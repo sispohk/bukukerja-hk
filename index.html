@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="id">
 <head>
@@ -79,6 +78,8 @@
     .btn.danger:hover { background: rgba(255,107,107,.24); }
     .btn.good { background: rgba(56,211,159,.16); border-color: rgba(56,211,159,.32); }
     .btn.good:hover { background: rgba(56,211,159,.24); }
+    .btn.warn { background: rgba(255,204,102,.12); border-color: rgba(255,204,102,.28); }
+    .btn.warn:hover { background: rgba(255,204,102,.18); }
     .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .field { display:flex; flex-direction:column; gap:6px; margin-bottom: 10px; }
     .field label { font-size: 12px; color: var(--muted); }
@@ -115,19 +116,53 @@
       padding: 10px 12px; border-radius: 12px; border:1px solid rgba(56,211,159,.35);
       background: rgba(56,211,159,.10); color: var(--text); font-size: 12px;
     }
-    .nav {
-      display:flex; gap:8px; flex-wrap:wrap;
-    }
+    .nav { display:flex; gap:8px; flex-wrap:wrap; }
     .nav .btn.active { outline: 2px solid rgba(138,180,255,.45); }
     .right { text-align:right; }
+
+    /* Simple modal */
+    .modal-backdrop{
+      position:fixed; inset:0; background: rgba(0,0,0,.55);
+      display:none; align-items:center; justify-content:center; z-index: 9998;
+      padding: 18px;
+    }
+    .modal{
+      width:min(860px, 100%);
+      border:1px solid var(--line); border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modal .hd{ padding: 12px 14px; border-bottom: 1px solid var(--line); display:flex; justify-content:space-between; gap:10px; }
+    .modal .bd{ padding: 14px; max-height: 70vh; overflow:auto; }
+    .modal .ft{ padding: 12px 14px; border-top: 1px solid var(--line); display:flex; justify-content:flex-end; gap:10px; }
+
+    /* PRINT / EXPORT */
+    .print-area{ display:none; }
+    @media print{
+      body{ background:#fff !important; }
+      header, .grid, .modal-backdrop { display:none !important; }
+      .print-area{ display:block !important; color:#000; font-family: Arial, "Noto Sans", sans-serif; }
+      .page{ page-break-after: always; padding: 12mm 12mm; }
+      .page:last-child{ page-break-after: auto; }
+      .p-title{ text-align:center; font-weight:700; font-size: 14pt; margin: 0 0 3mm; }
+      .p-sub{ text-align:center; font-size: 10.5pt; margin:0 0 6mm; }
+      .p-meta{ font-size: 10pt; margin:0 0 3mm; }
+      .p-box{ border:1px solid #000; padding: 3mm; margin: 0 0 4mm; }
+      .p-h3{ font-weight:700; margin:0 0 2mm; }
+      .p-table{ width:100%; border-collapse: collapse; font-size: 9.5pt; }
+      .p-table th,.p-table td{ border:1px solid #000; padding: 2mm; vertical-align: top; }
+      .p-table th{ font-weight:700; background:#f2f2f2; }
+      .small{ font-size: 9pt; }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div class="brand">
-        <h1>BUKU KERJA PONTREN HK — <span class="muted">Buku 1 (MVP)</span></h1>
-        <div class="sub">Tanpa Auth • Supabase REST • Prota / Promes / ATP</div>
+        <h1>BUKU KERJA PONTREN HK — <span class="muted">Buku 1 (HTML)</span></h1>
+        <div class="sub">Tanpa Auth • Supabase REST • Minggu Efektif • Prota • Promes • ATP • Modul Ajar • Export A4</div>
       </div>
       <div class="row">
         <span class="pill">Status: <span id="statusPill" class="mono">idle</span></span>
@@ -136,16 +171,16 @@
     </header>
 
     <div class="grid cols">
-      <!-- LEFT: Setup + Assignment list -->
+      <!-- LEFT -->
       <section class="card">
         <div class="hd">
-          <h2>1) Konfigurasi Supabase</h2>
+          <h2>Konfigurasi Supabase</h2>
           <span class="tag warn">wajib</span>
         </div>
         <div class="bd">
           <div class="notice">
-            Isi <span class="mono">SUPABASE_URL</span> dan <span class="mono">SUPABASE_ANON_KEY</span> di bawah.
-            Ini hanya MVP lokal (tanpa login). Jangan dipakai publik dulu.
+            Isi <span class="mono">SUPABASE_URL</span> dan <span class="mono">SUPABASE_ANON_KEY</span>.
+            Ini MVP internal (tanpa login). Jangan dipublish dulu.
           </div>
           <div class="hr"></div>
 
@@ -168,7 +203,7 @@
 
           <div class="hr"></div>
           <div class="row" style="justify-content:space-between;">
-            <h3 style="margin:0; font-size:13px;">2) Teaching Assignment</h3>
+            <h3 style="margin:0; font-size:13px;">Teaching Assignment</h3>
             <span class="tag" id="assignCount">0</span>
           </div>
           <div style="margin-top:10px; max-height: 420px; overflow:auto;">
@@ -188,39 +223,59 @@
         </div>
       </section>
 
-      <!-- RIGHT: Main -->
+      <!-- RIGHT -->
       <section class="card">
         <div class="hd">
           <h2 id="mainTitle">Pilih assignment dulu</h2>
           <div class="nav" id="navBtns" style="display:none;">
             <button class="btn small active" data-view="dash">Dashboard</button>
+            <button class="btn small" data-view="week">Minggu Efektif</button>
             <button class="btn small" data-view="prota">Prota</button>
             <button class="btn small" data-view="promes">Promes</button>
             <button class="btn small" data-view="atp">ATP</button>
+            <button class="btn small" data-view="lesson">Modul Ajar</button>
+            <button class="btn small" data-view="export">Export BK1</button>
           </div>
         </div>
         <div class="bd" id="mainBody">
           <div class="notice">
-            Alur cepat: Connect → Load Assignments → Pilih → isi Prota → Promes → ATP.
+            Alur cepat: Connect → Load Assignments → Pilih → isi Minggu Efektif → Prota → Promes → ATP → Generate Modul Ajar → Export.
           </div>
         </div>
       </section>
     </div>
   </div>
 
+  <!-- Modal for lesson plan -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="hd">
+        <div>
+          <div style="font-weight:700; font-size:13px;">Editor Modul Ajar / RPP</div>
+          <div class="muted" style="font-size:12px;" id="lpModalSub"></div>
+        </div>
+        <button class="btn small" id="btnCloseModal">Tutup</button>
+      </div>
+      <div class="bd" id="modalBody"></div>
+      <div class="ft">
+        <button class="btn danger" id="btnDeleteLP">Hapus</button>
+        <button class="btn good" id="btnSaveLP">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print area -->
+  <div class="print-area" id="printArea"></div>
+
 <script>
 /** =========================
  *  Simple Supabase REST client (no auth)
  *  ========================= */
-let SUPABASE_URL = "https://mdsolgsfxtmwnbwuklyg.supabase.co";
-let SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kc29sZ3NmeHRtd25id3VrbHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzYxMjcsImV4cCI6MjA4NDIxMjEyN30.eO4zFvmZuK8aCmKyOGXH5e0Arq1EBXMjMu4FzR7_sb0";
+let SUPABASE_URL = "";
+let SUPABASE_KEY = "";
 
 function setStatus(txt){ document.getElementById("statusPill").textContent = txt; }
-
-function saveConfig(){
-  localStorage.setItem("BKHK_SB_URL", SUPABASE_URL);
-  localStorage.setItem("BKHK_SB_KEY", SUPABASE_KEY);
-}
+function saveConfig(){ localStorage.setItem("BKHK_SB_URL", SUPABASE_URL); localStorage.setItem("BKHK_SB_KEY", SUPABASE_KEY); }
 function loadConfig(){
   SUPABASE_URL = localStorage.getItem("BKHK_SB_URL") || "";
   SUPABASE_KEY = localStorage.getItem("BKHK_SB_KEY") || "";
@@ -247,12 +302,7 @@ async function sbFetch(path, { method="GET", params=null, body=null, prefer=null
   };
   if(prefer) headers["Prefer"] = prefer;
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined
-  });
-
+  const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
   const text = await res.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
@@ -268,37 +318,41 @@ async function sbFetch(path, { method="GET", params=null, body=null, prefer=null
  *  App state
  *  ========================= */
 let assignments = [];
-let active = null; // active assignment object
+let active = null;
 let view = "dash";
 
 /** =========================
  *  UI helpers
  *  ========================= */
-function el(html){
-  const t = document.createElement("template");
-  t.innerHTML = html.trim();
-  return t.content.firstChild;
-}
-function money(x){ return (x ?? "").toString(); }
-
+function el(html){ const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
 function msgBox(kind, text){
   const cls = kind === "ok" ? "ok" : (kind === "err" ? "err" : "notice");
   return `<div class="${cls}">${text}</div>`;
 }
+function showConnMessage(kind, text){ document.getElementById("connMsg").innerHTML = msgBox(kind, text); }
+function setActiveNav(){ document.querySelectorAll("#navBtns .btn").forEach(b=> b.classList.toggle("active", b.dataset.view === view)); }
 
-function showConnMessage(kind, text){
-  document.getElementById("connMsg").innerHTML = msgBox(kind, text);
+let toastEl = null;
+function showToast(text, isError=false){
+  if(toastEl) toastEl.remove();
+  toastEl = el(`<div style="
+    position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+    padding:10px 12px; border-radius: 12px; border:1px solid ${isError ? "rgba(255,107,107,.45)" : "rgba(56,211,159,.45)"};
+    background:${isError ? "rgba(255,107,107,.14)" : "rgba(56,211,159,.12)"};
+    box-shadow: var(--shadow); z-index:9999; font-size:12px;
+  ">${escapeHtml(text)}</div>`);
+  document.body.appendChild(toastEl);
+  setTimeout(()=>{ if(toastEl){ toastEl.remove(); toastEl=null; } }, 2400);
 }
 
-function setActiveNav(){
-  document.querySelectorAll("#navBtns .btn").forEach(b=>{
-    b.classList.toggle("active", b.dataset.view === view);
-  });
+function escapeHtml(str){
+  return (str ?? "").toString()
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
 
 /** =========================
- *  Load assignments with embedded relations
- *  teaching_assignment?select=*,subject(*),class_group(*),academic_term(*),teacher(*)
+ *  Load assignments
  *  ========================= */
 async function loadAssignments(){
   setStatus("loading assignments...");
@@ -354,15 +408,45 @@ function selectAssignment(a){
 }
 
 /** =========================
- *  Dashboard progress
+ *  Common helpers for header tables
  *  ========================= */
 async function getSingleRow(table, assignmentId){
-  const rows = await sbFetch(table, {
-    params: { select: "*", teaching_assignment_id: `eq.${assignmentId}`, limit: "1" }
-  });
+  const rows = await sbFetch(table, { params: { select: "*", teaching_assignment_id: `eq.${assignmentId}`, limit: "1" } });
   return (rows && rows[0]) ? rows[0] : null;
 }
 
+async function ensureHeader(table){
+  const existing = await getSingleRow(table, active.id);
+  if(existing) return existing;
+  const inserted = await sbFetch(table, {
+    method: "POST",
+    prefer: "return=representation",
+    body: { teaching_assignment_id: active.id, deskripsi: null, status: "DRAFT" }
+  });
+  return inserted?.[0] || null;
+}
+
+async function ensureWeekPlan(){
+  const existing = await getSingleRow("bk1_effective_week_plan", active.id);
+  if(existing) return existing;
+  const inserted = await sbFetch("bk1_effective_week_plan", {
+    method: "POST",
+    prefer: "return=representation",
+    body: { teaching_assignment_id: active.id, total_minggu: null, minggu_efektif: null, catatan: null, status: "DRAFT" }
+  });
+  return inserted?.[0] || null;
+}
+
+async function updateById(table, id, patch){
+  await sbFetch(table, { method: "PATCH", prefer: "return=minimal", params: { id: `eq.${id}` }, body: patch });
+}
+async function deleteById(table, id){
+  await sbFetch(table, { method: "DELETE", prefer: "return=minimal", params: { id: `eq.${id}` } });
+}
+
+/** =========================
+ *  Dashboard
+ *  ========================= */
 async function renderDashboard(){
   const id = active.id;
   setStatus("loading dashboard...");
@@ -382,72 +466,225 @@ async function renderDashboard(){
     return `<span class="tag">DRAFT</span>`;
   };
 
-  const body = `
+  document.getElementById("mainBody").innerHTML = `
     <div class="notice">
-      Dashboard ini cek: apakah header tiap komponen sudah dibuat + statusnya. Isi detailnya ada di tab Prota/Promes/ATP.
+      Dashboard cek keberadaan + status header. Isi detail ada di tab masing-masing.
     </div>
     <div class="hr"></div>
     <table>
-      <thead>
-        <tr><th>Komponen</th><th>Status</th><th class="right">Aksi cepat</th></tr>
-      </thead>
+      <thead><tr><th>Komponen</th><th>Status</th><th class="right">Aksi cepat</th></tr></thead>
       <tbody>
-        <tr>
-          <td><b>Minggu Efektif</b></td>
-          <td>${badge(week)}</td>
-          <td class="right"><button class="btn small" id="goWeek">Buat/Update</button></td>
-        </tr>
-        <tr>
-          <td><b>Prota</b></td>
-          <td>${badge(prota)}</td>
-          <td class="right"><button class="btn small" id="goProta">Kelola</button></td>
-        </tr>
-        <tr>
-          <td><b>Promes</b></td>
-          <td>${badge(promes)}</td>
-          <td class="right"><button class="btn small" id="goPromes">Kelola</button></td>
-        </tr>
-        <tr>
-          <td><b>ATP</b></td>
-          <td>${badge(atp)}</td>
-          <td class="right"><button class="btn small" id="goATP">Kelola</button></td>
-        </tr>
-        <tr>
-          <td><b>KKM/Kriteria</b></td>
-          <td>${badge(kkm)}</td>
-          <td class="right"><button class="btn small" id="goKKM" disabled>Next</button></td>
-        </tr>
+        <tr><td><b>Minggu Efektif</b></td><td>${badge(week)}</td><td class="right"><button class="btn small" id="goWeek">Kelola</button></td></tr>
+        <tr><td><b>Prota</b></td><td>${badge(prota)}</td><td class="right"><button class="btn small" id="goProta">Kelola</button></td></tr>
+        <tr><td><b>Promes</b></td><td>${badge(promes)}</td><td class="right"><button class="btn small" id="goPromes">Kelola</button></td></tr>
+        <tr><td><b>ATP</b></td><td>${badge(atp)}</td><td class="right"><button class="btn small" id="goATP">Kelola</button></td></tr>
+        <tr><td><b>Modul Ajar</b></td><td><span class="tag">—</span></td><td class="right"><button class="btn small" id="goLesson">Kelola</button></td></tr>
+        <tr><td><b>Export</b></td><td><span class="tag">—</span></td><td class="right"><button class="btn small" id="goExport">Buka</button></td></tr>
       </tbody>
     </table>
-    <div class="hr"></div>
-    <div class="muted" style="font-size:12px;">
-      Catatan: “Minggu Efektif” belum dibuatkan editor di MVP ini (biar cepat). Kalau antum mau, nanti aku tambahkan panelnya.
-    </div>
   `;
-
-  document.getElementById("mainBody").innerHTML = body;
-
+  document.getElementById("goWeek").onclick = ()=>{ view="week"; renderMain(); };
   document.getElementById("goProta").onclick = ()=>{ view="prota"; renderMain(); };
   document.getElementById("goPromes").onclick = ()=>{ view="promes"; renderMain(); };
   document.getElementById("goATP").onclick = ()=>{ view="atp"; renderMain(); };
-  document.getElementById("goWeek").onclick = ()=>alert("Editor Minggu Efektif belum ada di MVP ini. Nanti aku tambahkan panelnya.");
+  document.getElementById("goLesson").onclick = ()=>{ view="lesson"; renderMain(); };
+  document.getElementById("goExport").onclick = ()=>{ view="export"; renderMain(); };
   setStatus("ready");
+}
+
+/** =========================
+ *  Minggu Efektif editor
+ *  ========================= */
+async function renderWeek(){
+  setStatus("loading week...");
+  const plan = await ensureWeekPlan();
+  const details = await sbFetch("bk1_effective_week_detail", {
+    params: { select: "*", week_plan_id: `eq.${plan.id}`, order: "minggu_ke.asc" }
+  });
+  setStatus("ready");
+
+  document.getElementById("mainBody").innerHTML = `
+    <div class="split">
+      <div>
+        <div class="field">
+          <label>Total Minggu (opsional)</label>
+          <input id="wkTotal" type="number" value="${plan.total_minggu ?? ""}" placeholder="mis. 18" />
+        </div>
+        <div class="field">
+          <label>Minggu Efektif (opsional)</label>
+          <input id="wkEff" type="number" value="${plan.minggu_efektif ?? ""}" placeholder="mis. 16" />
+        </div>
+      </div>
+      <div>
+        <div class="field">
+          <label>Status</label>
+          <select id="wkStatus">
+            <option value="DRAFT">DRAFT</option>
+            <option value="REVIEW">REVIEW</option>
+            <option value="APPROVED">APPROVED</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Catatan</label>
+          <textarea id="wkNote" placeholder="Catatan umum minggu efektif...">${escapeHtml(plan.catatan ?? "")}</textarea>
+        </div>
+        <div class="row">
+          <button class="btn good" id="btnSaveWeek">Simpan Plan</button>
+          <button class="btn" id="btnReloadWeek">Reload</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="row" style="justify-content:space-between;">
+      <div class="row">
+        <b>Detail Minggu</b>
+        <span class="tag">${(details||[]).length} baris</span>
+      </div>
+      <div class="row">
+        <button class="btn small warn" id="btnGenWeeks">Generate Minggu 1..N</button>
+        <button class="btn small" id="btnAddWeekRow">Tambah Baris</button>
+      </div>
+    </div>
+
+    <div style="margin-top:10px; overflow:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:70px;">Minggu</th>
+            <th style="width:140px;">Mulai</th>
+            <th style="width:140px;">Selesai</th>
+            <th style="width:130px;">Kategori</th>
+            <th>Keterangan</th>
+            <th class="right" style="width:160px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="wkTbody">
+          ${(details||[]).map(d=>`
+            <tr data-id="${d.id}">
+              <td><input data-k="minggu_ke" type="number" value="${d.minggu_ke}" /></td>
+              <td><input data-k="start_date" type="date" value="${d.start_date ?? ""}" /></td>
+              <td><input data-k="end_date" type="date" value="${d.end_date ?? ""}" /></td>
+              <td>
+                <select data-k="kategori">
+                  ${["EFEKTIF","LIBUR","UJIAN","KEGIATAN"].map(k=>`<option value="${k}" ${d.kategori===k?"selected":""}>${k}</option>`).join("")}
+                </select>
+              </td>
+              <td><input data-k="keterangan" value="${escapeHtml(d.keterangan ?? "")}" /></td>
+              <td class="right">
+                <button class="btn small" data-act="save">Simpan</button>
+                <button class="btn small danger" data-act="del">Hapus</button>
+              </td>
+            </tr>
+          `).join("") || `<tr><td colspan="6" class="muted">Belum ada detail minggu. Klik Generate atau Tambah.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById("wkStatus").value = plan.status || "DRAFT";
+
+  document.getElementById("btnSaveWeek").onclick = async ()=>{
+    try{
+      setStatus("saving...");
+      const total = parseInt(document.getElementById("wkTotal").value, 10);
+      const eff = parseInt(document.getElementById("wkEff").value, 10);
+      await updateById("bk1_effective_week_plan", plan.id, {
+        total_minggu: Number.isFinite(total) ? total : null,
+        minggu_efektif: Number.isFinite(eff) ? eff : null,
+        status: document.getElementById("wkStatus").value,
+        catatan: document.getElementById("wkNote").value.trim() || null
+      });
+      showToast("Plan minggu efektif tersimpan.");
+      setStatus("ready");
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+  document.getElementById("btnReloadWeek").onclick = ()=>renderMain();
+
+  document.getElementById("btnAddWeekRow").onclick = async ()=>{
+    try{
+      const next = (details?.length ? Math.max(...details.map(x=>x.minggu_ke)) : 0) + 1;
+      setStatus("saving...");
+      await sbFetch("bk1_effective_week_detail", {
+        method: "POST",
+        prefer: "return=minimal",
+        body: { week_plan_id: plan.id, minggu_ke: next, start_date: null, end_date: null, kategori: "EFEKTIF", keterangan: null }
+      });
+      showToast("Baris ditambahkan.");
+      renderMain();
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+
+  document.getElementById("btnGenWeeks").onclick = async ()=>{
+    try{
+      const N = parseInt(document.getElementById("wkTotal").value, 10);
+      if(!Number.isFinite(N) || N <= 0) return showToast("Isi Total Minggu dulu (angka > 0).", true);
+      if(!confirm(`Generate minggu 1..${N}? Ini akan MENGHAPUS detail minggu yang sudah ada.`)) return;
+
+      setStatus("generating...");
+      // delete all existing details for this plan
+      await sbFetch("bk1_effective_week_detail", {
+        method: "DELETE",
+        prefer: "return=minimal",
+        params: { week_plan_id: `eq.${plan.id}` }
+      });
+
+      // insert weeks (batch)
+      const payload = [];
+      for(let i=1;i<=N;i++){
+        payload.push({ week_plan_id: plan.id, minggu_ke: i, start_date: null, end_date: null, kategori: "EFEKTIF", keterangan: null });
+      }
+      await sbFetch("bk1_effective_week_detail", { method:"POST", prefer:"return=minimal", body: payload });
+      showToast("Minggu berhasil digenerate.");
+      setStatus("ready");
+      renderMain();
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+
+  document.querySelectorAll("#wkTbody tr[data-id]").forEach(tr=>{
+    const id = parseInt(tr.dataset.id, 10);
+    tr.querySelectorAll("button[data-act]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        try{
+          const act = btn.dataset.act;
+          if(act === "del"){
+            if(!confirm("Hapus baris minggu ini?")) return;
+            setStatus("deleting...");
+            await deleteById("bk1_effective_week_detail", id);
+            showToast("Baris dihapus.");
+            renderMain();
+            return;
+          }
+          if(act === "save"){
+            const patch = {};
+            tr.querySelectorAll("[data-k]").forEach(inp=>{
+              const k = inp.dataset.k;
+              if(k === "minggu_ke"){
+                patch[k] = parseInt(inp.value, 10) || 0;
+              }else if(k === "kategori"){
+                patch[k] = inp.value;
+              }else if(k === "start_date" || k === "end_date"){
+                patch[k] = inp.value || null;
+              }else{
+                patch[k] = inp.value.trim() || null;
+              }
+            });
+            if(!patch.minggu_ke) return showToast("Minggu ke- wajib angka > 0.", true);
+            setStatus("saving...");
+            await updateById("bk1_effective_week_detail", id, patch);
+            showToast("Baris tersimpan.");
+            setStatus("ready");
+          }
+        }catch(e){ showToast(e.message, true); setStatus("error"); }
+      };
+    });
+  });
 }
 
 /** =========================
  *  PROTA editor
  *  ========================= */
-async function ensureHeader(table){
-  const existing = await getSingleRow(table, active.id);
-  if(existing) return existing;
-  const inserted = await sbFetch(table, {
-    method: "POST",
-    prefer: "return=representation",
-    body: { teaching_assignment_id: active.id, deskripsi: null, status: "DRAFT" }
-  });
-  return inserted?.[0] || null;
-}
-
 async function loadProta(){
   setStatus("loading prota...");
   const header = await ensureHeader("bk1_prota");
@@ -457,65 +694,27 @@ async function loadProta(){
   setStatus("ready");
   return { header, items: items || [] };
 }
-
 async function addProtaItem(protaId, payload){
-  await sbFetch("bk1_prota_item", {
-    method: "POST",
-    prefer: "return=minimal",
-    body: { prota_id: protaId, ...payload }
-  });
+  await sbFetch("bk1_prota_item", { method: "POST", prefer: "return=minimal", body: { prota_id: protaId, ...payload } });
 }
-
-async function updateProtaItem(id, patch){
-  await sbFetch("bk1_prota_item", {
-    method: "PATCH",
-    prefer: "return=minimal",
-    params: { id: `eq.${id}` },
-    body: patch
-  });
-}
-
-async function deleteRow(table, id){
-  await sbFetch(table, {
-    method: "DELETE",
-    prefer: "return=minimal",
-    params: { id: `eq.${id}` }
-  });
-}
-
-async function updateHeader(table, id, patch){
-  await sbFetch(table, {
-    method: "PATCH",
-    prefer: "return=minimal",
-    params: { id: `eq.${id}` },
-    body: patch
-  });
-}
-
+async function updateProtaItem(id, patch){ await updateById("bk1_prota_item", id, patch); }
 async function swapProtaOrder(items, idxA, idxB){
   const a = items[idxA], b = items[idxB];
   if(!a || !b) return;
-  // swap urutan
-  await Promise.all([
-    updateProtaItem(a.id, { urutan: b.urutan }),
-    updateProtaItem(b.id, { urutan: a.urutan })
-  ]);
+  await Promise.all([ updateProtaItem(a.id, { urutan: b.urutan }), updateProtaItem(b.id, { urutan: a.urutan }) ]);
 }
 
 async function renderProta(){
   const { header, items } = await loadProta();
-
-  const html = `
+  document.getElementById("mainBody").innerHTML = `
     <div class="split">
       <div>
-        <div class="field">
-          <label>Deskripsi Prota</label>
-          <textarea id="protaDesc" placeholder="Catatan umum prota...">${header.deskripsi ?? ""}</textarea>
+        <div class="field"><label>Deskripsi Prota</label>
+          <textarea id="protaDesc" placeholder="Catatan umum prota...">${escapeHtml(header.deskripsi ?? "")}</textarea>
         </div>
       </div>
       <div>
-        <div class="field">
-          <label>Status</label>
+        <div class="field"><label>Status</label>
           <select id="protaStatus">
             <option value="DRAFT">DRAFT</option>
             <option value="REVIEW">REVIEW</option>
@@ -524,6 +723,7 @@ async function renderProta(){
         </div>
         <div class="row">
           <button class="btn good" id="saveProtaHeader">Simpan Header</button>
+          <button class="btn" id="btnReloadProta">Reload</button>
         </div>
       </div>
     </div>
@@ -531,11 +731,7 @@ async function renderProta(){
     <div class="hr"></div>
 
     <div class="row" style="justify-content:space-between;">
-      <div class="row">
-        <b>Item Prota</b>
-        <span class="tag">${items.length} baris</span>
-      </div>
-      <button class="btn small" id="btnReloadProta">Reload</button>
+      <div class="row"><b>Item Prota</b> <span class="tag">${items.length} baris</span></div>
     </div>
 
     <div style="margin-top:10px;">
@@ -579,41 +775,27 @@ async function renderProta(){
       <div class="hd"><h2>Tambah Item Prota</h2></div>
       <div class="bd">
         <div class="split">
-          <div class="field">
-            <label>Topik</label>
-            <input id="newProtaTopik" placeholder="Contoh: Thaharah, Shalat, ..." />
-          </div>
-          <div class="field">
-            <label>Alokasi JP</label>
-            <input id="newProtaJP" type="number" placeholder="mis. 8" />
-          </div>
+          <div class="field"><label>Topik</label><input id="newProtaTopik" placeholder="Contoh: Thaharah, Shalat, ..." /></div>
+          <div class="field"><label>Alokasi JP</label><input id="newProtaJP" type="number" placeholder="mis. 8" /></div>
         </div>
-        <div class="field">
-          <label>Integrasi HK (AQIL/panca cinta/adab)</label>
-          <input id="newProtaHK" placeholder="Contoh: Adab bersuci, disiplin berjamaah..." />
-        </div>
-        <div class="row">
-          <button class="btn good" id="btnAddProta">Tambah</button>
-        </div>
+        <div class="field"><label>Integrasi HK</label><input id="newProtaHK" placeholder="Adab/nilai/AQIL (opsional)" /></div>
+        <div class="row"><button class="btn good" id="btnAddProta">Tambah</button></div>
       </div>
     </div>
   `;
 
-  document.getElementById("mainBody").innerHTML = html;
   document.getElementById("protaStatus").value = header.status || "DRAFT";
 
   document.getElementById("saveProtaHeader").onclick = async ()=>{
     try{
       setStatus("saving...");
-      await updateHeader("bk1_prota", header.id, {
+      await updateById("bk1_prota", header.id, {
         deskripsi: document.getElementById("protaDesc").value.trim() || null,
         status: document.getElementById("protaStatus").value
       });
-      showToast("Header prota tersimpan.");
-      setStatus("ready");
+      showToast("Header prota tersimpan."); setStatus("ready");
     }catch(e){ showToast(e.message, true); setStatus("error"); }
   };
-
   document.getElementById("btnReloadProta").onclick = ()=>renderMain();
 
   document.getElementById("btnAddProta").onclick = async ()=>{
@@ -630,12 +812,10 @@ async function renderProta(){
         alokasi_jp: Number.isFinite(jp) ? jp : null,
         integrasi_hk: hk || null
       });
-      showToast("Item prota ditambahkan.");
-      renderMain();
+      showToast("Item prota ditambahkan."); renderMain();
     }catch(e){ showToast(e.message, true); setStatus("error"); }
   };
 
-  // Row actions
   document.querySelectorAll("#protaTbody tr[data-id]").forEach((tr, idx)=>{
     const id = parseInt(tr.dataset.id, 10);
     tr.querySelectorAll("button[data-act]").forEach(btn=>{
@@ -645,42 +825,26 @@ async function renderProta(){
           if(act === "del"){
             if(!confirm("Hapus item ini?")) return;
             setStatus("deleting...");
-            await deleteRow("bk1_prota_item", id);
-            showToast("Item dihapus.");
-            renderMain();
-            return;
+            await deleteById("bk1_prota_item", id);
+            showToast("Item dihapus."); renderMain(); return;
           }
-          if(act === "up"){
-            if(idx === 0) return;
-            setStatus("reordering...");
-            await swapProtaOrder(items, idx, idx-1);
-            renderMain();
-            return;
-          }
-          if(act === "down"){
-            if(idx === items.length-1) return;
-            setStatus("reordering...");
-            await swapProtaOrder(items, idx, idx+1);
-            renderMain();
-            return;
-          }
+          if(act === "up"){ if(idx===0) return; setStatus("reordering..."); await swapProtaOrder(items, idx, idx-1); renderMain(); return; }
+          if(act === "down"){ if(idx===items.length-1) return; setStatus("reordering..."); await swapProtaOrder(items, idx, idx+1); renderMain(); return; }
           if(act === "save"){
             const patch = {};
             tr.querySelectorAll("input[data-k]").forEach(inp=>{
               const k = inp.dataset.k;
-              let v = inp.value;
               if(k === "alokasi_jp"){
-                const n = parseInt(v, 10);
+                const n = parseInt(inp.value, 10);
                 patch[k] = Number.isFinite(n) ? n : null;
               }else{
-                patch[k] = v.trim() || null;
+                patch[k] = inp.value.trim() || null;
               }
             });
             if(!patch.topik) return showToast("Topik tidak boleh kosong.", true);
             setStatus("saving...");
             await updateProtaItem(id, patch);
-            showToast("Item disimpan.");
-            setStatus("ready");
+            showToast("Item disimpan."); setStatus("ready");
           }
         }catch(e){ showToast(e.message, true); setStatus("error"); }
       };
@@ -689,7 +853,7 @@ async function renderProta(){
 }
 
 /** =========================
- *  PROMES editor (simple)
+ *  PROMES editor
  *  ========================= */
 async function loadPromes(){
   setStatus("loading promes...");
@@ -701,35 +865,22 @@ async function loadPromes(){
   return { header, items: items || [] };
 }
 async function addPromesItem(promesId, payload){
-  await sbFetch("bk1_promes_item", {
-    method: "POST",
-    prefer: "return=minimal",
-    body: { promes_id: promesId, ...payload }
-  });
+  await sbFetch("bk1_promes_item", { method:"POST", prefer:"return=minimal", body: { promes_id: promesId, ...payload } });
 }
-async function updatePromesItem(id, patch){
-  await sbFetch("bk1_promes_item", {
-    method: "PATCH",
-    prefer: "return=minimal",
-    params: { id: `eq.${id}` },
-    body: patch
-  });
-}
+async function updatePromesItem(id, patch){ await updateById("bk1_promes_item", id, patch); }
 
 async function renderPromes(){
   const { header, items } = await loadPromes();
 
-  const html = `
+  document.getElementById("mainBody").innerHTML = `
     <div class="split">
       <div>
-        <div class="field">
-          <label>Deskripsi Promes</label>
-          <textarea id="promesDesc" placeholder="Catatan umum promes...">${header.deskripsi ?? ""}</textarea>
+        <div class="field"><label>Deskripsi Promes</label>
+          <textarea id="promesDesc" placeholder="Catatan umum promes...">${escapeHtml(header.deskripsi ?? "")}</textarea>
         </div>
       </div>
       <div>
-        <div class="field">
-          <label>Status</label>
+        <div class="field"><label>Status</label>
           <select id="promesStatus">
             <option value="DRAFT">DRAFT</option>
             <option value="REVIEW">REVIEW</option>
@@ -746,10 +897,7 @@ async function renderPromes(){
     <div class="hr"></div>
 
     <div class="row" style="justify-content:space-between;">
-      <div class="row">
-        <b>Item Promes</b>
-        <span class="tag">${items.length} baris</span>
-      </div>
+      <div class="row"><b>Item Promes</b> <span class="tag">${items.length} baris</span></div>
     </div>
 
     <div style="margin-top:10px; overflow:auto;">
@@ -802,25 +950,21 @@ async function renderPromes(){
           <div class="field"><label>Target</label><input id="newPrTarget" placeholder="Target singkat (opsional)" /></div>
         </div>
         <div class="field"><label>Integrasi HK</label><input id="newPrHK" placeholder="Adab/nilai/AQIL (opsional)" /></div>
-        <div class="row">
-          <button class="btn good" id="btnAddPromes">Tambah</button>
-        </div>
+        <div class="row"><button class="btn good" id="btnAddPromes">Tambah</button></div>
       </div>
     </div>
   `;
 
-  document.getElementById("mainBody").innerHTML = html;
   document.getElementById("promesStatus").value = header.status || "DRAFT";
 
   document.getElementById("savePromesHeader").onclick = async ()=>{
     try{
       setStatus("saving...");
-      await updateHeader("bk1_promes", header.id, {
+      await updateById("bk1_promes", header.id, {
         deskripsi: document.getElementById("promesDesc").value.trim() || null,
         status: document.getElementById("promesStatus").value
       });
-      showToast("Header promes tersimpan.");
-      setStatus("ready");
+      showToast("Header promes tersimpan."); setStatus("ready");
     }catch(e){ showToast(e.message, true); setStatus("error"); }
   };
   document.getElementById("btnReloadPromes").onclick = ()=>renderMain();
@@ -844,8 +988,7 @@ async function renderPromes(){
         target: target || null,
         integrasi_hk: hk || null
       });
-      showToast("Item promes ditambahkan.");
-      renderMain();
+      showToast("Item promes ditambahkan."); renderMain();
     }catch(e){ showToast(e.message, true); setStatus("error"); }
   };
 
@@ -858,10 +1001,8 @@ async function renderPromes(){
           if(act === "del"){
             if(!confirm("Hapus item ini?")) return;
             setStatus("deleting...");
-            await deleteRow("bk1_promes_item", id);
-            showToast("Item dihapus.");
-            renderMain();
-            return;
+            await deleteById("bk1_promes_item", id);
+            showToast("Item dihapus."); renderMain(); return;
           }
           if(act === "save"){
             const patch = {};
@@ -877,8 +1018,7 @@ async function renderPromes(){
             if(!patch.topik) return showToast("Topik tidak boleh kosong.", true);
             setStatus("saving...");
             await updatePromesItem(id, patch);
-            showToast("Item disimpan.");
-            setStatus("ready");
+            showToast("Item disimpan."); setStatus("ready");
           }
         }catch(e){ showToast(e.message, true); setStatus("error"); }
       };
@@ -887,55 +1027,37 @@ async function renderPromes(){
 }
 
 /** =========================
- *  ATP editor (units)
+ *  ATP editor
  *  ========================= */
 async function loadATP(){
   setStatus("loading atp...");
   const header = await ensureHeader("bk1_atp");
-  const units = await sbFetch("bk1_atp_unit", {
-    params: { select: "*", atp_id: `eq.${header.id}`, order: "urutan.asc" }
-  });
+  const units = await sbFetch("bk1_atp_unit", { params: { select:"*", atp_id:`eq.${header.id}`, order:"urutan.asc" } });
   setStatus("ready");
   return { header, units: units || [] };
 }
 async function addATPUnit(atpId, payload){
-  await sbFetch("bk1_atp_unit", {
-    method: "POST",
-    prefer: "return=minimal",
-    body: { atp_id: atpId, ...payload }
-  });
+  await sbFetch("bk1_atp_unit", { method:"POST", prefer:"return=minimal", body: { atp_id: atpId, ...payload } });
 }
-async function updateATPUnit(id, patch){
-  await sbFetch("bk1_atp_unit", {
-    method: "PATCH",
-    prefer: "return=minimal",
-    params: { id: `eq.${id}` },
-    body: patch
-  });
-}
+async function updateATPUnit(id, patch){ await updateById("bk1_atp_unit", id, patch); }
 async function swapATPOrder(units, idxA, idxB){
   const a = units[idxA], b = units[idxB];
   if(!a || !b) return;
-  await Promise.all([
-    updateATPUnit(a.id, { urutan: b.urutan }),
-    updateATPUnit(b.id, { urutan: a.urutan })
-  ]);
+  await Promise.all([ updateATPUnit(a.id, { urutan: b.urutan }), updateATPUnit(b.id, { urutan: a.urutan }) ]);
 }
 
 async function renderATP(){
   const { header, units } = await loadATP();
 
-  const html = `
+  document.getElementById("mainBody").innerHTML = `
     <div class="split">
       <div>
-        <div class="field">
-          <label>Deskripsi ATP/Silabus</label>
-          <textarea id="atpDesc" placeholder="Catatan umum ATP...">${header.deskripsi ?? ""}</textarea>
+        <div class="field"><label>Deskripsi ATP/Silabus</label>
+          <textarea id="atpDesc" placeholder="Catatan umum ATP...">${escapeHtml(header.deskripsi ?? "")}</textarea>
         </div>
       </div>
       <div>
-        <div class="field">
-          <label>Status</label>
+        <div class="field"><label>Status</label>
           <select id="atpStatus">
             <option value="DRAFT">DRAFT</option>
             <option value="REVIEW">REVIEW</option>
@@ -952,10 +1074,8 @@ async function renderATP(){
     <div class="hr"></div>
 
     <div class="row" style="justify-content:space-between;">
-      <div class="row">
-        <b>Unit ATP</b>
-        <span class="tag">${units.length} unit</span>
-      </div>
+      <div class="row"><b>Unit ATP</b> <span class="tag">${units.length} unit</span></div>
+      <div class="row"><span class="tag">Tip: nanti modul ajar bisa digenerate dari unit ini</span></div>
     </div>
 
     <div style="margin-top:10px; overflow:auto;">
@@ -998,42 +1118,32 @@ async function renderATP(){
     <div class="card" style="box-shadow:none; background: rgba(0,0,0,.10);">
       <div class="hd"><h2>Tambah Unit ATP</h2></div>
       <div class="bd">
-        <div class="field">
-          <label>Tujuan</label>
+        <div class="field"><label>Tujuan</label>
           <textarea id="newATPTujuan" placeholder="Tuliskan tujuan pembelajaran unit ini..."></textarea>
         </div>
         <div class="split">
+          <div class="field"><label>Materi</label><textarea id="newATPMateri" placeholder="Ringkas materi unit..."></textarea></div>
           <div class="field">
-            <label>Materi</label>
-            <textarea id="newATPMateri" placeholder="Ringkas materi unit..."></textarea>
-          </div>
-          <div class="field">
-            <label>Alokasi JP</label>
-            <input id="newATPJP" type="number" placeholder="mis. 4" />
+            <label>Alokasi JP</label><input id="newATPJP" type="number" placeholder="mis. 4" />
             <div style="height:10px;"></div>
-            <label>Integrasi HK</label>
-            <input id="newATPHK" placeholder="Adab/nilai/AQIL (opsional)" />
+            <label>Integrasi HK</label><input id="newATPHK" placeholder="Adab/nilai/AQIL (opsional)" />
           </div>
         </div>
-        <div class="row">
-          <button class="btn good" id="btnAddATP">Tambah Unit</button>
-        </div>
+        <div class="row"><button class="btn good" id="btnAddATP">Tambah Unit</button></div>
       </div>
     </div>
   `;
 
-  document.getElementById("mainBody").innerHTML = html;
   document.getElementById("atpStatus").value = header.status || "DRAFT";
 
   document.getElementById("saveATPHeader").onclick = async ()=>{
     try{
       setStatus("saving...");
-      await updateHeader("bk1_atp", header.id, {
+      await updateById("bk1_atp", header.id, {
         deskripsi: document.getElementById("atpDesc").value.trim() || null,
         status: document.getElementById("atpStatus").value
       });
-      showToast("Header ATP tersimpan.");
-      setStatus("ready");
+      showToast("Header ATP tersimpan."); setStatus("ready");
     }catch(e){ showToast(e.message, true); setStatus("error"); }
   };
   document.getElementById("btnReloadATP").onclick = ()=>renderMain();
@@ -1055,8 +1165,7 @@ async function renderATP(){
         alokasi_jp: Number.isFinite(jp) ? jp : null,
         integrasi_hk: hk || null
       });
-      showToast("Unit ATP ditambahkan.");
-      renderMain();
+      showToast("Unit ATP ditambahkan."); renderMain();
     }catch(e){ showToast(e.message, true); setStatus("error"); }
   };
 
@@ -1069,25 +1178,11 @@ async function renderATP(){
           if(act === "del"){
             if(!confirm("Hapus unit ini?")) return;
             setStatus("deleting...");
-            await deleteRow("bk1_atp_unit", id);
-            showToast("Unit dihapus.");
-            renderMain();
-            return;
+            await deleteById("bk1_atp_unit", id);
+            showToast("Unit dihapus."); renderMain(); return;
           }
-          if(act === "up"){
-            if(idx === 0) return;
-            setStatus("reordering...");
-            await swapATPOrder(units, idx, idx-1);
-            renderMain();
-            return;
-          }
-          if(act === "down"){
-            if(idx === units.length-1) return;
-            setStatus("reordering...");
-            await swapATPOrder(units, idx, idx+1);
-            renderMain();
-            return;
-          }
+          if(act === "up"){ if(idx===0) return; setStatus("reordering..."); await swapATPOrder(units, idx, idx-1); renderMain(); return; }
+          if(act === "down"){ if(idx===units.length-1) return; setStatus("reordering..."); await swapATPOrder(units, idx, idx+1); renderMain(); return; }
           if(act === "save"){
             const patch = {};
             tr.querySelectorAll("[data-k]").forEach(inp=>{
@@ -1102,13 +1197,466 @@ async function renderATP(){
             if(!patch.tujuan) return showToast("Tujuan tidak boleh kosong.", true);
             setStatus("saving...");
             await updateATPUnit(id, patch);
-            showToast("Unit disimpan.");
-            setStatus("ready");
+            showToast("Unit disimpan."); setStatus("ready");
           }
         }catch(e){ showToast(e.message, true); setStatus("error"); }
       };
     });
   });
+}
+
+/** =========================
+ *  Modul Ajar / Lesson Plan
+ *  ========================= */
+async function loadLessonPlans(){
+  setStatus("loading lesson plans...");
+  const rows = await sbFetch("bk1_lesson_plan", {
+    params: { select:"*", teaching_assignment_id:`eq.${active.id}`, order:"pertemuan_ke.asc" }
+  });
+  setStatus("ready");
+  return rows || [];
+}
+async function createLessonPlansBatch(payload){
+  await sbFetch("bk1_lesson_plan", { method:"POST", prefer:"return=minimal", body: payload });
+}
+async function createLessonPlan(payload){
+  const rep = await sbFetch("bk1_lesson_plan", { method:"POST", prefer:"return=representation", body: payload });
+  return rep?.[0] || null;
+}
+
+function openModal(){ document.getElementById("modalBackdrop").style.display = "flex"; }
+function closeModal(){ document.getElementById("modalBackdrop").style.display = "none"; }
+
+let currentLP = null;
+
+async function openLessonEditor(lp){
+  currentLP = lp;
+  document.getElementById("lpModalSub").textContent = `Pertemuan ke-${lp.pertemuan_ke || 0} • Tipe: ${lp.tipe || "MODUL_AJAR"}`;
+  document.getElementById("modalBody").innerHTML = `
+    <div class="split">
+      <div class="field">
+        <label>Tipe</label>
+        <select id="lpTipe">
+          <option value="MODUL_AJAR">MODUL_AJAR</option>
+          <option value="RPP">RPP</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="lpStatus">
+          <option value="DRAFT">DRAFT</option>
+          <option value="REVIEW">REVIEW</option>
+          <option value="APPROVED">APPROVED</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="field">
+        <label>Pertemuan ke-</label>
+        <input id="lpMeet" type="number" value="${lp.pertemuan_ke ?? 0}" />
+      </div>
+      <div class="field">
+        <label>Tanggal (opsional)</label>
+        <input id="lpDate" type="date" value="${lp.tanggal ?? ""}" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Tujuan</label>
+      <textarea id="lpTujuan">${escapeHtml(lp.tujuan ?? "")}</textarea>
+    </div>
+
+    <div class="field">
+      <label>Langkah Pembelajaran</label>
+      <textarea id="lpLangkah" placeholder="Pendahuluan • Inti • Penutup">${escapeHtml(lp.langkah_pembelajaran ?? "")}</textarea>
+    </div>
+
+    <div class="field">
+      <label>Asesmen</label>
+      <textarea id="lpAsesmen" placeholder="Formatif/sumatif, rubrik, teknik penilaian...">${escapeHtml(lp.asesmen ?? "")}</textarea>
+    </div>
+
+    <div class="split">
+      <div class="field">
+        <label>Diferensiasi (opsional)</label>
+        <textarea id="lpDiff">${escapeHtml(lp.diferensiasi ?? "")}</textarea>
+      </div>
+      <div class="field">
+        <label>Refleksi (opsional)</label>
+        <textarea id="lpRef">${escapeHtml(lp.refleksi ?? "")}</textarea>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="field">
+        <label>Referensi (opsional)</label>
+        <textarea id="lpRefSrc">${escapeHtml(lp.referensi ?? "")}</textarea>
+      </div>
+      <div class="field">
+        <label>Integrasi HK (opsional)</label>
+        <textarea id="lpHK">${escapeHtml(lp.integrasi_hk ?? "")}</textarea>
+      </div>
+    </div>
+  `;
+  document.getElementById("lpTipe").value = lp.tipe || "MODUL_AJAR";
+  document.getElementById("lpStatus").value = lp.status || "DRAFT";
+
+  document.getElementById("btnDeleteLP").onclick = async ()=>{
+    try{
+      if(!confirm("Hapus modul ajar ini?")) return;
+      setStatus("deleting...");
+      await deleteById("bk1_lesson_plan", lp.id);
+      showToast("Modul ajar dihapus.");
+      closeModal();
+      renderMain();
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+
+  document.getElementById("btnSaveLP").onclick = async ()=>{
+    try{
+      const meet = parseInt(document.getElementById("lpMeet").value, 10) || 0;
+      if(meet <= 0) return showToast("Pertemuan ke- harus > 0.", true);
+
+      setStatus("saving...");
+      await updateById("bk1_lesson_plan", lp.id, {
+        tipe: document.getElementById("lpTipe").value,
+        status: document.getElementById("lpStatus").value,
+        pertemuan_ke: meet,
+        tanggal: document.getElementById("lpDate").value || null,
+        tujuan: document.getElementById("lpTujuan").value.trim() || null,
+        langkah_pembelajaran: document.getElementById("lpLangkah").value.trim() || null,
+        asesmen: document.getElementById("lpAsesmen").value.trim() || null,
+        diferensiasi: document.getElementById("lpDiff").value.trim() || null,
+        refleksi: document.getElementById("lpRef").value.trim() || null,
+        referensi: document.getElementById("lpRefSrc").value.trim() || null,
+        integrasi_hk: document.getElementById("lpHK").value.trim() || null
+      });
+
+      showToast("Modul ajar tersimpan.");
+      setStatus("ready");
+      closeModal();
+      renderMain();
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+
+  openModal();
+}
+
+async function renderLessonPlans(){
+  const plans = await loadLessonPlans();
+
+  document.getElementById("mainBody").innerHTML = `
+    <div class="notice">
+      Modul Ajar bisa dibuat manual atau <b>Generate dari ATP</b>. Generator akan membuat pertemuan berurutan (append).
+    </div>
+    <div class="hr"></div>
+
+    <div class="row" style="justify-content:space-between;">
+      <div class="row">
+        <b>Daftar Modul Ajar</b> <span class="tag">${plans.length} pertemuan</span>
+      </div>
+      <div class="row">
+        <button class="btn small warn" id="btnGenLP">Generate dari ATP</button>
+        <button class="btn small" id="btnNewLP">Tambah Manual</button>
+        <button class="btn small" id="btnReloadLP">Reload</button>
+      </div>
+    </div>
+
+    <div style="margin-top:10px; overflow:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:90px;">Pertemuan</th>
+            <th>Tujuan (ringkas)</th>
+            <th style="width:110px;">Tipe</th>
+            <th style="width:120px;">Status</th>
+            <th class="right" style="width:130px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="lpTbody">
+          ${plans.map(p=>`
+            <tr data-id="${p.id}">
+              <td><span class="mono">${p.pertemuan_ke ?? 0}</span></td>
+              <td>${escapeHtml((p.tujuan ?? "").slice(0, 120))}${(p.tujuan ?? "").length>120?"…":""}</td>
+              <td>${escapeHtml(p.tipe ?? "MODUL_AJAR")}</td>
+              <td>${renderStatusTag(p.status)}</td>
+              <td class="right">
+                <button class="btn small" data-act="edit">Edit</button>
+                <button class="btn small danger" data-act="del">Hapus</button>
+              </td>
+            </tr>
+          `).join("") || `<tr><td colspan="5" class="muted">Belum ada modul ajar.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById("btnReloadLP").onclick = ()=>renderMain();
+
+  document.getElementById("btnNewLP").onclick = async ()=>{
+    try{
+      const maxMeet = plans.length ? Math.max(...plans.map(x=>x.pertemuan_ke||0)) : 0;
+      setStatus("saving...");
+      const newLP = await createLessonPlan({
+        teaching_assignment_id: active.id,
+        tipe: "MODUL_AJAR",
+        pertemuan_ke: maxMeet + 1,
+        tanggal: null,
+        tujuan: null, langkah_pembelajaran: null, asesmen: null,
+        diferensiasi: null, refleksi: null, referensi: null, integrasi_hk: null,
+        status: "DRAFT"
+      });
+      setStatus("ready");
+      showToast("Modul ajar dibuat. Silakan edit.");
+      openLessonEditor(newLP);
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+
+  document.getElementById("btnGenLP").onclick = async ()=>{
+    try{
+      // fetch ATP units
+      const atpHeader = await getSingleRow("bk1_atp", active.id);
+      if(!atpHeader) return showToast("ATP belum ada. Isi ATP dulu.", true);
+      const units = await sbFetch("bk1_atp_unit", { params: { select:"*", atp_id:`eq.${atpHeader.id}`, order:"urutan.asc" } });
+      if(!units?.length) return showToast("Unit ATP masih kosong.", true);
+
+      const maxMeet = plans.length ? Math.max(...plans.map(x=>x.pertemuan_ke||0)) : 0;
+      if(!confirm(`Generate ${units.length} pertemuan dari ATP? (Akan ditambahkan mulai pertemuan ke-${maxMeet+1})`)) return;
+
+      setStatus("generating...");
+      const payload = units.map((u, idx)=>({
+        teaching_assignment_id: active.id,
+        tipe: "MODUL_AJAR",
+        pertemuan_ke: maxMeet + idx + 1,
+        tanggal: null,
+        tujuan: u.tujuan || null,
+        langkah_pembelajaran: u.kegiatan || null,
+        asesmen: u.asesmen || null,
+        diferensiasi: null,
+        refleksi: null,
+        referensi: u.sumber || null,
+        integrasi_hk: u.integrasi_hk || null,
+        status: "DRAFT"
+      }));
+      await createLessonPlansBatch(payload);
+      showToast("Generate selesai.");
+      setStatus("ready");
+      renderMain();
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+
+  document.querySelectorAll("#lpTbody tr[data-id]").forEach(tr=>{
+    const id = parseInt(tr.dataset.id, 10);
+    const lp = plans.find(x=>x.id === id);
+    tr.querySelectorAll("button[data-act]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        try{
+          const act = btn.dataset.act;
+          if(act === "edit"){ openLessonEditor(lp); return; }
+          if(act === "del"){
+            if(!confirm("Hapus modul ajar ini?")) return;
+            setStatus("deleting...");
+            await deleteById("bk1_lesson_plan", id);
+            showToast("Modul ajar dihapus.");
+            setStatus("ready");
+            renderMain();
+          }
+        }catch(e){ showToast(e.message, true); setStatus("error"); }
+      };
+    });
+  });
+}
+
+function renderStatusTag(st){
+  if(st === "APPROVED") return `<span class="tag good">APPROVED</span>`;
+  if(st === "REVIEW") return `<span class="tag warn">REVIEW</span>`;
+  return `<span class="tag">DRAFT</span>`;
+}
+
+/** =========================
+ *  EXPORT (Print A4 -> Save PDF)
+ *  ========================= */
+async function buildExportHTML(){
+  setStatus("building export...");
+  const assignmentId = active.id;
+
+  const [weekPlan, protaH, promesH, atpH] = await Promise.all([
+    getSingleRow("bk1_effective_week_plan", assignmentId),
+    getSingleRow("bk1_prota", assignmentId),
+    getSingleRow("bk1_promes", assignmentId),
+    getSingleRow("bk1_atp", assignmentId)
+  ]);
+
+  const [weekDetail, protaItems, promesItems, atpUnits, lessonPlans] = await Promise.all([
+    weekPlan ? sbFetch("bk1_effective_week_detail", { params: { select:"*", week_plan_id:`eq.${weekPlan.id}`, order:"minggu_ke.asc" } }) : [],
+    protaH ? sbFetch("bk1_prota_item", { params: { select:"*", prota_id:`eq.${protaH.id}`, order:"urutan.asc" } }) : [],
+    promesH ? sbFetch("bk1_promes_item", { params: { select:"*", promes_id:`eq.${promesH.id}`, order:"minggu_ke.asc,pertemuan_ke.asc" } }) : [],
+    atpH ? sbFetch("bk1_atp_unit", { params: { select:"*", atp_id:`eq.${atpH.id}`, order:"urutan.asc" } }) : [],
+    sbFetch("bk1_lesson_plan", { params: { select:"*", teaching_assignment_id:`eq.${assignmentId}`, order:"pertemuan_ke.asc" } })
+  ]);
+
+  const meta = `
+    <div class="p-meta"><b>Satuan Pendidikan:</b> Pontren HK</div>
+    <div class="p-meta"><b>Guru:</b> ${escapeHtml(active.teacher?.nama ?? "-")}</div>
+    <div class="p-meta"><b>Mapel:</b> ${escapeHtml(active.subject?.nama ?? "-")} (${escapeHtml(active.subject?.kurikulum ?? "-")})</div>
+    <div class="p-meta"><b>Kelas:</b> ${escapeHtml(active.class_group?.jenjang ?? "")} ${escapeHtml(active.class_group?.label ?? "")}</div>
+    <div class="p-meta"><b>Tahun Ajaran:</b> ${escapeHtml(active.academic_term?.tahun_ajaran ?? "")} • <b>Semester:</b> ${escapeHtml(active.academic_term?.semester ?? "")}</div>
+    <div class="p-meta"><b>JP/Pekan:</b> ${escapeHtml(active.jp_per_pekan ?? "-")}</div>
+  `;
+
+  const secWeek = `
+    <div class="p-box">
+      <div class="p-h3">A. Minggu Efektif</div>
+      <div class="small">Total minggu: ${weekPlan?.total_minggu ?? "-"} • Minggu efektif: ${weekPlan?.minggu_efektif ?? "-"} • Status: ${weekPlan?.status ?? "-"}</div>
+      <div class="small">Catatan: ${escapeHtml(weekPlan?.catatan ?? "-")}</div>
+      <div style="height:2mm;"></div>
+      <table class="p-table">
+        <thead><tr><th style="width:18mm;">Minggu</th><th style="width:28mm;">Mulai</th><th style="width:28mm;">Selesai</th><th style="width:28mm;">Kategori</th><th>Keterangan</th></tr></thead>
+        <tbody>
+          ${(weekDetail||[]).map(d=>`
+            <tr>
+              <td>${d.minggu_ke}</td>
+              <td>${d.start_date ?? ""}</td>
+              <td>${d.end_date ?? ""}</td>
+              <td>${escapeHtml(d.kategori ?? "")}</td>
+              <td>${escapeHtml(d.keterangan ?? "")}</td>
+            </tr>
+          `).join("") || `<tr><td colspan="5">-</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  const secProta = `
+    <div class="p-box">
+      <div class="p-h3">B. Program Tahunan (Prota)</div>
+      <div class="small">Status: ${protaH?.status ?? "-"} • Catatan: ${escapeHtml(protaH?.deskripsi ?? "-")}</div>
+      <div style="height:2mm;"></div>
+      <table class="p-table">
+        <thead><tr><th style="width:14mm;">No</th><th>Topik</th><th style="width:18mm;">JP</th><th style="width:45mm;">Integrasi HK</th></tr></thead>
+        <tbody>
+          ${(protaItems||[]).map(it=>`
+            <tr>
+              <td>${it.urutan}</td>
+              <td>${escapeHtml(it.topik ?? "")}${it.catatan?`<br><span class="small">Catatan: ${escapeHtml(it.catatan)}</span>`:""}</td>
+              <td>${it.alokasi_jp ?? ""}</td>
+              <td>${escapeHtml(it.integrasi_hk ?? "")}</td>
+            </tr>
+          `).join("") || `<tr><td colspan="4">-</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  const secPromes = `
+    <div class="p-box">
+      <div class="p-h3">C. Program Semester (Promes)</div>
+      <div class="small">Status: ${promesH?.status ?? "-"} • Catatan: ${escapeHtml(promesH?.deskripsi ?? "-")}</div>
+      <div style="height:2mm;"></div>
+      <table class="p-table">
+        <thead><tr><th style="width:16mm;">Minggu</th><th style="width:16mm;">Pert.</th><th>Topik</th><th style="width:18mm;">JP</th><th style="width:40mm;">Target</th></tr></thead>
+        <tbody>
+          ${(promesItems||[]).map(it=>`
+            <tr>
+              <td>${it.minggu_ke ?? ""}</td>
+              <td>${it.pertemuan_ke ?? ""}</td>
+              <td>${escapeHtml(it.topik ?? "")}${it.integrasi_hk?`<br><span class="small">Integrasi: ${escapeHtml(it.integrasi_hk)}</span>`:""}</td>
+              <td>${it.alokasi_jp ?? ""}</td>
+              <td>${escapeHtml(it.target ?? "")}</td>
+            </tr>
+          `).join("") || `<tr><td colspan="5">-</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  const secATP = `
+    <div class="p-box">
+      <div class="p-h3">D. ATP / Silabus</div>
+      <div class="small">Status: ${atpH?.status ?? "-"} • Catatan: ${escapeHtml(atpH?.deskripsi ?? "-")}</div>
+      <div style="height:2mm;"></div>
+      <table class="p-table">
+        <thead><tr><th style="width:14mm;">No</th><th style="width:55mm;">Tujuan</th><th>Materi</th><th style="width:16mm;">JP</th><th style="width:35mm;">Integrasi HK</th></tr></thead>
+        <tbody>
+          ${(atpUnits||[]).map(u=>`
+            <tr>
+              <td>${u.urutan}</td>
+              <td>${escapeHtml(u.tujuan ?? "")}</td>
+              <td>${escapeHtml(u.materi ?? "")}</td>
+              <td>${u.alokasi_jp ?? ""}</td>
+              <td>${escapeHtml(u.integrasi_hk ?? "")}</td>
+            </tr>
+          `).join("") || `<tr><td colspan="5">-</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  const secLP = `
+    <div class="p-box">
+      <div class="p-h3">E. Modul Ajar / RPP (Ringkasan)</div>
+      <div class="small">Jumlah pertemuan: ${(lessonPlans||[]).length}</div>
+      <div style="height:2mm;"></div>
+      <table class="p-table">
+        <thead><tr><th style="width:16mm;">Pert.</th><th style="width:20mm;">Tipe</th><th style="width:20mm;">Status</th><th>Tujuan</th><th>Asesmen</th></tr></thead>
+        <tbody>
+          ${(lessonPlans||[]).map(p=>`
+            <tr>
+              <td>${p.pertemuan_ke ?? ""}</td>
+              <td>${escapeHtml(p.tipe ?? "")}</td>
+              <td>${escapeHtml(p.status ?? "")}</td>
+              <td>${escapeHtml(p.tujuan ?? "")}</td>
+              <td>${escapeHtml(p.asesmen ?? "")}</td>
+            </tr>
+          `).join("") || `<tr><td colspan="5">-</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  const html = `
+    <div class="page">
+      <div class="p-title">BUKU KERJA GURU — BUKU KERJA 1</div>
+      <div class="p-sub">PONTREN HK</div>
+      <div class="p-box">${meta}</div>
+      ${secWeek}
+      ${secProta}
+      ${secPromes}
+      ${secATP}
+      ${secLP}
+    </div>
+  `;
+
+  document.getElementById("printArea").innerHTML = html;
+  setStatus("ready");
+}
+
+async function renderExport(){
+  document.getElementById("mainBody").innerHTML = `
+    <div class="notice">
+      Export menggunakan mode <b>Print A4</b>. Setelah dokumen disiapkan, klik <b>Print / Save PDF</b>.
+    </div>
+    <div class="hr"></div>
+    <div class="row">
+      <button class="btn good" id="btnBuildExport">Siapkan Dokumen</button>
+      <button class="btn" id="btnPrint" disabled>Print / Save PDF</button>
+      <span class="tag">Tip: setelah siap, buka print dialog → pilih Save as PDF.</span>
+    </div>
+    <div class="hr"></div>
+    <div class="muted" style="font-size:12px;">
+      Catatan: Layout export ini ringkas (untuk BK1). Nanti bisa kita pecah jadi beberapa halaman + cover + halaman pengesahan.
+    </div>
+  `;
+
+  document.getElementById("btnBuildExport").onclick = async ()=>{
+    try{
+      await buildExportHTML();
+      document.getElementById("btnPrint").disabled = false;
+      showToast("Dokumen siap. Klik Print / Save PDF.");
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+  document.getElementById("btnPrint").onclick = ()=>window.print();
 }
 
 /** =========================
@@ -1122,41 +1670,16 @@ async function renderMain(){
   setActiveNav();
   try{
     if(view === "dash") return await renderDashboard();
+    if(view === "week") return await renderWeek();
     if(view === "prota") return await renderProta();
     if(view === "promes") return await renderPromes();
     if(view === "atp") return await renderATP();
+    if(view === "lesson") return await renderLessonPlans();
+    if(view === "export") return await renderExport();
   }catch(e){
     document.getElementById("mainBody").innerHTML = msgBox("err", escapeHtml(e.message));
     setStatus("error");
   }
-}
-
-/** =========================
- *  Toast
- *  ========================= */
-let toastEl = null;
-function showToast(text, isError=false){
-  if(toastEl) toastEl.remove();
-  toastEl = el(`<div style="
-    position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
-    padding:10px 12px; border-radius: 12px; border:1px solid ${isError ? "rgba(255,107,107,.45)" : "rgba(56,211,159,.45)"};
-    background:${isError ? "rgba(255,107,107,.14)" : "rgba(56,211,159,.12)"};
-    box-shadow: var(--shadow); z-index:9999; font-size:12px;
-  ">${escapeHtml(text)}</div>`);
-  document.body.appendChild(toastEl);
-  setTimeout(()=>{ if(toastEl){ toastEl.remove(); toastEl=null; } }, 2400);
-}
-
-/** =========================
- *  Security-ish: escape HTML
- *  ========================= */
-function escapeHtml(str){
-  return (str ?? "").toString()
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
 }
 
 /** =========================
@@ -1168,7 +1691,6 @@ document.getElementById("btnConnect").onclick = async ()=>{
   saveConfig();
   try{
     setStatus("testing...");
-    // Ping: ambil 1 row dari academic_term
     await sbFetch("academic_term", { params: { select: "id", limit: "1" } });
     showConnMessage("ok", "Koneksi OK. Sekarang klik <b>Load Assignments</b>.");
     setStatus("ready");
@@ -1203,7 +1725,12 @@ document.getElementById("navBtns").addEventListener("click", (e)=>{
   renderMain();
 });
 
-// auto-load assignments if config exists
+document.getElementById("btnCloseModal").onclick = closeModal;
+document.getElementById("modalBackdrop").addEventListener("click", (e)=>{
+  if(e.target.id === "modalBackdrop") closeModal();
+});
+
+// auto-connect hint
 (async ()=>{
   if(SUPABASE_URL && SUPABASE_KEY){
     try{
@@ -1212,7 +1739,6 @@ document.getElementById("navBtns").addEventListener("click", (e)=>{
       showConnMessage("ok", "Auto-connect OK. Klik Load Assignments.");
       setStatus("ready");
     }catch{
-      // ignore
       setStatus("idle");
     }
   }
