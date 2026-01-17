@@ -1,1 +1,1222 @@
 
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BUKU KERJA PONTREN HK — BK1 (HTML MVP)</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #111a2c;
+      --card2: #0f1729;
+      --text: #e9eefc;
+      --muted: #9fb0d0;
+      --line: rgba(255,255,255,.08);
+      --good: #38d39f;
+      --warn: #ffcc66;
+      --bad: #ff6b6b;
+      --btn: #2a3a62;
+      --btn2: #1d2a4a;
+      --accent: #8ab4ff;
+      --shadow: 0 10px 35px rgba(0,0,0,.35);
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: var(--sans); color: var(--text);
+      background: radial-gradient(1200px 600px at 10% -10%, rgba(138,180,255,.18), transparent 60%),
+                  radial-gradient(900px 500px at 90% 0%, rgba(56,211,159,.12), transparent 55%),
+                  var(--bg);
+    }
+    a { color: var(--accent); text-decoration: none; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 18px; }
+    header {
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+    }
+    .brand { display:flex; flex-direction:column; gap:4px; }
+    .brand h1 { margin:0; font-size: 16px; letter-spacing:.3px; }
+    .brand .sub { font-size:12px; color: var(--muted); }
+    .pill {
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 10px; border:1px solid var(--line);
+      background: rgba(255,255,255,.03); border-radius: 999px;
+      font-size: 12px; color: var(--muted);
+    }
+    .grid { display:grid; gap: 14px; margin-top: 14px; }
+    .cols { grid-template-columns: 360px 1fr; }
+    @media (max-width: 980px){ .cols { grid-template-columns: 1fr; } }
+
+    .card {
+      border:1px solid var(--line); border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd {
+      padding: 12px 14px; border-bottom: 1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background: rgba(0,0,0,.15);
+    }
+    .card .hd h2 { margin:0; font-size: 13px; color: var(--text); }
+    .card .bd { padding: 14px; }
+    .muted { color: var(--muted); }
+    .mono { font-family: var(--mono); }
+    .btn {
+      border:1px solid var(--line); background: var(--btn);
+      color: var(--text); padding: 9px 11px; border-radius: 10px;
+      cursor:pointer; font-size: 12px;
+    }
+    .btn:hover { background: #314372; }
+    .btn.ghost { background: transparent; }
+    .btn.small { padding: 7px 9px; border-radius: 9px; }
+    .btn.danger { background: rgba(255,107,107,.16); border-color: rgba(255,107,107,.32); }
+    .btn.danger:hover { background: rgba(255,107,107,.24); }
+    .btn.good { background: rgba(56,211,159,.16); border-color: rgba(56,211,159,.32); }
+    .btn.good:hover { background: rgba(56,211,159,.24); }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom: 10px; }
+    .field label { font-size: 12px; color: var(--muted); }
+    input, textarea, select {
+      width:100%; padding: 10px 11px; border-radius: 11px;
+      border: 1px solid var(--line); background: var(--card2); color: var(--text);
+      outline: none; font-size: 13px;
+    }
+    textarea { min-height: 92px; resize: vertical; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { text-align:left; font-size: 12px; color: var(--muted); font-weight: 600; }
+    td { font-size: 13px; }
+    .tag {
+      display:inline-flex; align-items:center; gap:6px;
+      padding: 5px 8px; border-radius: 999px; font-size: 11px;
+      border:1px solid var(--line); background: rgba(255,255,255,.03); color: var(--muted);
+    }
+    .tag.good { color: var(--good); border-color: rgba(56,211,159,.28); background: rgba(56,211,159,.12); }
+    .tag.warn { color: var(--warn); border-color: rgba(255,204,102,.28); background: rgba(255,204,102,.10); }
+    .tag.bad { color: var(--bad); border-color: rgba(255,107,107,.28); background: rgba(255,107,107,.10); }
+    .split { display:flex; gap: 10px; }
+    .split > * { flex: 1; }
+    .hr { height:1px; background: var(--line); margin: 12px 0; }
+    .notice {
+      padding: 10px 12px; border-radius: 12px; border:1px solid var(--line);
+      background: rgba(138,180,255,.08); color: var(--text); font-size: 12px;
+    }
+    .err {
+      padding: 10px 12px; border-radius: 12px; border:1px solid rgba(255,107,107,.35);
+      background: rgba(255,107,107,.12); color: var(--text); font-size: 12px;
+    }
+    .ok {
+      padding: 10px 12px; border-radius: 12px; border:1px solid rgba(56,211,159,.35);
+      background: rgba(56,211,159,.10); color: var(--text); font-size: 12px;
+    }
+    .nav {
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .nav .btn.active { outline: 2px solid rgba(138,180,255,.45); }
+    .right { text-align:right; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <h1>BUKU KERJA PONTREN HK — <span class="muted">Buku 1 (MVP)</span></h1>
+        <div class="sub">Tanpa Auth • Supabase REST • Prota / Promes / ATP</div>
+      </div>
+      <div class="row">
+        <span class="pill">Status: <span id="statusPill" class="mono">idle</span></span>
+        <button class="btn ghost" id="btnReset">Reset pilihan</button>
+      </div>
+    </header>
+
+    <div class="grid cols">
+      <!-- LEFT: Setup + Assignment list -->
+      <section class="card">
+        <div class="hd">
+          <h2>1) Konfigurasi Supabase</h2>
+          <span class="tag warn">wajib</span>
+        </div>
+        <div class="bd">
+          <div class="notice">
+            Isi <span class="mono">SUPABASE_URL</span> dan <span class="mono">SUPABASE_ANON_KEY</span> di bawah.
+            Ini hanya MVP lokal (tanpa login). Jangan dipakai publik dulu.
+          </div>
+          <div class="hr"></div>
+
+          <div class="field">
+            <label>SUPABASE_URL</label>
+            <input id="sbUrl" placeholder="https://xxxx.supabase.co" />
+          </div>
+          <div class="field">
+            <label>SUPABASE_ANON_KEY</label>
+            <input id="sbKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." />
+          </div>
+
+          <div class="row">
+            <button class="btn good" id="btnConnect">Connect</button>
+            <button class="btn" id="btnLoadAssignments">Load Assignments</button>
+          </div>
+
+          <div class="hr"></div>
+          <div id="connMsg"></div>
+
+          <div class="hr"></div>
+          <div class="row" style="justify-content:space-between;">
+            <h3 style="margin:0; font-size:13px;">2) Teaching Assignment</h3>
+            <span class="tag" id="assignCount">0</span>
+          </div>
+          <div style="margin-top:10px; max-height: 420px; overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mapel</th>
+                  <th>Kelas</th>
+                  <th class="right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="assignmentTbody">
+                <tr><td colspan="3" class="muted">Belum dimuat.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Main -->
+      <section class="card">
+        <div class="hd">
+          <h2 id="mainTitle">Pilih assignment dulu</h2>
+          <div class="nav" id="navBtns" style="display:none;">
+            <button class="btn small active" data-view="dash">Dashboard</button>
+            <button class="btn small" data-view="prota">Prota</button>
+            <button class="btn small" data-view="promes">Promes</button>
+            <button class="btn small" data-view="atp">ATP</button>
+          </div>
+        </div>
+        <div class="bd" id="mainBody">
+          <div class="notice">
+            Alur cepat: Connect → Load Assignments → Pilih → isi Prota → Promes → ATP.
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+/** =========================
+ *  Simple Supabase REST client (no auth)
+ *  ========================= */
+let SUPABASE_URL = "https://mdsolgsfxtmwnbwuklyg.supabase.co";
+let SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kc29sZ3NmeHRtd25id3VrbHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzYxMjcsImV4cCI6MjA4NDIxMjEyN30.eO4zFvmZuK8aCmKyOGXH5e0Arq1EBXMjMu4FzR7_sb0";
+
+function setStatus(txt){ document.getElementById("statusPill").textContent = txt; }
+
+function saveConfig(){
+  localStorage.setItem("BKHK_SB_URL", SUPABASE_URL);
+  localStorage.setItem("BKHK_SB_KEY", SUPABASE_KEY);
+}
+function loadConfig(){
+  SUPABASE_URL = localStorage.getItem("BKHK_SB_URL") || "";
+  SUPABASE_KEY = localStorage.getItem("BKHK_SB_KEY") || "";
+  document.getElementById("sbUrl").value = SUPABASE_URL;
+  document.getElementById("sbKey").value = SUPABASE_KEY;
+}
+loadConfig();
+
+function restUrl(path){
+  return SUPABASE_URL.replace(/\/+$/, "") + "/rest/v1/" + path.replace(/^\/+/, "");
+}
+
+async function sbFetch(path, { method="GET", params=null, body=null, prefer=null } = {}){
+  if(!SUPABASE_URL || !SUPABASE_KEY) throw new Error("Config belum lengkap.");
+  let url = restUrl(path);
+  if(params){
+    const qs = new URLSearchParams(params);
+    url += (url.includes("?") ? "&" : "?") + qs.toString();
+  }
+  const headers = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": "Bearer " + SUPABASE_KEY,
+    "Content-Type": "application/json"
+  };
+  if(prefer) headers["Prefer"] = prefer;
+
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+
+  if(!res.ok){
+    const msg = typeof data === "string" ? data : (data?.message || JSON.stringify(data));
+    throw new Error(`HTTP ${res.status} — ${msg}`);
+  }
+  return data;
+}
+
+/** =========================
+ *  App state
+ *  ========================= */
+let assignments = [];
+let active = null; // active assignment object
+let view = "dash";
+
+/** =========================
+ *  UI helpers
+ *  ========================= */
+function el(html){
+  const t = document.createElement("template");
+  t.innerHTML = html.trim();
+  return t.content.firstChild;
+}
+function money(x){ return (x ?? "").toString(); }
+
+function msgBox(kind, text){
+  const cls = kind === "ok" ? "ok" : (kind === "err" ? "err" : "notice");
+  return `<div class="${cls}">${text}</div>`;
+}
+
+function showConnMessage(kind, text){
+  document.getElementById("connMsg").innerHTML = msgBox(kind, text);
+}
+
+function setActiveNav(){
+  document.querySelectorAll("#navBtns .btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.view === view);
+  });
+}
+
+/** =========================
+ *  Load assignments with embedded relations
+ *  teaching_assignment?select=*,subject(*),class_group(*),academic_term(*),teacher(*)
+ *  ========================= */
+async function loadAssignments(){
+  setStatus("loading assignments...");
+  const data = await sbFetch("teaching_assignment", {
+    params: {
+      select: "id,jp_per_pekan,catatan,academic_term:academic_term_id(id,tahun_ajaran,semester),teacher:teacher_id(id,nama,unit),subject:subject_id(id,nama,kurikulum),class_group:class_group_id(id,jenjang,kelas,rombel,label)",
+      order: "id.desc"
+    }
+  });
+  assignments = data || [];
+  renderAssignments();
+  setStatus("ready");
+}
+
+function renderAssignments(){
+  const tb = document.getElementById("assignmentTbody");
+  document.getElementById("assignCount").textContent = assignments.length;
+  if(!assignments.length){
+    tb.innerHTML = `<tr><td colspan="3" class="muted">Tidak ada data. Pastikan sudah seed teaching_assignment.</td></tr>`;
+    return;
+  }
+  tb.innerHTML = "";
+  assignments.forEach(a=>{
+    const tr = el(`
+      <tr>
+        <td>
+          <div><b>${a.subject?.nama ?? "-"}</b></div>
+          <div class="muted" style="font-size:12px;">
+            ${a.teacher?.nama ?? "-"} • ${a.academic_term?.tahun_ajaran ?? ""} ${a.academic_term?.semester ?? ""}
+          </div>
+        </td>
+        <td>
+          <div><b>${a.class_group?.jenjang ?? ""} ${a.class_group?.label ?? ""}</b></div>
+          <div class="muted" style="font-size:12px;">JP/pekan: ${a.jp_per_pekan ?? "-"}</div>
+        </td>
+        <td class="right">
+          <button class="btn small good">Pilih</button>
+        </td>
+      </tr>
+    `);
+    tr.querySelector("button").onclick = ()=>selectAssignment(a);
+    tb.appendChild(tr);
+  });
+}
+
+function selectAssignment(a){
+  active = a;
+  view = "dash";
+  document.getElementById("navBtns").style.display = "flex";
+  document.getElementById("mainTitle").textContent =
+    `${a.subject?.nama ?? "Mapel"} — ${a.class_group?.jenjang ?? ""} ${a.class_group?.label ?? ""} (${a.academic_term?.tahun_ajaran ?? ""} ${a.academic_term?.semester ?? ""})`;
+  renderMain();
+}
+
+/** =========================
+ *  Dashboard progress
+ *  ========================= */
+async function getSingleRow(table, assignmentId){
+  const rows = await sbFetch(table, {
+    params: { select: "*", teaching_assignment_id: `eq.${assignmentId}`, limit: "1" }
+  });
+  return (rows && rows[0]) ? rows[0] : null;
+}
+
+async function renderDashboard(){
+  const id = active.id;
+  setStatus("loading dashboard...");
+  const [week, prota, promes, atp, kkm] = await Promise.all([
+    getSingleRow("bk1_effective_week_plan", id),
+    getSingleRow("bk1_prota", id),
+    getSingleRow("bk1_promes", id),
+    getSingleRow("bk1_atp", id),
+    getSingleRow("bk1_mastery_criteria", id)
+  ]);
+
+  const badge = (obj)=> {
+    if(!obj) return `<span class="tag bad">Belum ada</span>`;
+    const st = obj.status || "DRAFT";
+    if(st === "APPROVED") return `<span class="tag good">APPROVED</span>`;
+    if(st === "REVIEW") return `<span class="tag warn">REVIEW</span>`;
+    return `<span class="tag">DRAFT</span>`;
+  };
+
+  const body = `
+    <div class="notice">
+      Dashboard ini cek: apakah header tiap komponen sudah dibuat + statusnya. Isi detailnya ada di tab Prota/Promes/ATP.
+    </div>
+    <div class="hr"></div>
+    <table>
+      <thead>
+        <tr><th>Komponen</th><th>Status</th><th class="right">Aksi cepat</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Minggu Efektif</b></td>
+          <td>${badge(week)}</td>
+          <td class="right"><button class="btn small" id="goWeek">Buat/Update</button></td>
+        </tr>
+        <tr>
+          <td><b>Prota</b></td>
+          <td>${badge(prota)}</td>
+          <td class="right"><button class="btn small" id="goProta">Kelola</button></td>
+        </tr>
+        <tr>
+          <td><b>Promes</b></td>
+          <td>${badge(promes)}</td>
+          <td class="right"><button class="btn small" id="goPromes">Kelola</button></td>
+        </tr>
+        <tr>
+          <td><b>ATP</b></td>
+          <td>${badge(atp)}</td>
+          <td class="right"><button class="btn small" id="goATP">Kelola</button></td>
+        </tr>
+        <tr>
+          <td><b>KKM/Kriteria</b></td>
+          <td>${badge(kkm)}</td>
+          <td class="right"><button class="btn small" id="goKKM" disabled>Next</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="hr"></div>
+    <div class="muted" style="font-size:12px;">
+      Catatan: “Minggu Efektif” belum dibuatkan editor di MVP ini (biar cepat). Kalau antum mau, nanti aku tambahkan panelnya.
+    </div>
+  `;
+
+  document.getElementById("mainBody").innerHTML = body;
+
+  document.getElementById("goProta").onclick = ()=>{ view="prota"; renderMain(); };
+  document.getElementById("goPromes").onclick = ()=>{ view="promes"; renderMain(); };
+  document.getElementById("goATP").onclick = ()=>{ view="atp"; renderMain(); };
+  document.getElementById("goWeek").onclick = ()=>alert("Editor Minggu Efektif belum ada di MVP ini. Nanti aku tambahkan panelnya.");
+  setStatus("ready");
+}
+
+/** =========================
+ *  PROTA editor
+ *  ========================= */
+async function ensureHeader(table){
+  const existing = await getSingleRow(table, active.id);
+  if(existing) return existing;
+  const inserted = await sbFetch(table, {
+    method: "POST",
+    prefer: "return=representation",
+    body: { teaching_assignment_id: active.id, deskripsi: null, status: "DRAFT" }
+  });
+  return inserted?.[0] || null;
+}
+
+async function loadProta(){
+  setStatus("loading prota...");
+  const header = await ensureHeader("bk1_prota");
+  const items = await sbFetch("bk1_prota_item", {
+    params: { select: "*", prota_id: `eq.${header.id}`, order: "urutan.asc" }
+  });
+  setStatus("ready");
+  return { header, items: items || [] };
+}
+
+async function addProtaItem(protaId, payload){
+  await sbFetch("bk1_prota_item", {
+    method: "POST",
+    prefer: "return=minimal",
+    body: { prota_id: protaId, ...payload }
+  });
+}
+
+async function updateProtaItem(id, patch){
+  await sbFetch("bk1_prota_item", {
+    method: "PATCH",
+    prefer: "return=minimal",
+    params: { id: `eq.${id}` },
+    body: patch
+  });
+}
+
+async function deleteRow(table, id){
+  await sbFetch(table, {
+    method: "DELETE",
+    prefer: "return=minimal",
+    params: { id: `eq.${id}` }
+  });
+}
+
+async function updateHeader(table, id, patch){
+  await sbFetch(table, {
+    method: "PATCH",
+    prefer: "return=minimal",
+    params: { id: `eq.${id}` },
+    body: patch
+  });
+}
+
+async function swapProtaOrder(items, idxA, idxB){
+  const a = items[idxA], b = items[idxB];
+  if(!a || !b) return;
+  // swap urutan
+  await Promise.all([
+    updateProtaItem(a.id, { urutan: b.urutan }),
+    updateProtaItem(b.id, { urutan: a.urutan })
+  ]);
+}
+
+async function renderProta(){
+  const { header, items } = await loadProta();
+
+  const html = `
+    <div class="split">
+      <div>
+        <div class="field">
+          <label>Deskripsi Prota</label>
+          <textarea id="protaDesc" placeholder="Catatan umum prota...">${header.deskripsi ?? ""}</textarea>
+        </div>
+      </div>
+      <div>
+        <div class="field">
+          <label>Status</label>
+          <select id="protaStatus">
+            <option value="DRAFT">DRAFT</option>
+            <option value="REVIEW">REVIEW</option>
+            <option value="APPROVED">APPROVED</option>
+          </select>
+        </div>
+        <div class="row">
+          <button class="btn good" id="saveProtaHeader">Simpan Header</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="row" style="justify-content:space-between;">
+      <div class="row">
+        <b>Item Prota</b>
+        <span class="tag">${items.length} baris</span>
+      </div>
+      <button class="btn small" id="btnReloadProta">Reload</button>
+    </div>
+
+    <div style="margin-top:10px;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:56px;">Urut</th>
+            <th>Topik</th>
+            <th style="width:90px;">JP</th>
+            <th>Integrasi HK</th>
+            <th class="right" style="width:210px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="protaTbody">
+          ${items.map((it, i)=>`
+            <tr data-id="${it.id}">
+              <td><span class="mono">${it.urutan}</span></td>
+              <td>
+                <input data-k="topik" value="${escapeHtml(it.topik)}" />
+                <div class="muted" style="font-size:12px; margin-top:6px;">
+                  <input data-k="catatan" placeholder="Catatan (opsional)" value="${escapeHtml(it.catatan ?? "")}" />
+                </div>
+              </td>
+              <td><input data-k="alokasi_jp" type="number" value="${it.alokasi_jp ?? ""}" /></td>
+              <td><input data-k="integrasi_hk" value="${escapeHtml(it.integrasi_hk ?? "")}" /></td>
+              <td class="right">
+                <button class="btn small" data-act="save">Simpan</button>
+                <button class="btn small" data-act="up">↑</button>
+                <button class="btn small" data-act="down">↓</button>
+                <button class="btn small danger" data-act="del">Hapus</button>
+              </td>
+            </tr>
+          `).join("") || `<tr><td colspan="5" class="muted">Belum ada item. Tambahkan di bawah.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="card" style="box-shadow:none; background: rgba(0,0,0,.10);">
+      <div class="hd"><h2>Tambah Item Prota</h2></div>
+      <div class="bd">
+        <div class="split">
+          <div class="field">
+            <label>Topik</label>
+            <input id="newProtaTopik" placeholder="Contoh: Thaharah, Shalat, ..." />
+          </div>
+          <div class="field">
+            <label>Alokasi JP</label>
+            <input id="newProtaJP" type="number" placeholder="mis. 8" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Integrasi HK (AQIL/panca cinta/adab)</label>
+          <input id="newProtaHK" placeholder="Contoh: Adab bersuci, disiplin berjamaah..." />
+        </div>
+        <div class="row">
+          <button class="btn good" id="btnAddProta">Tambah</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("mainBody").innerHTML = html;
+  document.getElementById("protaStatus").value = header.status || "DRAFT";
+
+  document.getElementById("saveProtaHeader").onclick = async ()=>{
+    try{
+      setStatus("saving...");
+      await updateHeader("bk1_prota", header.id, {
+        deskripsi: document.getElementById("protaDesc").value.trim() || null,
+        status: document.getElementById("protaStatus").value
+      });
+      showToast("Header prota tersimpan.");
+      setStatus("ready");
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+
+  document.getElementById("btnReloadProta").onclick = ()=>renderMain();
+
+  document.getElementById("btnAddProta").onclick = async ()=>{
+    try{
+      const topik = document.getElementById("newProtaTopik").value.trim();
+      if(!topik) return showToast("Topik wajib diisi.", true);
+      const jp = parseInt(document.getElementById("newProtaJP").value, 10);
+      const hk = document.getElementById("newProtaHK").value.trim();
+      const nextOrder = (items.length ? Math.max(...items.map(x=>x.urutan)) : 0) + 1;
+      setStatus("saving...");
+      await addProtaItem(header.id, {
+        urutan: nextOrder,
+        topik,
+        alokasi_jp: Number.isFinite(jp) ? jp : null,
+        integrasi_hk: hk || null
+      });
+      showToast("Item prota ditambahkan.");
+      renderMain();
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+
+  // Row actions
+  document.querySelectorAll("#protaTbody tr[data-id]").forEach((tr, idx)=>{
+    const id = parseInt(tr.dataset.id, 10);
+    tr.querySelectorAll("button[data-act]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        try{
+          const act = btn.dataset.act;
+          if(act === "del"){
+            if(!confirm("Hapus item ini?")) return;
+            setStatus("deleting...");
+            await deleteRow("bk1_prota_item", id);
+            showToast("Item dihapus.");
+            renderMain();
+            return;
+          }
+          if(act === "up"){
+            if(idx === 0) return;
+            setStatus("reordering...");
+            await swapProtaOrder(items, idx, idx-1);
+            renderMain();
+            return;
+          }
+          if(act === "down"){
+            if(idx === items.length-1) return;
+            setStatus("reordering...");
+            await swapProtaOrder(items, idx, idx+1);
+            renderMain();
+            return;
+          }
+          if(act === "save"){
+            const patch = {};
+            tr.querySelectorAll("input[data-k]").forEach(inp=>{
+              const k = inp.dataset.k;
+              let v = inp.value;
+              if(k === "alokasi_jp"){
+                const n = parseInt(v, 10);
+                patch[k] = Number.isFinite(n) ? n : null;
+              }else{
+                patch[k] = v.trim() || null;
+              }
+            });
+            if(!patch.topik) return showToast("Topik tidak boleh kosong.", true);
+            setStatus("saving...");
+            await updateProtaItem(id, patch);
+            showToast("Item disimpan.");
+            setStatus("ready");
+          }
+        }catch(e){ showToast(e.message, true); setStatus("error"); }
+      };
+    });
+  });
+}
+
+/** =========================
+ *  PROMES editor (simple)
+ *  ========================= */
+async function loadPromes(){
+  setStatus("loading promes...");
+  const header = await ensureHeader("bk1_promes");
+  const items = await sbFetch("bk1_promes_item", {
+    params: { select: "*", promes_id: `eq.${header.id}`, order: "minggu_ke.asc,pertemuan_ke.asc" }
+  });
+  setStatus("ready");
+  return { header, items: items || [] };
+}
+async function addPromesItem(promesId, payload){
+  await sbFetch("bk1_promes_item", {
+    method: "POST",
+    prefer: "return=minimal",
+    body: { promes_id: promesId, ...payload }
+  });
+}
+async function updatePromesItem(id, patch){
+  await sbFetch("bk1_promes_item", {
+    method: "PATCH",
+    prefer: "return=minimal",
+    params: { id: `eq.${id}` },
+    body: patch
+  });
+}
+
+async function renderPromes(){
+  const { header, items } = await loadPromes();
+
+  const html = `
+    <div class="split">
+      <div>
+        <div class="field">
+          <label>Deskripsi Promes</label>
+          <textarea id="promesDesc" placeholder="Catatan umum promes...">${header.deskripsi ?? ""}</textarea>
+        </div>
+      </div>
+      <div>
+        <div class="field">
+          <label>Status</label>
+          <select id="promesStatus">
+            <option value="DRAFT">DRAFT</option>
+            <option value="REVIEW">REVIEW</option>
+            <option value="APPROVED">APPROVED</option>
+          </select>
+        </div>
+        <div class="row">
+          <button class="btn good" id="savePromesHeader">Simpan Header</button>
+          <button class="btn" id="btnReloadPromes">Reload</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="row" style="justify-content:space-between;">
+      <div class="row">
+        <b>Item Promes</b>
+        <span class="tag">${items.length} baris</span>
+      </div>
+    </div>
+
+    <div style="margin-top:10px; overflow:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:72px;">Minggu</th>
+            <th style="width:84px;">Pert.</th>
+            <th>Topik</th>
+            <th style="width:84px;">JP</th>
+            <th>Target</th>
+            <th class="right" style="width:170px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="promesTbody">
+          ${items.map(it=>`
+            <tr data-id="${it.id}">
+              <td><input data-k="minggu_ke" type="number" value="${it.minggu_ke ?? 0}" /></td>
+              <td><input data-k="pertemuan_ke" type="number" value="${it.pertemuan_ke ?? 0}" /></td>
+              <td>
+                <input data-k="topik" value="${escapeHtml(it.topik)}" />
+                <div class="muted" style="font-size:12px; margin-top:6px;">
+                  <input data-k="integrasi_hk" placeholder="Integrasi HK (opsional)" value="${escapeHtml(it.integrasi_hk ?? "")}" />
+                </div>
+              </td>
+              <td><input data-k="alokasi_jp" type="number" value="${it.alokasi_jp ?? ""}" /></td>
+              <td><input data-k="target" value="${escapeHtml(it.target ?? "")}" /></td>
+              <td class="right">
+                <button class="btn small" data-act="save">Simpan</button>
+                <button class="btn small danger" data-act="del">Hapus</button>
+              </td>
+            </tr>
+          `).join("") || `<tr><td colspan="6" class="muted">Belum ada item promes.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="card" style="box-shadow:none; background: rgba(0,0,0,.10);">
+      <div class="hd"><h2>Tambah Item Promes</h2></div>
+      <div class="bd">
+        <div class="split">
+          <div class="field"><label>Minggu ke-</label><input id="newPrM" type="number" value="1" /></div>
+          <div class="field"><label>Pertemuan ke-</label><input id="newPrP" type="number" value="1" /></div>
+        </div>
+        <div class="field"><label>Topik</label><input id="newPrTopik" placeholder="Topik per pertemuan/minggu" /></div>
+        <div class="split">
+          <div class="field"><label>JP</label><input id="newPrJP" type="number" placeholder="mis. 2" /></div>
+          <div class="field"><label>Target</label><input id="newPrTarget" placeholder="Target singkat (opsional)" /></div>
+        </div>
+        <div class="field"><label>Integrasi HK</label><input id="newPrHK" placeholder="Adab/nilai/AQIL (opsional)" /></div>
+        <div class="row">
+          <button class="btn good" id="btnAddPromes">Tambah</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("mainBody").innerHTML = html;
+  document.getElementById("promesStatus").value = header.status || "DRAFT";
+
+  document.getElementById("savePromesHeader").onclick = async ()=>{
+    try{
+      setStatus("saving...");
+      await updateHeader("bk1_promes", header.id, {
+        deskripsi: document.getElementById("promesDesc").value.trim() || null,
+        status: document.getElementById("promesStatus").value
+      });
+      showToast("Header promes tersimpan.");
+      setStatus("ready");
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+  document.getElementById("btnReloadPromes").onclick = ()=>renderMain();
+
+  document.getElementById("btnAddPromes").onclick = async ()=>{
+    try{
+      const minggu = parseInt(document.getElementById("newPrM").value, 10) || 0;
+      const pertemuan = parseInt(document.getElementById("newPrP").value, 10) || 0;
+      const topik = document.getElementById("newPrTopik").value.trim();
+      if(!topik) return showToast("Topik wajib diisi.", true);
+      const jp = parseInt(document.getElementById("newPrJP").value, 10);
+      const target = document.getElementById("newPrTarget").value.trim();
+      const hk = document.getElementById("newPrHK").value.trim();
+
+      setStatus("saving...");
+      await addPromesItem(header.id, {
+        minggu_ke: minggu,
+        pertemuan_ke: pertemuan,
+        topik,
+        alokasi_jp: Number.isFinite(jp) ? jp : null,
+        target: target || null,
+        integrasi_hk: hk || null
+      });
+      showToast("Item promes ditambahkan.");
+      renderMain();
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+
+  document.querySelectorAll("#promesTbody tr[data-id]").forEach(tr=>{
+    const id = parseInt(tr.dataset.id, 10);
+    tr.querySelectorAll("button[data-act]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        try{
+          const act = btn.dataset.act;
+          if(act === "del"){
+            if(!confirm("Hapus item ini?")) return;
+            setStatus("deleting...");
+            await deleteRow("bk1_promes_item", id);
+            showToast("Item dihapus.");
+            renderMain();
+            return;
+          }
+          if(act === "save"){
+            const patch = {};
+            tr.querySelectorAll("input[data-k]").forEach(inp=>{
+              const k = inp.dataset.k;
+              if(k === "minggu_ke" || k === "pertemuan_ke" || k === "alokasi_jp"){
+                const n = parseInt(inp.value, 10);
+                patch[k] = Number.isFinite(n) ? n : (k === "alokasi_jp" ? null : 0);
+              }else{
+                patch[k] = inp.value.trim() || null;
+              }
+            });
+            if(!patch.topik) return showToast("Topik tidak boleh kosong.", true);
+            setStatus("saving...");
+            await updatePromesItem(id, patch);
+            showToast("Item disimpan.");
+            setStatus("ready");
+          }
+        }catch(e){ showToast(e.message, true); setStatus("error"); }
+      };
+    });
+  });
+}
+
+/** =========================
+ *  ATP editor (units)
+ *  ========================= */
+async function loadATP(){
+  setStatus("loading atp...");
+  const header = await ensureHeader("bk1_atp");
+  const units = await sbFetch("bk1_atp_unit", {
+    params: { select: "*", atp_id: `eq.${header.id}`, order: "urutan.asc" }
+  });
+  setStatus("ready");
+  return { header, units: units || [] };
+}
+async function addATPUnit(atpId, payload){
+  await sbFetch("bk1_atp_unit", {
+    method: "POST",
+    prefer: "return=minimal",
+    body: { atp_id: atpId, ...payload }
+  });
+}
+async function updateATPUnit(id, patch){
+  await sbFetch("bk1_atp_unit", {
+    method: "PATCH",
+    prefer: "return=minimal",
+    params: { id: `eq.${id}` },
+    body: patch
+  });
+}
+async function swapATPOrder(units, idxA, idxB){
+  const a = units[idxA], b = units[idxB];
+  if(!a || !b) return;
+  await Promise.all([
+    updateATPUnit(a.id, { urutan: b.urutan }),
+    updateATPUnit(b.id, { urutan: a.urutan })
+  ]);
+}
+
+async function renderATP(){
+  const { header, units } = await loadATP();
+
+  const html = `
+    <div class="split">
+      <div>
+        <div class="field">
+          <label>Deskripsi ATP/Silabus</label>
+          <textarea id="atpDesc" placeholder="Catatan umum ATP...">${header.deskripsi ?? ""}</textarea>
+        </div>
+      </div>
+      <div>
+        <div class="field">
+          <label>Status</label>
+          <select id="atpStatus">
+            <option value="DRAFT">DRAFT</option>
+            <option value="REVIEW">REVIEW</option>
+            <option value="APPROVED">APPROVED</option>
+          </select>
+        </div>
+        <div class="row">
+          <button class="btn good" id="saveATPHeader">Simpan Header</button>
+          <button class="btn" id="btnReloadATP">Reload</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="row" style="justify-content:space-between;">
+      <div class="row">
+        <b>Unit ATP</b>
+        <span class="tag">${units.length} unit</span>
+      </div>
+    </div>
+
+    <div style="margin-top:10px; overflow:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:56px;">Urut</th>
+            <th>Tujuan</th>
+            <th>Materi</th>
+            <th style="width:84px;">JP</th>
+            <th class="right" style="width:230px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="atpTbody">
+          ${units.map((u, idx)=>`
+            <tr data-id="${u.id}">
+              <td><span class="mono">${u.urutan}</span></td>
+              <td>
+                <textarea data-k="tujuan" style="min-height:72px;">${escapeHtml(u.tujuan)}</textarea>
+                <div class="muted" style="font-size:12px; margin-top:6px;">
+                  <input data-k="integrasi_hk" placeholder="Integrasi HK (opsional)" value="${escapeHtml(u.integrasi_hk ?? "")}" />
+                </div>
+              </td>
+              <td><textarea data-k="materi" style="min-height:72px;">${escapeHtml(u.materi ?? "")}</textarea></td>
+              <td><input data-k="alokasi_jp" type="number" value="${u.alokasi_jp ?? ""}" /></td>
+              <td class="right">
+                <button class="btn small" data-act="save">Simpan</button>
+                <button class="btn small" data-act="up">↑</button>
+                <button class="btn small" data-act="down">↓</button>
+                <button class="btn small danger" data-act="del">Hapus</button>
+              </td>
+            </tr>
+          `).join("") || `<tr><td colspan="5" class="muted">Belum ada unit ATP.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="card" style="box-shadow:none; background: rgba(0,0,0,.10);">
+      <div class="hd"><h2>Tambah Unit ATP</h2></div>
+      <div class="bd">
+        <div class="field">
+          <label>Tujuan</label>
+          <textarea id="newATPTujuan" placeholder="Tuliskan tujuan pembelajaran unit ini..."></textarea>
+        </div>
+        <div class="split">
+          <div class="field">
+            <label>Materi</label>
+            <textarea id="newATPMateri" placeholder="Ringkas materi unit..."></textarea>
+          </div>
+          <div class="field">
+            <label>Alokasi JP</label>
+            <input id="newATPJP" type="number" placeholder="mis. 4" />
+            <div style="height:10px;"></div>
+            <label>Integrasi HK</label>
+            <input id="newATPHK" placeholder="Adab/nilai/AQIL (opsional)" />
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn good" id="btnAddATP">Tambah Unit</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("mainBody").innerHTML = html;
+  document.getElementById("atpStatus").value = header.status || "DRAFT";
+
+  document.getElementById("saveATPHeader").onclick = async ()=>{
+    try{
+      setStatus("saving...");
+      await updateHeader("bk1_atp", header.id, {
+        deskripsi: document.getElementById("atpDesc").value.trim() || null,
+        status: document.getElementById("atpStatus").value
+      });
+      showToast("Header ATP tersimpan.");
+      setStatus("ready");
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+  document.getElementById("btnReloadATP").onclick = ()=>renderMain();
+
+  document.getElementById("btnAddATP").onclick = async ()=>{
+    try{
+      const tujuan = document.getElementById("newATPTujuan").value.trim();
+      if(!tujuan) return showToast("Tujuan wajib diisi.", true);
+      const materi = document.getElementById("newATPMateri").value.trim();
+      const jp = parseInt(document.getElementById("newATPJP").value, 10);
+      const hk = document.getElementById("newATPHK").value.trim();
+      const nextOrder = (units.length ? Math.max(...units.map(x=>x.urutan)) : 0) + 1;
+
+      setStatus("saving...");
+      await addATPUnit(header.id, {
+        urutan: nextOrder,
+        tujuan,
+        materi: materi || null,
+        alokasi_jp: Number.isFinite(jp) ? jp : null,
+        integrasi_hk: hk || null
+      });
+      showToast("Unit ATP ditambahkan.");
+      renderMain();
+    }catch(e){ showToast(e.message, true); setStatus("error"); }
+  };
+
+  document.querySelectorAll("#atpTbody tr[data-id]").forEach((tr, idx)=>{
+    const id = parseInt(tr.dataset.id, 10);
+    tr.querySelectorAll("button[data-act]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        try{
+          const act = btn.dataset.act;
+          if(act === "del"){
+            if(!confirm("Hapus unit ini?")) return;
+            setStatus("deleting...");
+            await deleteRow("bk1_atp_unit", id);
+            showToast("Unit dihapus.");
+            renderMain();
+            return;
+          }
+          if(act === "up"){
+            if(idx === 0) return;
+            setStatus("reordering...");
+            await swapATPOrder(units, idx, idx-1);
+            renderMain();
+            return;
+          }
+          if(act === "down"){
+            if(idx === units.length-1) return;
+            setStatus("reordering...");
+            await swapATPOrder(units, idx, idx+1);
+            renderMain();
+            return;
+          }
+          if(act === "save"){
+            const patch = {};
+            tr.querySelectorAll("[data-k]").forEach(inp=>{
+              const k = inp.dataset.k;
+              if(k === "alokasi_jp"){
+                const n = parseInt(inp.value, 10);
+                patch[k] = Number.isFinite(n) ? n : null;
+              }else{
+                patch[k] = inp.value.trim() || null;
+              }
+            });
+            if(!patch.tujuan) return showToast("Tujuan tidak boleh kosong.", true);
+            setStatus("saving...");
+            await updateATPUnit(id, patch);
+            showToast("Unit disimpan.");
+            setStatus("ready");
+          }
+        }catch(e){ showToast(e.message, true); setStatus("error"); }
+      };
+    });
+  });
+}
+
+/** =========================
+ *  Main render
+ *  ========================= */
+async function renderMain(){
+  if(!active){
+    document.getElementById("mainBody").innerHTML = msgBox("notice", "Pilih assignment dulu.");
+    return;
+  }
+  setActiveNav();
+  try{
+    if(view === "dash") return await renderDashboard();
+    if(view === "prota") return await renderProta();
+    if(view === "promes") return await renderPromes();
+    if(view === "atp") return await renderATP();
+  }catch(e){
+    document.getElementById("mainBody").innerHTML = msgBox("err", escapeHtml(e.message));
+    setStatus("error");
+  }
+}
+
+/** =========================
+ *  Toast
+ *  ========================= */
+let toastEl = null;
+function showToast(text, isError=false){
+  if(toastEl) toastEl.remove();
+  toastEl = el(`<div style="
+    position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+    padding:10px 12px; border-radius: 12px; border:1px solid ${isError ? "rgba(255,107,107,.45)" : "rgba(56,211,159,.45)"};
+    background:${isError ? "rgba(255,107,107,.14)" : "rgba(56,211,159,.12)"};
+    box-shadow: var(--shadow); z-index:9999; font-size:12px;
+  ">${escapeHtml(text)}</div>`);
+  document.body.appendChild(toastEl);
+  setTimeout(()=>{ if(toastEl){ toastEl.remove(); toastEl=null; } }, 2400);
+}
+
+/** =========================
+ *  Security-ish: escape HTML
+ *  ========================= */
+function escapeHtml(str){
+  return (str ?? "").toString()
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/** =========================
+ *  Events
+ *  ========================= */
+document.getElementById("btnConnect").onclick = async ()=>{
+  SUPABASE_URL = document.getElementById("sbUrl").value.trim();
+  SUPABASE_KEY = document.getElementById("sbKey").value.trim();
+  saveConfig();
+  try{
+    setStatus("testing...");
+    // Ping: ambil 1 row dari academic_term
+    await sbFetch("academic_term", { params: { select: "id", limit: "1" } });
+    showConnMessage("ok", "Koneksi OK. Sekarang klik <b>Load Assignments</b>.");
+    setStatus("ready");
+  }catch(e){
+    showConnMessage("err", "Gagal connect: " + escapeHtml(e.message));
+    setStatus("error");
+  }
+};
+
+document.getElementById("btnLoadAssignments").onclick = async ()=>{
+  try{
+    await loadAssignments();
+    showConnMessage("ok", "Assignments dimuat. Silakan pilih salah satu.");
+  }catch(e){
+    showConnMessage("err", "Gagal load assignments: " + escapeHtml(e.message));
+    setStatus("error");
+  }
+};
+
+document.getElementById("btnReset").onclick = ()=>{
+  active = null;
+  view = "dash";
+  document.getElementById("navBtns").style.display = "none";
+  document.getElementById("mainTitle").textContent = "Pilih assignment dulu";
+  document.getElementById("mainBody").innerHTML = msgBox("notice", "Pilih assignment dulu.");
+};
+
+document.getElementById("navBtns").addEventListener("click", (e)=>{
+  const btn = e.target.closest("button[data-view]");
+  if(!btn) return;
+  view = btn.dataset.view;
+  renderMain();
+});
+
+// auto-load assignments if config exists
+(async ()=>{
+  if(SUPABASE_URL && SUPABASE_KEY){
+    try{
+      setStatus("auto-connect...");
+      await sbFetch("academic_term", { params: { select: "id", limit: "1" } });
+      showConnMessage("ok", "Auto-connect OK. Klik Load Assignments.");
+      setStatus("ready");
+    }catch{
+      // ignore
+      setStatus("idle");
+    }
+  }
+})();
+</script>
+</body>
+</html>
