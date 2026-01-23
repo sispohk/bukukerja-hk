@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buku Kerja Guru - V31 Revised</title>
+    <title>Buku Kerja Guru - V34 Revised (RPP Style & Auto-Copy)</title>
     <link rel="icon" href="data:,">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,9 +41,12 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* PRINT STYLES - LANDSCAPE FIX */
+        /* PRINT STYLES */
         @media print {
-            @page { size: landscape; margin: 1cm; }
+            @page { size: portrait; margin: 1.5cm; } 
+            @page landscape-page { size: landscape; margin: 1cm; }
+            .landscape-section { page: landscape-page; }
+
             body { background: white; margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
             nav, .max-w-7xl, .modal-overlay, button, .no-print, .rpp-actions { display: none !important; }
             
@@ -53,18 +56,32 @@
                 margin: 0; padding: 0; background: white; z-index: 9999;
             }
             .page-break { page-break-before: always; }
+            
             table.official-table { width: 100%; border-collapse: collapse; font-size: 10pt; margin: 15px 0; page-break-inside: avoid; }
             table.official-table th, table.official-table td { border: 1px solid black; padding: 5px; vertical-align: top; text-align: left; }
             table.official-table th { background-color: #f1f5f9 !important; font-weight: bold; text-align: center; }
+            
             .bg-red-print { background-color: #fee2e2 !important; } 
             h1 { font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 5px; text-transform: uppercase; }
             h2 { font-size: 12pt; font-weight: bold; text-align: center; margin-bottom: 10px; text-transform: uppercase; }
+            
             .ttd-wrapper { display: flex; justify-content: space-between; margin-top: 60px; page-break-inside: avoid; }
             .ttd-box { width: 40%; text-align: center; }
-            .ttd-right { padding-top: 25px; } 
+            .ttd-right { padding-top: 0; }
+            
             p { text-align: justify; line-height: 1.3; }
-            ul, ol { margin-left: 20px; }
-            li { margin-bottom: 5px; }
+            
+            /* RPP SPECIFIC STYLES (Requested Revisions) */
+            .rpp-content-text {
+                font-family: Arial, sans-serif !important;
+                font-size: 12pt !important;
+                line-height: 1.5 !important;
+                text-align: justify !important;
+                margin-bottom: 15px;
+            }
+            .rpp-content-text ul { list-style-type: disc; margin-left: 20px; }
+            .rpp-content-text ol { list-style-type: decimal; margin-left: 20px; }
+            .rpp-content-text li { margin-bottom: 5px; padding-left: 5px; }
         }
     </style>
 </head>
@@ -72,7 +89,7 @@
 
     <nav class="bg-white/95 backdrop-blur border-b border-slate-200 p-4 sticky top-0 z-40 no-print shadow-sm">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3"><span class="text-2xl">🎓</span><h1 class="text-lg font-bold">Smart Guru <span class="text-violet-600">V31</span></h1></div>
+            <div class="flex items-center gap-3"><span class="text-2xl">🎓</span><h1 class="text-lg font-bold">Smart Guru <span class="text-violet-600">V34</span></h1></div>
             <div><span id="user-email" class="mr-3 text-sm font-medium text-slate-500 hidden md:inline"></span><button id="btn-logout" class="hidden-section text-xs text-red-600 bg-red-50 border border-red-200 px-4 py-2 rounded-full hover:bg-red-100 transition">Keluar</button></div>
         </div>
     </nav>
@@ -243,7 +260,7 @@
 
         <div id="wizard-step-6" class="hidden-section bg-white p-10 rounded-2xl shadow-xl border border-slate-100 max-w-4xl mx-auto text-center">
             <h2 class="text-3xl font-bold text-slate-800 mb-6">Dokumen Siap!</h2>
-            <button onclick="printFullDocument()" class="bg-violet-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-violet-700 shadow-xl flex items-center justify-center gap-3 mx-auto transition transform hover:-translate-y-1"><span>🖨️</span> Download PDF (Landscape)</button>
+            <button onclick="printFullDocument()" class="bg-violet-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-violet-700 shadow-xl flex items-center justify-center gap-3 mx-auto transition transform hover:-translate-y-1"><span>🖨️</span> Download PDF</button>
             <div class="mt-8 pt-6 border-t"><button onclick="goBackToStep5()" class="text-slate-400 hover:text-violet-600 text-sm font-semibold transition">Kembali Edit RPP</button></div>
         </div>
     </div>
@@ -256,7 +273,7 @@
             </div>
             <div class="p-6">
                 <div class="mb-6"><div class="flex justify-between mb-2"><label class="text-xs font-bold text-violet-700 uppercase">Langkah 1: Copy Perintah Ini</label><button onclick="copyToClipboard('prompt-area')" class="text-xs text-violet-600 font-bold hover:underline">Salin Teks</button></div><textarea id="prompt-area" class="w-full p-3 border rounded-lg text-xs font-mono h-24 bg-violet-50 text-slate-700 focus:ring-violet-500" readonly></textarea></div>
-                <div class="mb-6 flex gap-3"><a href="https://chatgpt.com/" target="_blank" class="flex-1 bg-green-100 text-green-700 text-center py-3 rounded-lg font-bold text-sm hover:bg-green-200 border border-green-200 transition">Buka ChatGPT ↗️</a><a href="https://gemini.google.com/app" target="_blank" class="flex-1 bg-blue-100 text-blue-700 text-center py-3 rounded-lg font-bold text-sm hover:bg-blue-200 border border-blue-200 transition">Buka Gemini ↗️</a></div>
+                <div class="mb-6 flex gap-3"><button onclick="autoCopyAndOpen('https://chatgpt.com/')" class="flex-1 bg-green-100 text-green-700 text-center py-3 rounded-lg font-bold text-sm hover:bg-green-200 border border-green-200 transition">Buka ChatGPT ↗️</button><button onclick="autoCopyAndOpen('https://gemini.google.com/app')" class="flex-1 bg-blue-100 text-blue-700 text-center py-3 rounded-lg font-bold text-sm hover:bg-blue-200 border border-blue-200 transition">Buka Gemini ↗️</button></div>
                 <div class="mb-4"><label class="text-xs font-bold text-violet-700 uppercase mb-2 block">Langkah 3: Paste Jawaban AI Di Sini</label><textarea id="ai-response-area" class="w-full p-3 border rounded-lg text-xs h-32 placeholder-slate-400 focus:ring-violet-500" placeholder="Paste seluruh jawaban dari AI di sini..."></textarea></div>
                 <div class="flex justify-end gap-3 border-t pt-4 mt-4"><button onclick="closeBridgeModal()" class="px-5 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg font-bold text-sm">Batal</button><button onclick="processAIResponse()" class="px-6 py-2.5 bg-violet-600 text-white rounded-lg font-bold text-sm hover:bg-violet-700 shadow-md flex items-center gap-2"><span>✨</span> Proses Jawaban</button></div>
             </div>
@@ -291,10 +308,14 @@
 
     <div id="print-area" style="display: none;">
         <div class="print-page pt-10" style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:95vh;"><h1>BUKU KERJA GURU</h1><h2>BUKU 1 : PERENCANAAN</h2><br><br><div style="border:3px double black; padding:40px; margin:20px 0; width:60%; text-align:center;"><h2>MATA PELAJARAN : <span class="p-mapel"></span></h2><h2>KELAS : <span class="p-kelas"></span></h2><h2>TAHUN : <span class="p-tahun"></span></h2></div><br><br><p>Disusun Oleh:</p><p class="p-guru" style="font-weight:bold; text-decoration:underline; font-size:14pt;"></p><br><br><h2 class="p-sekolah"></h2></div>
+        
         <div class="page-break pt-10"><h2 style="text-decoration:underline;">LEMBAR PENGESAHAN</h2><br><p style="text-align:justify; line-height:2;">Administrasi mata pelajaran <b><span class="p-mapel"></span></b> Kelas <b><span class="p-kelas"></span></b> Tahun <b><span class="p-tahun"></span></b> telah diperiksa dan disetujui.</p><div class="ttd-wrapper"><div class="ttd-box">Mengetahui,<br>Kepala Madrasah<br><br><br><br><b class="p-kepsek" style="text-decoration:underline;"></b></div><div class="ttd-box ttd-right"><span id="print-tgl-sah">............, ....................</span><br>Guru Mata Pelajaran<br><br><br><br><b class="p-guru" style="text-decoration:underline;"></b></div></div></div>
+        
         <div class="page-break"><h3>PROGRAM TAHUNAN</h3><table class="official-table"><thead><tr><th style="width:10%">KODE</th><th>MATERI POKOK</th><th style="width:10%">JP</th></tr></thead><tbody id="print-tbody-prota"></tbody></table></div>
-        <div class="page-break"><h3>PROGRAM SEMESTER (SMT 1)</h3><div id="print-promes-smt1"></div></div>
-        <div class="page-break"><h3>PROGRAM SEMESTER (SMT 2)</h3><div id="print-promes-smt2"></div></div>
+        
+        <div class="page-break landscape-section"><h3>PROGRAM SEMESTER (SMT 1)</h3><div id="print-promes-smt1"></div></div>
+        <div class="page-break landscape-section"><h3>PROGRAM SEMESTER (SMT 2)</h3><div id="print-promes-smt2"></div></div>
+        
         <div id="print-container-rpp"></div>
     </div>
 
@@ -309,7 +330,7 @@
         let calendarData=[], protaData=[], promesData=[], calendarWeeksStatus={}; 
         let currentMapelId=null, currentSemester='Ganjil', currentTahunLabel=0, totalJPTersedia=0;
         let activeRppProtaId=null, currentBridgeContext=null;
-        let pendingSubbabData = []; // Store temp data for preview
+        let pendingSubbabData = [];
 
         const monthsFull = [
             {name:'Juli',idx:6}, {name:'Agustus',idx:7}, {name:'September',idx:8}, {name:'Oktober',idx:9}, {name:'November',idx:10}, {name:'Desember',idx:11},
@@ -326,15 +347,12 @@
             const { data } = await window.db.from('mapel_kelas').select('*').eq('user_id', userId).order('created_at', {ascending:false}).limit(1).single();
             if(data) {
                 currentMapelId=data.id; 
-                // Cek apakah option tahun ada, jika tidak, pertahankan value yang tersimpan (jika custom) atau load DB
                 if(data.id_tahun_ajaran && els.selTahun.querySelector(`option[value="${data.id_tahun_ajaran}"]`)) {
                     els.selTahun.value=data.id_tahun_ajaran;
                 }
-                
                 getEl('input-mapel').value=data.nama_mapel; getEl('input-kelas').value=data.kelas; getEl('input-jp-beban').value=data.beban_jp_minggu;
                 const {data:th}=await window.db.from('tahun_ajaran').select('*').eq('id',data.id_tahun_ajaran).single();
                 if(th){currentSemester=th.semester; currentTahunLabel=parseInt(th.nama.split('/')[0]);}
-                
                 getEl('input-kepsek').value=localStorage.getItem('kepsek_name')||''; 
                 getEl('input-sekolah').value=localStorage.getItem('sekolah_name')||'';
                 getEl('input-guru').value=localStorage.getItem('guru_name')||'';
@@ -363,17 +381,15 @@
         
         async function loadTahunAjaran(){
             let {data}=await window.db.from('tahun_ajaran').select('*').eq('is_active',true); 
-            // Keep hardcoded options if DB is empty or merge them
             els.selTahun.innerHTML = '<option value="2024/2025" data-tahun="2024" data-semester="Ganjil">2024/2025</option><option value="2025/2026" data-tahun="2025" data-semester="Ganjil">2025/2026</option><option value="2026/2027" data-tahun="2026" data-semester="Ganjil">2026/2027</option>';
             if(data && data.length > 0) {
-                els.selTahun.innerHTML = ''; // Clear default if DB exists
+                els.selTahun.innerHTML = ''; 
                 data.forEach(th=>{const opt=document.createElement('option'); opt.value=th.id; opt.textContent=`${th.nama}`; opt.dataset.semester=th.semester; opt.dataset.tahun=th.nama.split('/')[0]; els.selTahun.appendChild(opt);});
             }
         }
         
         async function saveStep1(){ 
             const user=(await window.db.auth.getUser()).data.user; const opt=els.selTahun.options[els.selTahun.selectedIndex]; 
-            // Fallback dataset if using custom options
             currentSemester=opt.dataset.semester || 'Ganjil'; 
             currentTahunLabel=parseInt(opt.dataset.tahun || opt.text.split('/')[0]); 
 
@@ -392,7 +408,7 @@
             }
         }
 
-        // --- STEP 2 (FULL YEAR LOGIC) ---
+        // --- STEP 2, 3, 4, 5 ---
         function populateCalendarData(){ 
             calendarData=[]; 
             monthsFull.forEach((m, i)=>{ 
@@ -429,7 +445,6 @@
         async function saveStep2(loading){ const btn=getEl('btn-next-step2'); const txt=btn.innerText; if(loading){btn.innerText="Menyimpan..."; btn.disabled=true;} const tid=els.selTahun.value; await window.db.from('kalender_akademik').delete().eq('id_tahun_ajaran',tid); const payload=calendarData.map(d=>({id_tahun_ajaran:tid, tanggal:d.date, status:d.status})); await window.db.from('kalender_akademik').insert(payload); if(loading){btn.innerText=txt; btn.disabled=false;} }
         async function saveStep3(loading){ return true; } 
 
-        // --- STEP 3: PROTA & SUBBAB ---
         async function initStep3Logic(){ 
             const ef=parseInt(getEl('sum-efektif').innerText)||0; const bb=parseInt(getEl('input-jp-beban').value)||4; totalJPTersedia=ef*bb; 
             if(getEl('disp-minggu-efektif')) getEl('disp-minggu-efektif').innerText=ef; if(getEl('disp-beban-jp')) getEl('disp-beban-jp').innerText=bb; if(getEl('disp-total-jp')) getEl('disp-total-jp').innerText=totalJPTersedia; 
@@ -445,7 +460,6 @@
             const { data } = await window.db.from('prota').insert([item]).select(); if(data) { protaData.push(data[0]); loadProtaDB(); clearProtaInputs(); }
         }
         
-        // --- BRIDGE PARSER (UPDATED WITH CONFIRM MODAL) ---
         function openAIBridge(type) {
             currentBridgeContext = type; getEl('bridge-modal').classList.add('active');
             let promptText = "";
@@ -456,15 +470,37 @@
                 const topic = getEl('rpp-title').innerText; 
                 const model = getEl('select-metode').value;
                 if(!model) { alert("Pilih model pembelajaran di atas dulu!"); closeBridgeModal(); return; }
+
+                if(!activeRppProtaId) return alert("Pilih salah satu materi dulu!");
+                const currentP = protaData.find(p => p.id === activeRppProtaId);
+                const babPrefix = currentP.kode_materi.split('.')[0];
+                const subBabs = protaData.filter(p => p.kode_materi.startsWith(babPrefix + '.'));
+                const listSubBab = subBabs.map(p => `- Kode ${p.kode_materi}: ${p.topik_materi}`).join('\n');
                 
-                // Prompt Updated: Requesting text pointers for kegiatan, NOT table/array objects
-                promptText = `Buatkan konten RPP Kurikulum Merdeka yang SANGAT DETAIL dan LENGKAP untuk Bab Materi: ${topic}, menggunakan model "${model}".\n\nInstruksi Khusus:\n1. Tujuan: Gunakan prinsip ABCD.\n2. Kegiatan: Berikan langkah-langkah pembelajaran lengkap dalam bentuk poin-poin teks (misal: - Pendahuluan... - Inti... - Penutup...). JANGAN gunakan format JSON untuk bagian ini, cukup string teks biasa.\n3. Penilaian: Sebutkan teknik dan instrumennya.\n\nSangat Penting: Berikan jawaban HANYA dalam format JSON ARRAY Murni berikut:\n\n[
+                promptText = `Buatkan konten RPP Kurikulum Merdeka yang SANGAT DETAIL dan LENGKAP untuk Bab: "${topic}". \nModel Pembelajaran: ${model}.\n\nDaftar Sub-Bab yang WAJIB dibuatkan RPP-nya (Output harus mencakup SEMUA kode di bawah ini):\n${listSubBab}\n\nInstruksi Khusus:\n1. Tujuan: Gunakan prinsip ABCD.\n2. Kegiatan: Berikan langkah-langkah pembelajaran lengkap dalam bentuk poin-poin teks (misal: - Pendahuluan... - Inti... - Penutup...). JANGAN gunakan format JSON untuk bagian ini, cukup string teks biasa.\n3. Penilaian: Sebutkan teknik dan instrumennya.\n\nSangat Penting: Berikan jawaban HANYA dalam format JSON ARRAY Murni berikut:\n\n[
   {"kode": "1.1", "tujuan": "...", "kegiatan": "- Pendahuluan: ... \n- Inti: ... \n- Penutup: ...", "penilaian": "..."},
   {"kode": "1.2", "tujuan": "...", "kegiatan": "...", "penilaian": "..."}
 ]`;
             }
             getEl('prompt-area').value = promptText; getEl('ai-response-area').value = "";
         }
+
+        // AUTO-COPY FUNCTION
+        function autoCopyAndOpen(url) {
+            const promptText = getEl('prompt-area').value;
+            if (promptText) {
+                navigator.clipboard.writeText(promptText).then(() => {
+                    // Silent success, just open the window
+                    window.open(url, '_blank');
+                }).catch(err => {
+                    alert("Gagal copy otomatis, silakan copy manual.");
+                    window.open(url, '_blank');
+                });
+            } else {
+                window.open(url, '_blank');
+            }
+        }
+
         function copyToClipboard(id) { const el = getEl(id); el.select(); document.execCommand('copy'); alert("Prompt tersalin!"); }
         
         function extractJSON(text) {
@@ -487,8 +523,6 @@
                 
                 if (currentBridgeContext === 'subbab') {
                     if(!Array.isArray(json)) throw new Error("Format harus Array JSON");
-                    
-                    // Show Preview Modal instead of direct insert
                     const babCode = getEl('input-kd-code').value;
                     pendingSubbabData = json.map((item, idx) => ({ 
                         code: `${babCode}.${idx + 1}`, 
@@ -502,16 +536,13 @@
                 } else if (currentBridgeContext === 'rpp_full') {
                     if(!Array.isArray(json)) throw new Error("Format harus Array JSON untuk Batch RPP");
                     const model = getEl('select-metode').value;
-                    
                     const upserts = json.map(item => {
                         const protaItem = protaData.find(p => p.kode_materi == item.kode); 
                         if(!protaItem) return null;
-                        
-                        // Item.kegiatan is now expected to be a string (pointers), not JSON
                         return {
                             id_prota: protaItem.id,
                             tujuan_pembelajaran: item.tujuan,
-                            kegiatan_pembelajaran: item.kegiatan, // Directly save string
+                            kegiatan_pembelajaran: item.kegiatan, 
                             penilaian_pembelajaran: item.penilaian,
                             metode: model
                         };
@@ -531,17 +562,10 @@
             } catch(e) { alert("Gagal membaca JSON. Pastikan format benar.\nDetail: " + e.message); }
         }
 
-        // --- SUB-BAB PREVIEW LOGIC ---
         function renderSubbabPreview() {
             const tbody = getEl('preview-tbody'); tbody.innerHTML = '';
             pendingSubbabData.forEach((row, idx) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="p-2"><input type="text" class="w-full p-1 border rounded text-xs font-bold text-center bg-white" value="${row.code}" onchange="updatePendingSubbab(${idx}, 'code', this.value)"></td>
-                        <td class="p-2"><input type="text" class="w-full p-1 border rounded text-xs bg-white" value="${row.sub}" onchange="updatePendingSubbab(${idx}, 'sub', this.value)"></td>
-                        <td class="p-2"><input type="number" class="w-full p-1 border rounded text-xs text-center font-bold bg-white" value="${row.jp}" onchange="updatePendingSubbab(${idx}, 'jp', this.value)"></td>
-                    </tr>
-                `;
+                tbody.innerHTML += `<tr><td class="p-2"><input type="text" class="w-full p-1 border rounded text-xs font-bold text-center bg-white" value="${row.code}" onchange="updatePendingSubbab(${idx}, 'code', this.value)"></td><td class="p-2"><input type="text" class="w-full p-1 border rounded text-xs bg-white" value="${row.sub}" onchange="updatePendingSubbab(${idx}, 'sub', this.value)"></td><td class="p-2"><input type="number" class="w-full p-1 border rounded text-xs text-center font-bold bg-white" value="${row.jp}" onchange="updatePendingSubbab(${idx}, 'jp', this.value)"></td></tr>`;
             });
         }
         window.updatePendingSubbab = (idx, field, val) => { pendingSubbabData[idx][field] = val; };
@@ -556,13 +580,8 @@
                 alokasi_jp: parseInt(item.jp), 
                 semester: currentSemester 
             }));
-            
             const { data, error } = await window.db.from('prota').insert(items).select();
-            if(error) {
-                alert("Gagal simpan: " + error.message);
-            } else {
-                loadProtaDB(); clearProtaInputs(); closePreviewModal();
-            }
+            if(error) { alert("Gagal simpan: " + error.message); } else { loadProtaDB(); clearProtaInputs(); closePreviewModal(); }
         }
 
         function closeBridgeModal() { getEl('bridge-modal').classList.remove('active'); }
@@ -571,11 +590,9 @@
         async function deleteProta(id) { if(!confirm("Hapus?")) return; await window.db.from('prota').delete().eq('id', id); loadProtaDB(); }
         function updateSisaJP(){ const used=protaData.reduce((a,b)=>a+b.alokasi_jp,0); const sisa=totalJPTersedia-used; if(getEl('warn-sisa')) getEl('warn-sisa').innerText=`Sisa: ${sisa} JP`; }
 
-        // --- STEP 4 ---
         async function initStep4Logic(){ 
             const ids=protaData.map(p=>p.id); 
             if(ids.length>0){const {data}=await window.db.from('promes').select('*').in('id_prota',ids); promesData=data||[];} else promesData=[]; 
-            // Fix: Always run auto distribute if data is empty, but ensure protaData exists
             if(promesData.length===0 && protaData.length>0) autoDistributePromes(); 
             renderPromesTable(); 
             document.addEventListener('keydown', handleArrowKey); 
@@ -609,8 +626,6 @@
         function renderPromesTable(){ 
             const table=getEl('promes-table'); const thead=table.querySelector('thead'); const tbody=table.querySelector('tbody'); thead.innerHTML=''; tbody.innerHTML='';
             let rowMonth=`<tr><th class="p-3 bg-white border sticky-col min-w-[200px] z-30" rowspan="2">Materi</th>`; let rowWeek=`<tr>`;
-            
-            // Generate Headers
             monthsFull.forEach(m=>{ 
                 const mData=calendarData.filter(d=>d.monthIdx===m.idx); 
                 const maxW=mData.length ? Math.max(...mData.map(d=>d.weekInMonth)) : 4; 
@@ -621,15 +636,12 @@
             }); 
             rowMonth+=`<th class="p-2 border bg-slate-50 min-w-[80px]" rowspan="2">TOTAL</th></tr>`; rowWeek+=`</tr>`; thead.innerHTML=rowMonth+rowWeek;
             
-            // Generate Body
             protaData.forEach((prota,rIdx)=>{ 
                 const tr=document.createElement('tr'); tr.innerHTML=`<td class="p-2 border font-medium sticky-col text-xs text-slate-700 truncate max-w-[200px] border-slate-200 bg-white">${prota.topik_materi}</td>`; 
                 let rowTotal=0; let cIdx=0; 
-                
                 monthsFull.forEach(m=>{ 
                     const mData=calendarData.filter(d=>d.monthIdx===m.idx); 
                     const maxW=mData.length ? Math.max(...mData.map(d=>d.weekInMonth)) : 4; 
-                    
                     for(let w=1; w<=maxW; w++){ 
                         const status=calendarWeeksStatus[`${m.idx+1}-${w}`]||'Libur'; const isLibur=status==='Libur'; 
                         const existing=promesData.find(x=>x.id_prota===prota.id&&x.bulan===(m.idx+1)&&x.minggu_ke===w); 
@@ -647,16 +659,13 @@
         function updatePromesData(pid,b,m,val){ promesData=promesData.filter(x=>!(x.id_prota===pid&&x.bulan===b&&x.minggu_ke===m)); if(val&&!isNaN(val)) promesData.push({id_prota:pid,bulan:b,minggu_ke:m,jp_minggu:parseInt(val)}); renderPromesTable(); }
         async function saveStep4(loading){ const btn=getEl('btn-save-promes'); if(btn && loading){btn.innerText="Menyimpan..."; btn.disabled=true;} const ids=protaData.map(p=>p.id); if(ids.length) await window.db.from('promes').delete().in('id_prota',ids); if(promesData.length>0){ const pl=promesData.map(d=>({id_prota:d.id_prota,bulan:d.bulan,minggu_ke:d.minggu_ke,jp_minggu:d.jp_minggu})); await window.db.from('promes').insert(pl); renderPromesTable(); } if(btn && loading){btn.innerText="Simpan & Lanjut RPP ➜"; btn.disabled=false;} }
 
-        // --- STEP 5: RPP ---
         async function initStep5Logic(){ const list=getEl('rpp-materi-list'); list.innerHTML=''; protaData.forEach(p=>{ const div=document.createElement('div'); div.className="p-4 border rounded-xl hover:bg-violet-50 cursor-pointer text-sm mb-3 transition border-slate-100 shadow-sm flex justify-between items-center group"; div.innerHTML=`<div class="flex flex-col"><span class="font-bold text-violet-700">${p.kode_materi}</span></div><span class="text-xs text-slate-600 truncate ml-2 flex-1">${p.topik_materi}</span><span class="text-xs text-slate-400 font-bold bg-slate-100 px-2 py-1 rounded-full whitespace-nowrap group-hover:bg-white">${p.alokasi_jp} JP</span>`; div.onclick=()=>loadRPPEditor(p); list.appendChild(div); }); }
         
         async function loadRPPEditor(prota){ 
             activeRppProtaId=prota.id; 
             getEl('rpp-empty-state').classList.add('hidden-section'); getEl('rpp-editor-container').classList.remove('hidden-section'); 
             getEl('rpp-title').innerText=prota.topik_materi; getEl('rpp-subtitle').innerText=`Kode: ${prota.kode_materi} | ${prota.alokasi_jp} JP`;
-            
-            getEl('input-tujuan').value=""; getEl('input-penilaian').value=""; 
-            getEl('input-kegiatan').value="";
+            getEl('input-tujuan').value=""; getEl('input-penilaian').value=""; getEl('input-kegiatan').value="";
             
             const {data}=await window.db.from('rpp').select('*').eq('id_prota',prota.id).maybeSingle(); 
             if(data){ 
@@ -664,15 +673,13 @@
                 getEl('input-penilaian').value=data.penilaian_pembelajaran||""; 
                 if(data.metode && !getEl('select-metode').value) getEl('select-metode').value=data.metode; 
                 
-                // Parse Kegiatan (Convert JSON Array to text if coming from old version, else display string)
                 let kContent = data.kegiatan_pembelajaran || '';
                 try {
                     const parsed = JSON.parse(kContent);
                     if(Array.isArray(parsed)) {
-                        // Compatibility: Convert old table structure to text pointers
                         kContent = parsed.map(k => `* [${k.tahap}] ${k.deskripsi} (${k.waktu})`).join('\n');
                     }
-                } catch(e) { /* Content is already string, do nothing */ }
+                } catch(e) { }
                 getEl('input-kegiatan').value = kContent;
             }
         }
@@ -680,20 +687,17 @@
         async function saveRPP(){ 
             if(!activeRppProtaId)return; 
             const globalMethod = getEl('select-metode').value;
-            // Now saving kegiatan as plain text
             const pl={id_prota:activeRppProtaId, tujuan_pembelajaran:getEl('input-tujuan').value, kegiatan_pembelajaran:getEl('input-kegiatan').value, penilaian_pembelajaran:getEl('input-penilaian').value, metode: globalMethod}; 
             const {error}=await window.db.from('rpp').upsert(pl,{onConflict:'id_prota'}); 
             if(error)alert("Gagal: "+error.message);else alert("Draft RPP Tersimpan!"); 
         }
 
-        // --- PRINTING (UPDATED) ---
         async function printFullDocument(){
             const mapel=getEl('input-mapel').value; const kelas=getEl('input-kelas').value; const tahun=els.selTahun.options[els.selTahun.selectedIndex].text; const guru=getEl('input-guru').value; const kepsek=getEl('input-kepsek').value; const sekolah=getEl('input-sekolah').value;
             const tglSah = getEl('input-tgl-sah').value;
             
             document.querySelectorAll('.p-mapel').forEach(e=>e.innerText=mapel); document.querySelectorAll('.p-kelas').forEach(e=>e.innerText=kelas); document.querySelectorAll('.p-tahun').forEach(e=>e.innerText=tahun); document.querySelectorAll('.p-guru').forEach(e=>e.innerText=guru); document.querySelectorAll('.p-kepsek').forEach(e=>e.innerText=kepsek); document.querySelectorAll('.p-sekolah').forEach(e=>e.innerText=sekolah);
             
-            // Format Tanggal Pengesahan
             const d = new Date(tglSah || new Date());
             const formattedDate = d.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
             if(getEl('print-tgl-sah')) getEl('print-tgl-sah').innerText = `Jakarta, ${formattedDate}`; 
@@ -701,7 +705,6 @@
             const protaBody=getEl('print-tbody-prota'); protaBody.innerHTML=''; let lastP=null;
             protaData.forEach(d=>{ const pref=d.kode_materi.split('.')[0]; if(pref!==lastP) protaBody.innerHTML+=`<tr><td colspan="3" style="background:#f3f4f6; font-weight:bold; text-align:center;">BAB ${pref}</td></tr>`; lastP=pref; protaBody.innerHTML+=`<tr><td class="text-center">${d.kode_materi}</td><td>${d.topik_materi}</td><td class="text-center">${d.alokasi_jp} JP</td></tr>`; });
             
-            // Render Promes Logic
             const renderSplitPromes = (targetId, startMonthIdx, endMonthIdx) => {
                 const target = getEl(targetId);
                 const selectedMonths = monthsFull.slice(startMonthIdx, endMonthIdx);
@@ -744,20 +747,17 @@
             
             protaData.forEach(p=>{
                 const rpp=allRpps?allRpps.find(r=>r.id_prota===p.id):null; const met=rpp?rpp.metode:'-';
-                
-                // Content Rendering (Text/Markdown)
                 let kegiatanHtml = '<p>-</p>';
                 if(rpp && rpp.kegiatan_pembelajaran) {
                     try {
                         const kData = JSON.parse(rpp.kegiatan_pembelajaran);
                         if(Array.isArray(kData)) {
-                             // Fallback for old data in print
                             kegiatanHtml = '<ul>' + kData.map(k => `<li><b>${k.tahap}</b>: ${k.deskripsi} (${k.waktu})</li>`).join('') + '</ul>';
                         } else { kegiatanHtml = safeRender(rpp.kegiatan_pembelajaran); }
                     } catch(e) { kegiatanHtml = safeRender(rpp.kegiatan_pembelajaran); }
                 }
 
-                const html=`<div class="page-break pt-10"><h3 style="text-align:center; border:none; margin-bottom:20px; text-decoration:underline;">RENCANA PELAKSANAAN PEMBELAJARAN (RPP)</h3><table style="width:100%; border:none; margin-bottom:20px;"><tr><td style="width:20%; border:none; font-weight:bold;">Mata Pelajaran</td><td style="border:none;">: ${mapel}</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Materi Pokok</td><td style="border:none;">: ${p.topik_materi} (${p.kode_materi})</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Alokasi Waktu</td><td style="border:none;">: ${p.alokasi_jp} JP</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Metode</td><td style="border:none;">: ${met}</td></tr></table><h3>A. TUJUAN PEMBELAJARAN</h3><div style="text-align:justify;">${safeRender(rpp?rpp.tujuan_pembelajaran:'-')}</div><h3>B. KEGIATAN PEMBELAJARAN</h3><div style="text-align:justify;">${kegiatanHtml}</div><h3>C. PENILAIAN</h3><div style="text-align:justify;">${safeRender(rpp?rpp.penilaian_pembelajaran:'-')}</div><div class="ttd-wrapper"><div class="ttd-box">Mengetahui,<br>Kepala Madrasah<br><br><br><br><b style="text-decoration:underline;">${kepsek}</b></div><div class="ttd-box ttd-right">${getEl('print-tgl-sah').innerText}<br>Guru Mata Pelajaran<br><br><br><br><b style="text-decoration:underline;">${guru}</b></div></div></div>`;
+                const html=`<div class="page-break pt-10"><h3 style="text-align:center; border:none; margin-bottom:20px; text-decoration:underline;">RENCANA PELAKSANAAN PEMBELAJARAN (RPP)</h3><table style="width:100%; border:none; margin-bottom:20px;"><tr><td style="width:20%; border:none; font-weight:bold;">Mata Pelajaran</td><td style="border:none;">: ${mapel}</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Materi Pokok</td><td style="border:none;">: ${p.topik_materi} (${p.kode_materi})</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Alokasi Waktu</td><td style="border:none;">: ${p.alokasi_jp} JP</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Metode</td><td style="border:none;">: ${met}</td></tr></table><h3>A. TUJUAN PEMBELAJARAN</h3><div class="rpp-content-text">${safeRender(rpp?rpp.tujuan_pembelajaran:'-')}</div><h3>B. KEGIATAN PEMBELAJARAN</h3><div class="rpp-content-text">${kegiatanHtml}</div><h3>C. PENILAIAN</h3><div class="rpp-content-text">${safeRender(rpp?rpp.penilaian_pembelajaran:'-')}</div><div class="ttd-wrapper"><div class="ttd-box">Mengetahui,<br>Kepala Madrasah<br><br><br><br><b style="text-decoration:underline;">${kepsek}</b></div><div class="ttd-box ttd-right">${getEl('print-tgl-sah').innerText}<br>Guru Mata Pelajaran<br><br><br><br><b style="text-decoration:underline;">${guru}</b></div></div></div>`;
                 rppCont.insertAdjacentHTML('beforeend',html);
             });
             window.print();
