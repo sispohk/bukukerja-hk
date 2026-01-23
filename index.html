@@ -3,396 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buku Kerja Guru - Smart Context Engine v7</title>
+    <title>Buku Kerja Guru - Smart Offline v10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        
-        /* UTILITIES */
+        /* UI GLOBAL */
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #334155; }
         .hidden-section { display: none !important; }
-        .fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .sticky-col { 
-            position: sticky; left: 0; background: white; z-index: 20; 
-            border-right: 1px solid #e2e8f0; box-shadow: 4px 0 6px -2px rgba(0,0,0,0.05); 
-        }
-        
-        /* INPUT STYLING */
-        input:focus, textarea:focus, select:focus { 
-            outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); 
-        }
-        input, select, textarea { transition: all 0.2s; }
+        .sticky-col { position: sticky; left: 0; background: white; z-index: 20; border-right: 1px solid #e2e8f0; }
+        input:focus, textarea:focus, select:focus { outline: 2px solid #6366f1; background-color: #f5f3ff; border-color: #6366f1; }
 
-        /* PREMIUM MODAL STYLE */
+        /* MODAL */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.4); z-index: 9999;
+            background: rgba(15, 23, 42, 0.7); z-index: 999;
             display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(5px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.2s;
         }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        
         .modal-box {
-            background: white; width: 95%; max-width: 680px; 
-            border-radius: 16px; 
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            overflow: hidden;
+            background: white; width: 95%; max-width: 750px; max-height: 85vh;
+            border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            overflow-y: auto; transform: scale(0.95); transition: transform 0.2s;
+            display: flex; flex-direction: column;
         }
         .modal-overlay.active .modal-box { transform: scale(1); }
+
+        /* LOADER */
+        .typing-loader::after { content: '...'; animation: typing 1.5s infinite; }
+        @keyframes typing { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
 
         /* PRINT STYLES */
         @media print {
             @page { size: A4; margin: 1.5cm; }
-            body { background: white; font-family: 'Times New Roman', serif; color: black; -webkit-print-color-adjust: exact; }
-            nav, .max-w-7xl, #btn-logout, .modal-overlay, button, .no-print { display: none !important; }
+            body { background: white; -webkit-print-color-adjust: exact; }
+            nav, .max-w-7xl, .modal-overlay, button, .no-print { display: none !important; }
             #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
             .page-break { page-break-before: always; }
-            table.official-table { width: 100%; border-collapse: collapse; font-size: 11pt; margin: 15px 0; }
-            table.official-table th, table.official-table td { border: 1px solid black; padding: 6px; }
+            table.official-table { width: 100%; border-collapse: collapse; font-size: 10pt; margin: 10px 0; }
+            table.official-table th, table.official-table td { border: 1px solid black; padding: 5px; vertical-align: top; }
             table.official-table th { background-color: #f1f5f9 !important; font-weight: bold; text-align: center; }
             .bg-red-print { background-color: #fee2e2 !important; } 
-            h1 { font-size: 18pt; font-weight: bold; text-align: center; margin-bottom: 5px; text-transform: uppercase; }
+            h1 { font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 5px; text-transform: uppercase; }
             h2 { font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 10px; text-transform: uppercase; }
+            h3 { font-size: 12pt; font-weight: bold; margin-top: 15px; border-bottom: 1px solid black; display: inline-block; }
             .ttd-wrapper { display: flex; justify-content: space-between; margin-top: 50px; }
             .ttd-box { width: 40%; text-align: center; }
+            p { text-align: justify; line-height: 1.5; }
         }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800">
+<body class="text-slate-800">
 
-    <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 sticky top-0 z-40 no-print">
+    <nav class="bg-white/95 backdrop-blur border-b border-slate-200 p-4 sticky top-0 z-40 no-print shadow-sm">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">B</div>
-                <h1 class="text-lg font-bold text-slate-800 tracking-tight">Buku Kerja Guru <span class="text-indigo-600 font-medium">Smart Suite</span></h1>
+                <span class="text-2xl">🧠</span><h1 class="text-lg font-bold">Smart Guru <span class="text-indigo-600">Offline Engine</span></h1>
             </div>
             <div>
-                <span id="user-email" class="mr-4 text-sm text-slate-500 font-medium hidden md:inline"></span>
-                <button id="btn-logout" class="hidden-section text-xs text-red-600 bg-red-50 border border-red-100 px-4 py-2 rounded-full hover:bg-red-100 transition font-semibold">Keluar</button>
+                <span id="user-email" class="mr-3 text-sm font-medium text-slate-500 hidden md:inline"></span>
+                <button id="btn-logout" class="hidden-section text-xs text-red-600 bg-red-50 border border-red-200 px-4 py-2 rounded-full hover:bg-red-100 transition">Keluar</button>
             </div>
         </div>
     </nav>
 
     <div class="max-w-7xl mx-auto p-4 mt-6 mb-24 no-print">
 
-        <div id="auth-section" class="bg-white p-10 rounded-2xl shadow-xl border border-slate-100 fade-in text-center max-w-sm mx-auto mt-10">
-            <div class="mb-6"><span class="text-4xl">👋</span></div>
-            <h2 class="text-2xl font-bold text-slate-800 mb-2">Selamat Datang</h2>
-            <p class="text-slate-500 text-sm mb-8">Platform Administrasi Pembelajaran Cerdas</p>
+        <div id="auth-section" class="bg-white p-10 rounded-2xl shadow-xl border border-slate-100 text-center max-w-sm mx-auto mt-10">
+            <h2 class="text-2xl font-bold mb-6 text-slate-800">Login Guru</h2>
             <form id="auth-form" class="space-y-4 text-left">
-                <input type="email" id="email" placeholder="Email Sekolah" class="w-full p-3.5 border rounded-xl bg-slate-50 focus:bg-white transition" required>
-                <input type="password" id="password" placeholder="Kata Sandi" class="w-full p-3.5 border rounded-xl bg-slate-50 focus:bg-white transition" required>
-                <button type="submit" id="btn-login" class="w-full bg-indigo-600 text-white p-3.5 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">Masuk Dashboard</button>
+                <input type="email" id="email" placeholder="Email" class="w-full p-3.5 border rounded-xl bg-slate-50" required>
+                <input type="password" id="password" placeholder="Password" class="w-full p-3.5 border rounded-xl bg-slate-50" required>
+                <button type="submit" id="btn-login" class="w-full bg-indigo-600 text-white p-3.5 rounded-xl font-bold hover:bg-indigo-700 shadow-lg">Masuk</button>
             </form>
         </div>
 
-        <div id="wizard-step-1" class="hidden-section bg-white p-8 rounded-2xl shadow-sm border border-slate-200 fade-in max-w-3xl mx-auto">
-            <div class="flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-800">Identitas Sekolah</h2>
-                    <p class="text-sm text-slate-500">Langkah 1 dari 6</p>
-                </div>
-                <div class="h-10 w-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">1</div>
-            </div>
+        <div id="wizard-step-1" class="hidden-section bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-3xl mx-auto">
+            <div class="flex justify-between items-center mb-6 border-b pb-4"><h2 class="text-xl font-bold text-indigo-700">Step 1: Identitas</h2></div>
             <form id="setup-form" class="space-y-5">
-                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">Tahun Ajaran</label><select id="select-tahun" class="w-full p-3 border rounded-xl bg-slate-50 hover:bg-white focus:bg-white transition" required><option value="">Memuat...</option></select></div>
-                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">Mata Pelajaran</label><input type="text" id="input-mapel" class="w-full p-3 border rounded-xl" placeholder="Contoh: Bahasa Indonesia" required></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tahun Ajaran</label><select id="select-tahun" class="w-full p-3 border rounded-xl bg-slate-50" required><option value="">Memuat...</option></select></div>
                 <div class="grid grid-cols-2 gap-5">
-                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">Kelas</label><input type="text" id="input-kelas" class="w-full p-3 border rounded-xl" placeholder="X" required></div>
-                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">JP / Minggu</label><input type="number" id="input-jp-beban" class="w-full p-3 border rounded-xl text-center font-bold text-indigo-600" value="4" required></div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mata Pelajaran</label><input type="text" id="input-mapel" class="w-full p-3 border rounded-xl" required></div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kelas</label><input type="text" id="input-kelas" class="w-full p-3 border rounded-xl" required></div>
                 </div>
-                <div class="pt-4 border-t border-dashed">
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">Kepala Sekolah (Pejabat Penandatangan)</label>
-                    <input type="text" id="input-kepsek" class="w-full p-3 border rounded-xl" placeholder="Nama lengkap beserta gelar">
+                <div class="grid grid-cols-2 gap-5">
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">JP / Minggu</label><input type="number" id="input-jp-beban" class="w-full p-3 border rounded-xl text-center font-bold text-indigo-600" value="4" required></div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kepala Sekolah</label><input type="text" id="input-kepsek" class="w-full p-3 border rounded-xl"></div>
                 </div>
-                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">Nama Satuan Pendidikan</label><input type="text" id="input-sekolah" class="w-full p-3 border rounded-xl" placeholder="SMA NEGERI CONTOH"></div>
-                <div class="flex justify-end mt-6">
-                    <button type="submit" class="bg-indigo-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition transform active:scale-95">Simpan & Lanjut ➜</button>
-                </div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nama Sekolah</label><input type="text" id="input-sekolah" class="w-full p-3 border rounded-xl"></div>
+                <button type="submit" class="w-full bg-indigo-600 text-white p-4 rounded-xl font-bold hover:bg-indigo-700 mt-4 shadow-lg transition transform active:scale-95">Simpan & Lanjut ➜</button>
             </form>
         </div>
 
-        <div id="wizard-step-2" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in max-w-5xl mx-auto">
-            <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-                <div><h2 class="text-xl font-bold text-slate-800">Kalender Akademik</h2><p class="text-sm text-slate-500">Klik tanggal untuk menandai hari efektif/libur</p></div>
-                <div class="flex gap-2 text-xs font-medium"><span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full">● KBM Efektif</span><span class="px-3 py-1 bg-rose-100 text-rose-700 rounded-full">● Libur / Tidak Efektif</span></div>
+        <div id="wizard-step-2" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold text-slate-800">Step 2: Kalender Akademik</h2><div class="flex gap-2 text-xs font-bold"><span class="px-2 py-1 bg-green-100 text-green-700 rounded">● Efektif</span><span class="px-2 py-1 bg-red-100 text-red-700 rounded">● Libur</span></div></div>
+            <div id="calendar-loader" class="hidden-section text-center py-10 text-slate-400 animate-pulse">⏳ Menyinkronkan data...</div>
+            <div id="calendar-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 max-h-[500px] overflow-y-auto pr-2 custom-scroll"></div>
+            <div class="bg-slate-50 p-4 rounded-xl border mb-6 flex justify-around text-center">
+                <div><div class="text-[10px] uppercase text-slate-400 font-bold">Total</div><div id="sum-total" class="font-bold text-xl">0</div></div>
+                <div><div class="text-[10px] uppercase text-red-400 font-bold">Libur</div><div id="sum-libur" class="font-bold text-xl text-red-600">0</div></div>
+                <div><div class="text-[10px] uppercase text-green-500 font-bold">Efektif</div><div id="sum-efektif" class="font-bold text-xl text-green-600">0</div></div>
             </div>
-            <div id="calendar-loader" class="text-center py-16 hidden-section"><div class="animate-spin inline-block w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mb-2"></div><p class="text-slate-400 text-sm">Sinkronisasi data...</p></div>
-            <div id="calendar-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 max-h-[550px] overflow-y-auto pr-2 custom-scroll"></div>
-            <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 mb-6 flex justify-around text-center divide-x divide-slate-200">
-                <div class="w-1/3"><div class="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Total Pekan</div><div id="sum-total" class="font-bold text-2xl text-slate-700 mt-1">0</div></div>
-                <div class="w-1/3"><div class="text-[10px] uppercase text-rose-400 font-bold tracking-wider">Pekan Libur</div><div id="sum-libur" class="font-bold text-2xl text-rose-600 mt-1">0</div></div>
-                <div class="w-1/3"><div class="text-[10px] uppercase text-emerald-500 font-bold tracking-wider">Pekan Efektif</div><div id="sum-efektif" class="font-bold text-3xl text-emerald-600 mt-1">0</div></div>
-            </div>
-            <div class="flex gap-4 border-t pt-4">
-                <button onclick="goBackToStep1()" class="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition">← Kembali</button>
-                <div class="flex-1"></div>
-                <button id="btn-next-step2" onclick="goStep3()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-md transition">Simpan Analisis ➜</button>
+            <div class="flex gap-4">
+                <button onclick="goBackToStep1()" class="w-1/3 bg-slate-100 p-3 rounded-xl font-bold hover:bg-slate-200">← Kembali</button>
+                <button id="btn-next-step2" onclick="goStep3()" class="w-2/3 bg-indigo-600 text-white p-3 rounded-xl font-bold hover:bg-indigo-700 shadow-md">Simpan & Lanjut ➜</button>
             </div>
         </div>
 
-        <div id="wizard-step-3" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in max-w-5xl mx-auto">
+        <div id="wizard-step-3" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-5xl mx-auto">
             <div class="flex justify-between items-center mb-6">
-                <div><h2 class="text-xl font-bold text-slate-800">Program Tahunan</h2><p class="text-sm text-slate-500">Distribusi Materi Pokok</p></div>
-                <div class="bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-100 text-indigo-700 text-sm font-bold flex items-center gap-2"><span>🎯 Target JP:</span><span id="disp-total-jp" class="text-lg">0</span></div>
+                <h2 class="text-xl font-bold text-slate-800">Step 3: Program Tahunan</h2>
+                <div class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-bold border border-indigo-100">
+                    Target: <span id="disp-minggu-efektif">0</span> Pekan x <span id="disp-beban-jp">0</span> JP = <span id="disp-total-jp">0</span> Total JP
+                </div>
             </div>
 
-            <div class="bg-gradient-to-br from-slate-50 to-white p-6 rounded-xl border border-slate-200 mb-8 shadow-sm relative overflow-hidden group">
-                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition text-6xl select-none">✨</div>
-                <div class="flex flex-col md:flex-row gap-4 items-end mb-4 relative z-10">
-                    <div class="w-full md:w-20"><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">Bab</label><input type="text" id="input-kd-code" class="w-full p-2.5 border rounded-lg text-center font-bold text-slate-700" placeholder="1"></div>
-                    <div class="w-full md:flex-1"><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">Materi Pokok / Topik Pembelajaran</label><input type="text" id="input-kd-text" class="w-full p-2.5 border rounded-lg font-medium" placeholder="Contoh: Limit Fungsi Aljabar / Teks Eksplanasi"></div>
-                    <div class="w-full md:w-24"><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">Alokasi JP</label><input type="number" id="input-kd-jp" class="w-full p-2.5 border rounded-lg text-center font-bold text-indigo-600" placeholder="12"></div>
+            <div class="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-xl border border-indigo-100 mb-6 relative overflow-hidden shadow-sm">
+                <div class="absolute top-0 right-0 p-4 opacity-10 text-6xl select-none">🧠</div>
+                <h3 class="text-xs font-bold text-indigo-600 mb-3 uppercase tracking-wide">Input Materi Baru</h3>
+                <div class="flex flex-col md:flex-row gap-3 items-end mb-4 relative z-10">
+                    <div class="w-full md:w-24"><label class="text-[10px] font-bold text-slate-400">BAB</label><input type="text" id="input-kd-code" class="w-full p-2.5 border rounded-lg text-center font-bold" placeholder="1"></div>
+                    <div class="w-full md:flex-1"><label class="text-[10px] font-bold text-slate-400">MATERI POKOK</label><input type="text" id="input-kd-text" class="w-full p-2.5 border rounded-lg" placeholder="Contoh: Sistem Ekskresi"></div>
+                    <div class="w-full md:w-28"><label class="text-[10px] font-bold text-slate-400">TOTAL JP</label><input type="number" id="input-kd-jp" class="w-full p-2.5 border rounded-lg text-center font-bold" placeholder="12"></div>
                 </div>
                 <div class="flex gap-3 relative z-10">
-                    <button onclick="addManualProta()" class="px-5 py-2.5 bg-white border border-slate-300 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition shadow-sm">+ Manual</button>
-                    <button onclick="openGeneratorModal()" class="flex-1 bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-2.5 rounded-lg text-sm font-bold hover:from-violet-700 hover:to-indigo-700 shadow-md transition transform active:scale-[0.98] flex items-center justify-center gap-2">
-                        <span class="text-lg">✨</span> Generate Sub-Bab Otomatis
-                    </button>
+                    <button onclick="addManualProta()" class="px-5 py-2.5 bg-white border border-slate-300 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition">+ Manual</button>
+                    <button onclick="openGeneratorModal()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95"><span>✨</span> Generate Smart Sub-Bab</button>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center mb-2 px-1">
-                <span class="text-xs font-bold text-slate-400 tracking-wider">DAFTAR MATERI</span>
-                <span id="warn-sisa" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200">Sisa: 0 JP</span>
-            </div>
-            <div class="border rounded-xl overflow-hidden mb-8 bg-white shadow-sm min-h-[100px]">
-                <table class="w-full text-sm text-left">
-                    <thead class="bg-slate-50 text-slate-500 uppercase text-xs font-bold border-b border-slate-200">
-                        <tr><th class="p-3 w-20 text-center">Kode</th><th class="p-3">Materi Pembelajaran</th><th class="p-3 text-center w-24">JP</th><th class="p-3 w-16 text-center">Aksi</th></tr>
-                    </thead>
-                    <tbody id="prota-list-body" class="divide-y divide-slate-100"></tbody>
-                </table>
-                <div id="prota-empty-msg" class="p-10 text-center text-slate-400 text-sm hidden-section">Belum ada materi. Input di atas untuk memulai.</div>
-            </div>
-            
-            <div class="flex gap-4 border-t pt-4">
-                <button onclick="goBackToStep2()" class="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition">← Kembali</button>
-                <div class="flex-1"></div>
-                <button id="btn-next-step3" onclick="goStep4()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-md transition">Lanjut ke Promes ➜</button>
-            </div>
+            <div class="flex justify-between items-center mb-2 px-1"><span class="text-xs font-bold text-slate-400 tracking-wider">DAFTAR MATERI</span><span id="warn-sisa" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-500">Sisa: 0 JP</span></div>
+            <div class="border rounded-xl overflow-hidden mb-6 bg-white shadow-sm min-h-[100px]"><table class="w-full text-sm text-left"><tbody id="prota-list-body" class="divide-y divide-slate-100"></tbody></table></div>
+            <div class="flex gap-4"><button onclick="goBackToStep2()" class="w-1/3 bg-slate-100 p-3 rounded-xl font-bold hover:bg-slate-200">← Kembali</button><button onclick="goStep4()" class="w-2/3 bg-indigo-600 text-white p-3 rounded-xl font-bold shadow-md hover:bg-indigo-700">Lanjut ke Promes ➜</button></div>
         </div>
 
-        <div id="wizard-step-4" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in w-full">
+        <div id="wizard-step-4" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 w-full">
             <div class="flex justify-between items-center mb-4">
-                <div><h2 class="text-xl font-bold text-slate-800">Program Semester</h2><p class="text-sm text-slate-500">Distribusi JP ke Minggu Efektif</p></div>
-                <div class="flex gap-2"><span class="bg-rose-50 text-rose-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-rose-100">Merah = Libur</span></div>
+                <h2 class="text-xl font-bold text-slate-800">Step 4: Promes</h2>
+                <div class="flex gap-2 items-center"><span class="bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">Merah = Libur</span><span class="text-xs text-slate-400 hidden md:inline">Navigasi: ⬆️⬇️⬅️➡️</span></div>
             </div>
-            <div class="bg-blue-50 border border-blue-100 text-blue-800 text-sm p-3 rounded-lg mb-4 flex items-start gap-3">
-                <span class="text-lg">💡</span>
-                <p><strong>Auto-Fill Aktif:</strong> Sistem telah mendistribusikan JP secara otomatis. Anda dapat mengubahnya manual. Gunakan panah keyboard ⬆️⬇️⬅️➡️ untuk navigasi cepat.</p>
-            </div>
-            <div class="overflow-x-auto border rounded-xl shadow-inner mb-8 relative bg-white max-h-[600px] custom-scroll">
+            <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 text-xs p-3 rounded mb-4">💡 <b>Info:</b> JP telah didistribusikan otomatis. Gunakan panah keyboard untuk geser cepat.</div>
+            <div class="overflow-x-auto border rounded-xl shadow-inner mb-6 relative bg-white max-h-[600px]">
                 <table class="text-xs text-left w-full border-collapse" id="promes-table">
-                    <thead class="bg-slate-50 text-slate-600 uppercase font-bold sticky top-0 z-20 shadow-sm border-b"></thead>
+                    <thead class="bg-slate-100 text-slate-600 uppercase font-bold sticky top-0 z-20 shadow-sm"></thead>
                     <tbody class="divide-y divide-slate-100 text-slate-700"></tbody>
                 </table>
             </div>
-            <div class="flex gap-4 border-t pt-4">
-                <button onclick="goBackToStep3()" class="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition">← Kembali</button>
-                <div class="flex-1"></div>
-                <button id="btn-save-promes" onclick="goStep5()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-md transition">Simpan & Buat RPP ➜</button>
-            </div>
+            <div class="flex gap-4"><button onclick="goBackToStep3()" class="w-1/3 bg-slate-100 p-3 rounded-xl font-bold hover:bg-slate-200">← Kembali</button><button id="btn-save-promes" onclick="goStep5()" class="w-2/3 bg-indigo-600 text-white p-3 rounded-xl font-bold shadow-md hover:bg-indigo-700">Simpan & Lanjut RPP ➜</button></div>
         </div>
 
-        <div id="wizard-step-5" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in max-w-7xl mx-auto">
-            <div class="flex justify-between items-center mb-6 pb-4 border-b">
-                <div><h2 class="text-xl font-bold text-slate-800">Generator RPP</h2><p class="text-sm text-slate-500">Langkah Terakhir Sebelum Cetak</p></div>
-                <div class="text-xs bg-orange-100 text-orange-800 px-3 py-1 rounded-full font-bold">Wajib Diisi</div>
-            </div>
+        <div id="wizard-step-5" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-7xl mx-auto">
+            <div class="flex justify-between items-center mb-6 border-b pb-4"><h2 class="text-xl font-bold text-slate-800">Step 5: Generator RPP</h2><span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded font-bold">Wajib Diisi</span></div>
             <div class="flex flex-col lg:flex-row gap-8">
-                <div class="w-full lg:w-1/4 border-r border-slate-100 pr-4 lg:pr-6">
-                    <h3 class="font-bold text-slate-400 uppercase text-xs mb-4 tracking-wider">Pilih Materi Prota</h3>
-                    <div id="rpp-materi-list" class="space-y-2 max-h-[650px] overflow-y-auto pr-2 custom-scroll"></div>
-                </div>
-                
+                <div class="w-full lg:w-1/4 border-r pr-4"><h3 class="font-bold text-slate-400 text-xs mb-4 uppercase tracking-wider">Pilih Materi Prota</h3><div id="rpp-materi-list" class="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scroll"></div></div>
                 <div class="w-full lg:w-3/4">
                     <div id="rpp-editor-container" class="hidden-section">
-                        <div class="flex justify-between items-end mb-6">
-                            <div>
-                                <h3 class="font-bold text-2xl text-slate-800 tracking-tight" id="rpp-title">Materi X</h3>
-                                <p class="text-sm text-slate-500 font-medium mt-1 bg-slate-100 inline-block px-2 py-0.5 rounded" id="rpp-subtitle">Kode: - | - JP</p>
-                            </div>
+                        <div class="flex justify-between items-end mb-4">
+                            <div><h3 class="font-bold text-xl text-slate-800" id="rpp-title">Materi X</h3><p class="text-xs text-slate-500 mt-1" id="rpp-subtitle">Kode: -</p></div>
                         </div>
-                        
-                        <div class="mb-6 bg-gradient-to-r from-orange-50 to-orange-100/50 p-5 rounded-xl border border-orange-100 shadow-sm">
-                            <label class="block text-xs font-bold text-orange-800 mb-2 uppercase tracking-wide">1. Pilih Model Pembelajaran (Engine)</label>
+                        <div class="mb-5 bg-gradient-to-r from-orange-50 to-orange-100 p-5 rounded-xl border border-orange-200 shadow-sm">
+                            <label class="block text-xs font-bold text-orange-800 mb-2 uppercase">1. Pilih Model Pembelajaran</label>
                             <div class="flex flex-col sm:flex-row gap-3">
-                                <select id="select-metode" class="flex-1 p-3 border border-orange-200 rounded-lg text-sm bg-white focus:ring-orange-500 focus:border-orange-500">
-                                    <option value="" disabled selected>-- Pilih Strategi Pembelajaran --</option>
-                                    <optgroup label="Pendekatan Ilmiah">
-                                        <option value="Saintifik">Saintifik (5M)</option>
-                                        <option value="Discovery">Discovery Learning</option>
-                                        <option value="Inquiry">Inquiry Learning</option>
-                                    </optgroup>
-                                    <optgroup label="Berbasis Masalah/Proyek">
-                                        <option value="PBL">Problem Based Learning (PBL)</option>
-                                        <option value="PJBL">Project Based Learning (PjBL)</option>
-                                        <option value="ProblemSolving">Problem Solving</option>
-                                    </optgroup>
-                                    <optgroup label="Kooperatif">
-                                        <option value="Kooperatif">Cooperative Learning (Umum)</option>
-                                        <option value="Jigsaw">Jigsaw</option>
-                                        <option value="TPS">Think Pair Share (TPS)</option>
-                                        <option value="STAD">STAD</option>
-                                    </optgroup>
-                                    <option value="Konvensional">Direct Instruction / Ceramah Interaktif</option>
+                                <select id="select-metode" class="flex-1 p-3 border border-orange-200 rounded-lg text-sm bg-white focus:ring-orange-500">
+                                    <option value="" disabled selected>-- Pilih Model --</option>
+                                    <option value="Konvensional">Konvensional / Ceramah</option>
+                                    <option value="PBL">Problem Based Learning (PBL)</option>
+                                    <option value="PJBL">Project Based Learning (PjBL)</option>
+                                    <option value="Discovery">Discovery Learning</option>
+                                    <option value="Inquiry">Inquiry Learning</option>
+                                    <option value="Kooperatif">Cooperative Learning</option>
                                 </select>
-                                <button type="button" onclick="generateKegiatanByMethod()" class="bg-orange-600 text-white px-6 py-3 rounded-lg text-sm font-bold hover:bg-orange-700 whitespace-nowrap shadow-md shadow-orange-200 transition transform active:scale-95 flex items-center justify-center gap-2">
-                                    <span>⚡</span> Generate Isi Otomatis
-                                </button>
+                                <button onclick="generateRPPSmart()" class="bg-orange-600 text-white px-5 py-3 rounded-lg text-sm font-bold hover:bg-orange-700 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95 whitespace-nowrap"><span>⚡</span> Isi Otomatis</button>
                             </div>
-                            <p class="text-[11px] text-orange-700 mt-2 ml-1">Tips: Klik tombol oranye untuk membuat skenario pembelajaran lengkap berdasarkan materi yang dipilih.</p>
+                            <p class="text-[10px] text-orange-700 mt-2 italic">*Menggunakan Smart Logic Engine (Bekerja Offline & Cepat).</p>
                         </div>
-
-                        <div class="space-y-6">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">2. Tujuan Pembelajaran</label>
-                                <textarea id="input-tujuan" class="w-full p-4 border rounded-xl text-sm h-28 focus:ring-2 focus:ring-indigo-500 transition leading-relaxed bg-slate-50 focus:bg-white"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">3. Langkah Pembelajaran (Sintaks)</label>
-                                <textarea id="input-kegiatan" class="w-full p-5 border rounded-xl text-sm h-80 font-mono text-xs leading-relaxed bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition" placeholder="Pilih model di atas lalu klik Generate..."></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">4. Penilaian (Asesmen)</label>
-                                <textarea id="input-penilaian" class="w-full p-4 border rounded-xl text-sm h-28 focus:ring-2 focus:ring-indigo-500 transition leading-relaxed bg-slate-50 focus:bg-white"></textarea>
-                            </div>
-                            
-                            <div class="pt-6 border-t flex justify-end">
-                                <button onclick="saveRPP()" class="bg-emerald-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition transform active:scale-95 flex items-center gap-2">
-                                    <span>💾</span> Simpan Perubahan RPP
-                                </button>
-                            </div>
+                        <div class="space-y-5">
+                            <div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">2. Tujuan Pembelajaran</label><textarea id="input-tujuan" class="w-full p-4 border rounded-xl text-sm h-24 focus:ring-2 focus:ring-indigo-500 bg-slate-50 focus:bg-white transition"></textarea></div>
+                            <div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">3. Kegiatan Pembelajaran (Sintaks)</label><textarea id="input-kegiatan" class="w-full p-4 border rounded-xl text-sm h-64 font-mono text-xs leading-relaxed focus:ring-2 focus:ring-indigo-500 bg-slate-50 focus:bg-white transition"></textarea></div>
+                            <div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">4. Penilaian</label><textarea id="input-penilaian" class="w-full p-4 border rounded-xl text-sm h-28 focus:ring-2 focus:ring-indigo-500 bg-slate-50 focus:bg-white transition"></textarea></div>
+                            <div class="flex justify-end pt-4"><button onclick="saveRPP()" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 shadow-lg transition transform active:scale-95 flex items-center gap-2"><span>💾</span> Simpan RPP Ini</button></div>
                         </div>
                     </div>
-                    
-                    <div id="rpp-empty-state" class="flex flex-col items-center justify-center h-full min-h-[400px] text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
-                        <div class="bg-white p-4 rounded-full shadow-sm mb-4 text-3xl">👈</div>
-                        <h3 class="font-bold text-slate-700 text-lg">Mulai Edit RPP</h3>
-                        <p class="text-slate-400 text-sm max-w-xs mt-1">Pilih salah satu materi dari daftar di sebelah kiri untuk mulai menyusun RPP.</p>
+                    <div id="rpp-empty-state" class="flex flex-col items-center justify-center h-[400px] text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
+                        <div class="text-4xl mb-2">👈</div>
+                        <p class="text-slate-400 font-medium">Pilih materi di daftar kiri untuk mulai menulis RPP.</p>
                     </div>
                 </div>
             </div>
-            <div class="mt-8 pt-6 border-t flex justify-between">
-                <button onclick="goBackToStep4()" class="text-slate-500 hover:text-slate-800 text-sm font-bold flex items-center gap-2">← Kembali</button>
-                <button onclick="goStep6()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-md transition">Selesai Semua & Cetak ➜</button>
-            </div>
+            <div class="mt-8 pt-4 border-t flex justify-between"><button onclick="goBackToStep4()" class="text-slate-500 font-bold text-sm hover:text-slate-800">← Kembali</button><button onclick="goStep6()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-md">Selesai & Cetak ➜</button></div>
         </div>
 
-        <div id="wizard-step-6" class="hidden-section bg-white p-10 rounded-2xl shadow-xl border border-slate-100 fade-in max-w-4xl mx-auto text-center">
-            <div class="w-24 h-24 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-5xl shadow-sm">🎉</div>
-            <h2 class="text-3xl font-bold text-slate-800 mb-3 tracking-tight">Dokumen Buku 1 Siap!</h2>
-            <p class="text-slate-500 mb-10 max-w-lg mx-auto leading-relaxed">Seluruh data administrasi (Cover, Pengesahan, Prota, Promes, RPP) telah disusun otomatis menjadi satu file PDF profesional.</p>
-            
-            <button onclick="printFullDocument()" class="bg-indigo-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-indigo-700 shadow-xl shadow-indigo-200 transform transition hover:-translate-y-1 flex items-center justify-center gap-3 mx-auto">
-                <span class="text-2xl">🖨️</span> Download / Print PDF (A4)
-            </button>
-            
-            <div class="mt-10 pt-8 border-t border-slate-100 flex justify-center gap-6">
-                <button onclick="goBackToStep5()" class="text-slate-400 hover:text-indigo-600 text-sm font-semibold transition">Kembali Edit RPP</button>
-                <span class="text-slate-300">|</span>
-                <button onclick="window.location.reload()" class="text-slate-400 hover:text-indigo-600 text-sm font-semibold transition">Keluar / Reset</button>
-            </div>
+        <div id="wizard-step-6" class="hidden-section bg-white p-10 rounded-2xl shadow-xl border border-slate-100 max-w-4xl mx-auto text-center">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">Dokumen Siap!</h2>
+            <button onclick="printFullDocument()" class="bg-indigo-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-indigo-700 shadow-xl flex items-center justify-center gap-3 mx-auto transition transform hover:-translate-y-1"><span>🖨️</span> Download PDF (A4)</button>
+            <div class="mt-8 pt-6 border-t"><button onclick="goBackToStep5()" class="text-slate-400 hover:text-indigo-600 text-sm font-semibold transition">Kembali Edit RPP</button></div>
         </div>
     </div>
 
     <div id="generator-modal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="flex justify-between items-start mb-6 border-b pb-4 px-2">
-                <div>
-                    <h3 class="font-bold text-xl text-violet-700 flex items-center gap-2">✨ Smart Generator</h3>
-                    <p class="text-xs text-slate-500 mt-1">Sistem menganalisis materi: <b id="gen-topic-title" class="text-slate-800"></b></p>
-                </div>
-                <button onclick="closeGeneratorModal()" class="text-slate-300 hover:text-slate-500 text-2xl font-bold leading-none">&times;</button>
+        <div class="modal-box relative">
+            <div id="logic-loader" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/95 hidden-section">
+                <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+                <p class="text-indigo-700 font-bold animate-pulse typing-loader">Memproses data</p>
             </div>
-            
-            <div class="bg-slate-50 p-1 rounded-xl border border-slate-200 mb-6 max-h-[350px] overflow-y-auto custom-scroll">
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10">
-                        <tr><th class="p-3 text-left">Kode</th><th class="p-3 text-left">Judul Sub-Materi (Otomatis)</th><th class="p-3 text-center w-20">JP</th></tr>
-                    </thead>
-                    <tbody id="gen-preview-body" class="divide-y divide-slate-100"></tbody>
-                </table>
+            <div class="flex justify-between items-start mb-4 border-b pb-3 px-6 pt-6">
+                <div><h3 class="font-bold text-xl text-slate-800">Smart Generator</h3><p class="text-xs text-slate-500 mt-1">Materi: <b id="gen-topic-title" class="text-indigo-600"></b></p></div>
+                <button onclick="closeGeneratorModal()" class="text-slate-400 hover:text-red-500 text-2xl font-bold leading-none">&times;</button>
             </div>
-            
-            <div class="flex justify-between items-center pt-2 px-2">
-                <span class="text-xs text-slate-400 italic">Anda dapat mengedit teks di atas sebelum menyimpan.</span>
-                <div class="flex gap-3">
+            <div class="px-6 pb-6">
+                <div class="bg-slate-50 p-1 rounded-lg border mb-4 max-h-[350px] overflow-y-auto custom-scroll"><table class="w-full text-sm"><thead class="bg-slate-200 text-slate-600 font-bold text-xs uppercase"><tr><th class="p-3 text-left">Kode</th><th class="p-3 text-left">Judul Sub-Materi (Editable)</th><th class="p-3 text-center w-16">JP</th></tr></thead><tbody id="gen-preview-body" class="divide-y divide-slate-200"></tbody></table></div>
+                <div class="flex justify-end gap-3 pt-2">
                     <button onclick="closeGeneratorModal()" class="px-5 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg font-bold text-sm transition">Batal</button>
-                    <button onclick="confirmGenerator()" class="px-6 py-2.5 bg-violet-600 text-white rounded-lg font-bold text-sm hover:bg-violet-700 shadow-lg shadow-violet-200 transition transform active:scale-95">Simpan ke Tabel</button>
+                    <button onclick="confirmGenerator()" class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-md transition transform active:scale-95">Simpan ke Tabel</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="print-area" style="display: none;">
-        <div class="print-page text-center pt-20" style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh;">
-            <h1>BUKU KERJA GURU</h1><h2>BUKU 1 : PERENCANAAN</h2><br><br>
-            <div style="border:3px double black; padding:40px; margin:40px 0; width:80%;">
-                <h2>MATA PELAJARAN : <span class="p-mapel"></span></h2><h2>KELAS : <span class="p-kelas"></span></h2><h2>TAHUN PELAJARAN : <span class="p-tahun"></span></h2>
-            </div>
-            <br><br><p style="font-size:14pt;">Disusun Oleh:</p><p class="p-guru" style="font-size:16pt; font-weight:bold; text-decoration:underline;"></p><p style="font-size:12pt;">NIP. ...........................</p><br><br><h2 class="p-sekolah"></h2>
-        </div>
-        <div class="page-break pt-10">
-            <h2 style="text-decoration:underline;">LEMBAR PENGESAHAN</h2><br><br>
-            <p class="text-justify" style="line-height:2;">Administrasi pembelajaran mata pelajaran <b><span class="p-mapel"></span></b> Kelas <b><span class="p-kelas"></span></b> Tahun Pelajaran <b><span class="p-tahun"></span></b> ini telah diperiksa dan disetujui oleh Kepala Sekolah.</p>
-            <div class="ttd-wrapper">
-                <div class="ttd-box">Mengetahui,<br>Kepala Sekolah<br><br><br><br><b class="p-kepsek" style="text-decoration:underline;"></b><br>NIP. ...</div>
-                <div class="ttd-box">Guru Mata Pelajaran<br><br><br><br><b class="p-guru" style="text-decoration:underline;"></b><br>NIP. ...</div>
-            </div>
-        </div>
-        <div class="page-break"><h3>PROGRAM TAHUNAN</h3><table class="official-table"><thead><tr><th style="width:10%">KODE</th><th>MATERI POKOK</th><th style="width:10%">JP</th></tr></thead><tbody id="print-tbody-prota"></tbody></table></div>
+        <div class="print-page text-center pt-20" style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh;"><h1>BUKU KERJA GURU</h1><h2>BUKU 1 : PERENCANAAN</h2><br><br><div style="border:3px double black; padding:40px; margin:40px 0; width:80%;"><h2>MATA PELAJARAN : <span class="p-mapel"></span></h2><h2>KELAS : <span class="p-kelas"></span></h2><h2>TAHUN : <span class="p-tahun"></span></h2></div><br><br><p>Disusun Oleh:</p><p class="p-guru" style="font-weight:bold; text-decoration:underline; font-size:14pt;"></p><br><br><h2 class="p-sekolah"></h2></div>
+        <div class="page-break pt-10"><h2 style="text-decoration:underline;">LEMBAR PENGESAHAN</h2><br><p style="text-align:justify; line-height:2;">Administrasi mata pelajaran <b><span class="p-mapel"></span></b> Kelas <b><span class="p-kelas"></span></b> Tahun <b><span class="p-tahun"></span></b> telah diperiksa dan disetujui.</p><div class="ttd-wrapper"><div class="ttd-box">Mengetahui,<br>Kepala Sekolah<br><br><br><br><b class="p-kepsek" style="text-decoration:underline;"></b></div><div class="ttd-box">Guru Mata Pelajaran<br><br><br><br><b class="p-guru" style="text-decoration:underline;"></b></div></div></div>
+        <div class="page-break"><h3>PROGRAM TAHUNAN</h3><table class="official-table"><thead><tr><th>KODE</th><th>MATERI POKOK</th><th>JP</th></tr></thead><tbody id="print-tbody-prota"></tbody></table></div>
         <div class="page-break"><h3>PROGRAM SEMESTER</h3><div id="print-container-promes"></div></div>
         <div id="print-container-rpp"></div>
     </div>
 
     <script src="supabase.js"></script>
     <script>
-        // --- CONFIG & STATE ---
-        const MIN_HARI_EFEKTIF_PER_MINGGU = 3; const HARI_NAMES = ['A','S','S','R','K','J','S'];
+        // --- HELPERS & DEFINISI VARIABEL UTAMA (PENTING: DI ATAS) ---
+        const getEl = (id) => document.getElementById(id);
+        
+        const els = { 
+            auth: getEl('auth-section'), 
+            step1: getEl('wizard-step-1'), 
+            step2: getEl('wizard-step-2'), 
+            step3: getEl('wizard-step-3'), 
+            step4: getEl('wizard-step-4'), 
+            step5: getEl('wizard-step-5'), 
+            step6: getEl('wizard-step-6'), 
+            email: getEl('user-email'), 
+            logout: getEl('btn-logout'), 
+            selTahun: getEl('select-tahun') 
+        };
+
+        const MIN_HARI_EFEKTIF_PER_MINGGU = 3; 
+        const HARI_NAMES = ['A','S','S','R','K','J','S'];
         let calendarData=[], protaData=[], promesData=[], calendarWeeksStatus={}; 
         let currentMapelId=null, currentSemester='Ganjil', currentTahunLabel=0, totalJPTersedia=0;
         let activeRppProtaId=null, generatedTempData=[];
 
-        // --- NEW: RICH CONTENT GENERATOR ENGINE ---
-        const RPP_TEMPLATES = {
-            "Konvensional": (t) => ({
-                tujuan: `Peserta didik mampu memahami konsep ${t}, menjelaskan karakteristiknya, serta menyelesaikan masalah dasar terkait ${t} dengan tepat.`,
-                kegiatan: `1. Pendahuluan (10 menit):\n   - Guru membuka kelas dengan salam dan doa.\n   - Guru menyampaikan tujuan pembelajaran materi ${t}.\n   - Apersepsi: Mengaitkan ${t} dengan pengetahuan sebelumnya.\n\n2. Kegiatan Inti (70 menit):\n   - Eksplorasi: Guru menjelaskan definisi dan prinsip dasar ${t}.\n   - Elaborasi: Siswa mencatat poin penting dan mengerjakan contoh soal ${t}.\n   - Konfirmasi: Guru membahas jawaban dan meluruskan pemahaman yang keliru.\n\n3. Penutup (10 menit):\n   - Siswa menyimpulkan materi.\n   - Guru memberikan tugas rumah (PR) terkait ${t}.`,
-                penilaian: `1. Sikap: Observasi kedisiplinan dan keaktifan di kelas.\n2. Pengetahuan: Tes tulis (Uraian/Pilihan Ganda) tentang ${t}.\n3. Keterampilan: Penyelesaian tugas individu.`
-            }),
-            "Saintifik": (t) => ({
-                tujuan: `Melalui pendekatan saintifik, peserta didik dapat mengamati, menanya, mencoba, menalar, dan mengomunikasikan konsep ${t} secara kritis dan mandiri.`,
-                kegiatan: `1. Mengamati: Siswa mengamati fenomena/tayangan/data terkait ${t}.\n2. Menanya: Siswa merumuskan pertanyaan tentang hal yang belum dipahami dari ${t}.\n3. Mengumpulkan Informasi: Siswa mencari referensi atau melakukan eksperimen sederhana tentang ${t}.\n4. Mengasosiasi: Siswa mengolah informasi untuk menemukan hubungan antar konsep dalam ${t}.\n5. Mengomunikasikan: Perwakilan siswa mempresentasikan temuan mereka tentang ${t} di depan kelas.`,
-                penilaian: `1. Pengetahuan: Tes formatif materi ${t}.\n2. Keterampilan: Unjuk kerja presentasi.`
-            }),
-            "PBL": (t) => ({
-                tujuan: `Peserta didik mampu menganalisis masalah kontekstual terkait ${t} dan merumuskan solusinya melalui diskusi kelompok.`,
-                kegiatan: `1. Orientasi Masalah: Guru menyajikan masalah nyata yang berkaitan dengan ${t}.\n2. Organisasi Belajar: Siswa duduk berkelompok untuk mendiskusikan masalah ${t}.\n3. Penyelidikan: Siswa mencari data pendukung untuk memecahkan masalah ${t}.\n4. Penyajian Hasil: Kelompok menyusun laporan dan mempresentasikan solusi masalah ${t}.\n5. Evaluasi: Guru dan siswa mengevaluasi efektivitas solusi yang ditawarkan.`,
-                penilaian: `1. Penilaian Produk (Laporan Diskusi).\n2. Observasi Kerjasama Tim.`
-            }),
-            "PJBL": (t) => ({
-                tujuan: `Peserta didik dapat merancang dan membuat produk nyata yang menerapkan prinsip ${t} secara kreatif.`,
-                kegiatan: `1. Pertanyaan Mendasar: Bagaimana ${t} dapat diterapkan dalam kehidupan?\n2. Desain Proyek: Siswa merancang proyek berbasis ${t}.\n3. Jadwal: Menyepakati timeline pengerjaan proyek.\n4. Monitoring: Guru memantau perkembangan proyek ${t} siswa.\n5. Uji Hasil: Siswa memamerkan produk hasil penerapan ${t}.\n6. Evaluasi: Refleksi pengalaman membuat proyek.`,
-                penilaian: `1. Penilaian Proyek (Perencanaan s.d. Hasil).\n2. Presentasi Produk.`
-            }),
-            "Discovery": (t) => ({
-                tujuan: `Peserta didik mampu menemukan sendiri prinsip-prinsip ${t} melalui penyelidikan terbimbing.`,
-                kegiatan: `1. Stimulasi: Guru memberikan rangsangan berupa anomali terkait ${t}.\n2. Identifikasi Masalah: Siswa memperkirakan penyebab fenomena ${t} tersebut.\n3. Pengumpulan Data: Siswa mengumpulkan bukti-bukti.\n4. Pengolahan Data: Siswa mengklasifikasikan data ${t}.\n5. Verifikasi: Siswa membuktikan hipotesisnya.\n6. Generalisasi: Menyimpulkan prinsip umum ${t}.`,
-                penilaian: `1. Tes Tulis.\n2. Laporan Penemuan.`
-            })
-        };
-
         const monthsGanjil = [{name:'Juli',idx:6},{name:'Agustus',idx:7},{name:'September',idx:8},{name:'Oktober',idx:9},{name:'November',idx:10},{name:'Desember',idx:11}];
         const monthsGenap = [{name:'Januari',idx:0},{name:'Februari',idx:1},{name:'Maret',idx:2},{name:'April',idx:3},{name:'Mei',idx:4},{name:'Juni',idx:5}];
 
-        const els = { auth: document.getElementById('auth-section'), step1: document.getElementById('wizard-step-1'), step2: document.getElementById('wizard-step-2'), step3: document.getElementById('wizard-step-3'), step4: document.getElementById('wizard-step-4'), step5: document.getElementById('wizard-step-5'), step6: document.getElementById('wizard-step-6'), email: document.getElementById('user-email'), logout: document.getElementById('btn-logout'), selTahun: document.getElementById('select-tahun') };
+        // --- SMART LOGIC ENGINE (OFFLINE) ---
+        const CONTEXT_DICT = {
+            math: { verbs: ["Menghitung", "Menganalisis", "Menyelesaikan", "Membuktikan"], syntax: "Latihan Terbimbing" },
+            science: { verbs: ["Mengamati", "Menjelaskan", "Mengklasifikasi", "Menganalisis"], syntax: "Eksperimen/Observasi" },
+            lang: { verbs: ["Mengidentifikasi", "Menyusun", "Menganalisis Struktur", "Mempresentasikan"], syntax: "Produksi Teks" },
+            history: { verbs: ["Mendeskripsikan", "Menganalisis Dampak", "Merekonstruksi", "Mengambil Hikmah"], syntax: "Studi Kasus" },
+            general: { verbs: ["Memahami Konsep", "Menerapkan", "Menganalisis", "Mengevaluasi"], syntax: "Diskusi" }
+        };
+
+        function detectSubjectType(mapel) {
+            const m = mapel.toLowerCase();
+            if (m.match(/matematika|fisika|kimia|kalkulus/)) return "math";
+            if (m.match(/biologi|ipa|sains|geografi/)) return "science";
+            if (m.match(/bahasa|sastra|indonesia|inggris/)) return "lang";
+            if (m.match(/sejarah|pkn|sosial|agama/)) return "history";
+            return "general";
+        }
 
         // --- AUTH & INIT ---
         async function initApp() { if (!window.db) return alert("Supabase Error"); const { data: { session } } = await window.db.auth.getSession(); if (session) { showApp(session.user); await restoreSessionData(session.user.id); } else showLogin(); }
@@ -400,17 +284,16 @@
             const { data } = await window.db.from('mapel_kelas').select('*').eq('user_id', userId).order('created_at', {ascending:false}).limit(1).single();
             if(data) {
                 currentMapelId=data.id; els.selTahun.value=data.id_tahun_ajaran;
-                document.getElementById('input-mapel').value=data.nama_mapel; document.getElementById('input-kelas').value=data.kelas; document.getElementById('input-jp-beban').value=data.beban_jp_minggu;
+                getEl('input-mapel').value=data.nama_mapel; getEl('input-kelas').value=data.kelas; getEl('input-jp-beban').value=data.beban_jp_minggu;
                 const {data:th}=await window.db.from('tahun_ajaran').select('*').eq('id',data.id_tahun_ajaran).single();
                 if(th){currentSemester=th.semester; currentTahunLabel=parseInt(th.nama.split('/')[0]);}
-                const sk=localStorage.getItem('kepsek_name'); if(sk) document.getElementById('input-kepsek').value=sk;
-                const ss=localStorage.getItem('sekolah_name'); if(ss) document.getElementById('input-sekolah').value=ss;
+                getEl('input-kepsek').value=localStorage.getItem('kepsek_name')||''; getEl('input-sekolah').value=localStorage.getItem('sekolah_name')||'';
             }
         }
         function showApp(user){ hideAllSteps(); els.step1.classList.remove('hidden-section'); els.auth.classList.add('hidden-section'); els.logout.classList.remove('hidden-section'); els.email.textContent=user.email; loadTahunAjaran(); }
         function showLogin(){ hideAllSteps(); els.auth.classList.remove('hidden-section'); els.logout.classList.add('hidden-section'); }
         function hideAllSteps(){ document.querySelectorAll('[id^="wizard-step-"]').forEach(el=>el.classList.add('hidden-section')); }
-        document.getElementById('auth-form').addEventListener('submit', async(e)=>{e.preventDefault(); const email=document.getElementById('email').value, password=document.getElementById('password').value; let {data,error}=await window.db.auth.signInWithPassword({email,password}); if(error){if(error.message.includes("Invalid login")){await window.db.auth.signUp({email,password}); alert("Akun dibuat! Login lagi.");}else alert(error.message);}else{showApp(data.user); await restoreSessionData(data.user.id);}});
+        getEl('auth-form').addEventListener('submit', async(e)=>{e.preventDefault(); const email=getEl('email').value, password=getEl('password').value; let {data,error}=await window.db.auth.signInWithPassword({email,password}); if(error){if(error.message.includes("Invalid login")){await window.db.auth.signUp({email,password}); alert("Akun dibuat! Login lagi.");}else alert(error.message);}else{showApp(data.user); await restoreSessionData(data.user.id);}});
         els.logout.addEventListener('click', async()=>{await window.db.auth.signOut(); showLogin();});
 
         // --- NAVIGATION ---
@@ -424,14 +307,21 @@
         async function goBackToStep4(){ hideAllSteps(); els.step4.classList.remove('hidden-section'); await initStep4Logic(); }
         async function goBackToStep5(){ hideAllSteps(); els.step5.classList.remove('hidden-section'); await initStep5Logic(); }
 
-        // --- STEP 1 & 2 (CALENDAR) ---
-        document.getElementById('setup-form').addEventListener('submit', async(e)=>{e.preventDefault(); await saveStep1();});
+        // --- STEP 1 ---
+        getEl('setup-form').addEventListener('submit', async(e)=>{e.preventDefault(); await saveStep1();});
         async function loadTahunAjaran(){els.selTahun.innerHTML='<option>Loading...</option>'; let {data}=await window.db.from('tahun_ajaran').select('*').eq('is_active',true); els.selTahun.innerHTML='<option value="">-- Pilih Tahun --</option>'; if(data) data.forEach(th=>{const opt=document.createElement('option'); opt.value=th.id; opt.textContent=`${th.nama} (${th.semester})`; opt.dataset.semester=th.semester; opt.dataset.tahun=th.nama.split('/')[0]; els.selTahun.appendChild(opt);});}
-        async function saveStep1(){ const user=(await window.db.auth.getUser()).data.user; const opt=els.selTahun.options[els.selTahun.selectedIndex]; currentSemester=opt.dataset.semester; currentTahunLabel=parseInt(opt.dataset.tahun); const payload={user_id:user.id, id_tahun_ajaran:els.selTahun.value, nama_mapel:document.getElementById('input-mapel').value, kelas:document.getElementById('input-kelas').value, beban_jp_minggu:parseInt(document.getElementById('input-jp-beban').value)}; const {data,error}=await window.db.from('mapel_kelas').insert([payload]).select(); if(!error){currentMapelId=data[0].id; localStorage.setItem('kepsek_name',document.getElementById('input-kepsek').value); localStorage.setItem('sekolah_name',document.getElementById('input-sekolah').value); if(!els.step2.classList.contains('hidden-section')) return; else {hideAllSteps(); els.step2.classList.remove('hidden-section'); await loadCalendarFromDB() || populateCalendarData(); renderDailyCalendarUI();}} }
+        async function saveStep1(){ 
+            const user=(await window.db.auth.getUser()).data.user; const opt=els.selTahun.options[els.selTahun.selectedIndex]; currentSemester=opt.dataset.semester; currentTahunLabel=parseInt(opt.dataset.tahun); 
+            const payload={user_id:user.id, id_tahun_ajaran:els.selTahun.value, nama_mapel:getEl('input-mapel').value, kelas:getEl('input-kelas').value, beban_jp_minggu:parseInt(getEl('input-jp-beban').value)}; 
+            const {data,error}=await window.db.from('mapel_kelas').insert([payload]).select(); 
+            if(!error){ currentMapelId=data[0].id; localStorage.setItem('kepsek_name',getEl('input-kepsek').value); localStorage.setItem('sekolah_name',getEl('input-sekolah').value); if(!els.step2.classList.contains('hidden-section')) return; else {hideAllSteps(); els.step2.classList.remove('hidden-section'); await loadCalendarFromDB() || populateCalendarData(); renderDailyCalendarUI();} } 
+        }
+
+        // --- STEP 2 ---
         function populateCalendarData(){ calendarData=[]; const months=(currentSemester==='Genap')?monthsGenap:monthsGanjil; let realYear=currentTahunLabel; months.forEach((m)=>{ if(currentSemester==='Ganjil'&&m.idx===0) realYear++; if(currentSemester==='Genap'&&m.idx<=5) realYear=currentTahunLabel+1; const totalDays=new Date(realYear,m.idx+1,0).getDate(); const firstDay=new Date(realYear,m.idx,1).getDay(); for(let d=1; d<=totalDays; d++){ const dayOfWeek=new Date(realYear,m.idx,d).getDay(); const weekInMonth=Math.ceil((d+firstDay)/7); calendarData.push({date:`${realYear}-${String(m.idx+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`, day:d, monthIdx:m.idx, year:realYear, weekInMonth:weekInMonth, status:(dayOfWeek===0)?'Tidak Efektif':'Efektif'}); } }); }
-        async function loadCalendarFromDB(){ document.getElementById('calendar-loader').classList.remove('hidden-section'); const {data}=await window.db.from('kalender_akademik').select('*').eq('id_tahun_ajaran',els.selTahun.value); document.getElementById('calendar-loader').classList.add('hidden-section'); if(data&&data.length>0){ calendarData=data.map(d=>{const dateObj=new Date(d.tanggal); const firstDay=new Date(dateObj.getFullYear(),dateObj.getMonth(),1).getDay(); return {date:d.tanggal, day:dateObj.getDate(), monthIdx:dateObj.getMonth(), year:dateObj.getFullYear(), weekInMonth:Math.ceil((dateObj.getDate()+firstDay)/7), status:d.status};}); return true; } return false; }
+        async function loadCalendarFromDB(){ getEl('calendar-loader').classList.remove('hidden-section'); const {data}=await window.db.from('kalender_akademik').select('*').eq('id_tahun_ajaran',els.selTahun.value); getEl('calendar-loader').classList.add('hidden-section'); if(data&&data.length>0){ calendarData=data.map(d=>{const dateObj=new Date(d.tanggal); const firstDay=new Date(dateObj.getFullYear(),dateObj.getMonth(),1).getDay(); return {date:d.tanggal, day:dateObj.getDate(), monthIdx:dateObj.getMonth(), year:dateObj.getFullYear(), weekInMonth:Math.ceil((dateObj.getDate()+firstDay)/7), status:d.status};}); return true; } return false; }
         function renderDailyCalendarUI(){
-            const grid=document.getElementById('calendar-grid'); grid.innerHTML=''; const months=(currentSemester==='Genap')?monthsGenap:monthsGanjil;
+            const grid=getEl('calendar-grid'); grid.innerHTML=''; const months=(currentSemester==='Genap')?monthsGenap:monthsGanjil;
             months.forEach(m=>{
                 const mData=calendarData.filter(d=>d.monthIdx===m.idx); if(mData.length===0) return;
                 const card=document.createElement('div'); card.className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm";
@@ -439,177 +329,165 @@
                 const maxW=Math.max(...mData.map(d=>d.weekInMonth)); const quickDiv=card.querySelector(`#quick-${m.idx}`);
                 for(let w=1; w<=maxW; w++){ const b=document.createElement('button'); b.className="text-[10px] bg-slate-100 text-slate-500 px-1.5 rounded hover:bg-slate-200 border"; b.innerText=`P${w}`; b.onclick=()=>toggleWeek(m.idx,mData[0].year,w); quickDiv.appendChild(b); }
                 const dGrid=document.createElement('div'); dGrid.className="grid grid-cols-7 gap-1 text-center"; HARI_NAMES.forEach(h=>dGrid.innerHTML+=`<div class="text-[10px] text-slate-400 font-bold">${h}</div>`); const startDay=new Date(mData[0].date).getDay(); for(let i=0; i<startDay; i++) dGrid.innerHTML+=`<div></div>`;
-                mData.forEach(item=>{ const btn=document.createElement('button'); const color=item.status==='Efektif'?'bg-emerald-500 text-white':'bg-rose-500 text-white opacity-80'; btn.className=`w-full aspect-square rounded-lg text-xs font-bold ${color} transition transform active:scale-95`; btn.innerText=item.day; btn.onclick=()=>{item.status=(item.status==='Efektif')?'Tidak Efektif':'Efektif'; renderDailyCalendarUI();}; dGrid.appendChild(btn); });
+                mData.forEach(item=>{ const btn=document.createElement('button'); const color=item.status==='Efektif'?'bg-emerald-500 text-white':'bg-red-500 text-white opacity-80'; btn.className=`w-full aspect-square rounded-lg text-xs font-bold ${color} transition transform active:scale-95`; btn.innerText=item.day; btn.onclick=()=>{item.status=(item.status==='Efektif')?'Tidak Efektif':'Efektif'; renderDailyCalendarUI();}; dGrid.appendChild(btn); });
                 card.appendChild(dGrid); grid.appendChild(card);
             }); calcStep2Summary();
         }
         function toggleWeek(mIdx,y,w){ const targets=calendarData.filter(d=>d.monthIdx===mIdx&&d.year===y&&d.weekInMonth===w); if(!targets.length)return; const newVal=targets.some(d=>d.status==='Efektif')?'Tidak Efektif':'Efektif'; targets.forEach(d=>d.status=newVal); renderDailyCalendarUI(); }
-        function calcStep2Summary(){ calendarWeeksStatus={}; let total=0, efektif=0; const weeks={}; calendarData.forEach(d=>{ const k=`${d.year}-W${Math.ceil((((new Date(d.date)-new Date(d.year,0,1))/86400000)+new Date(d.year,0,1).getDay()+1)/7)}`; if(!weeks[k]) weeks[k]=0; if(d.status==='Efektif') weeks[k]++; }); Object.values(weeks).forEach(cnt=>{ total++; if(cnt>=MIN_HARI_EFEKTIF_PER_MINGGU) efektif++; }); document.getElementById('sum-total').innerText=total; document.getElementById('sum-libur').innerText=total-efektif; document.getElementById('sum-efektif').innerText=efektif; const months=(currentSemester==='Genap')?monthsGenap:monthsGanjil; months.forEach(m=>{ const mData=calendarData.filter(d=>d.monthIdx===m.idx); if(!mData.length) return; const maxW=Math.max(...mData.map(d=>d.weekInMonth)); for(let w=1; w<=maxW; w++){ const daysInWeek=mData.filter(d=>d.weekInMonth===w); const efCount=daysInWeek.filter(d=>d.status==='Efektif').length; calendarWeeksStatus[`${m.idx+1}-${w}`]=(efCount>=MIN_HARI_EFEKTIF_PER_MINGGU)?'Efektif':'Libur'; } }); }
-        async function saveStep2(loading){ const btn=document.getElementById('btn-next-step2'); const txt=btn.innerText; if(loading){btn.innerText="Menyimpan..."; btn.disabled=true;} const tid=els.selTahun.value; await window.db.from('kalender_akademik').delete().eq('id_tahun_ajaran',tid); const payload=calendarData.map(d=>({id_tahun_ajaran:tid, tanggal:d.date, status:d.status})); await window.db.from('kalender_akademik').insert(payload); if(loading){btn.innerText=txt; btn.disabled=false;} }
+        function calcStep2Summary(){ calendarWeeksStatus={}; let total=0, efektif=0; const weeks={}; calendarData.forEach(d=>{ const k=`${d.year}-W${Math.ceil((((new Date(d.date)-new Date(d.year,0,1))/86400000)+new Date(d.year,0,1).getDay()+1)/7)}`; if(!weeks[k]) weeks[k]=0; if(d.status==='Efektif') weeks[k]++; }); Object.values(weeks).forEach(cnt=>{ total++; if(cnt>=MIN_HARI_EFEKTIF_PER_MINGGU) efektif++; }); getEl('sum-total').innerText=total; getEl('sum-libur').innerText=total-efektif; getEl('sum-efektif').innerText=efektif; const months=(currentSemester==='Genap')?monthsGenap:monthsGanjil; months.forEach(m=>{ const mData=calendarData.filter(d=>d.monthIdx===m.idx); if(!mData.length) return; const maxW=Math.max(...mData.map(d=>d.weekInMonth)); for(let w=1; w<=maxW; w++){ const daysInWeek=mData.filter(d=>d.weekInMonth===w); const efCount=daysInWeek.filter(d=>d.status==='Efektif').length; calendarWeeksStatus[`${m.idx+1}-${w}`]=(efCount>=MIN_HARI_EFEKTIF_PER_MINGGU)?'Efektif':'Libur'; } }); }
+        async function saveStep2(loading){ const btn=getEl('btn-next-step2'); if(btn && loading){btn.innerText="Menyimpan..."; btn.disabled=true;} const tid=els.selTahun.value; await window.db.from('kalender_akademik').delete().eq('id_tahun_ajaran',tid); const payload=calendarData.map(d=>({id_tahun_ajaran:tid, tanggal:d.date, status:d.status})); await window.db.from('kalender_akademik').insert(payload); if(btn && loading){btn.innerText="Simpan & Lanjut ➜"; btn.disabled=false;} }
 
-        // --- STEP 3: PROTA (SMART GENERATOR ENGINE) ---
-        async function initStep3Logic(){ const ef=parseInt(document.getElementById('sum-efektif').innerText)||0; const bb=parseInt(document.getElementById('input-jp-beban').value)||4; totalJPTersedia=ef*bb; document.getElementById('disp-minggu-efektif').innerText=ef; document.getElementById('disp-beban-jp').innerText=bb; document.getElementById('disp-total-jp').innerText=totalJPTersedia; await loadProtaDB(); updateSisaJP(); }
-        async function loadProtaDB(){ protaData=[]; const {data}=await window.db.from('prota').select('*').eq('id_mapel_kelas',currentMapelId).order('kode_materi',{ascending:true}); if(data) protaData=data; renderProtaTable(); }
-        
-        async function addManualProta() { 
-            if(!document.getElementById('input-kd-code').value || !document.getElementById('input-kd-text').value || !document.getElementById('input-kd-jp').value) return alert("Isi semua data!"); 
-            const item = { id_mapel_kelas: currentMapelId, kode_materi: document.getElementById('input-kd-code').value, topik_materi: document.getElementById('input-kd-text').value, alokasi_jp: parseInt(document.getElementById('input-kd-jp').value), semester: currentSemester }; 
-            const { data } = await window.db.from('prota').insert([item]).select();
-            if(data) { protaData.push(data[0]); protaData.sort((a,b)=>a.kode_materi.localeCompare(b.kode_materi,undefined,{numeric:true})); renderProtaTable(); clearProtaInputs(); }
+        // --- STEP 3: PROTA ---
+        async function initStep3Logic(){ 
+            const ef=parseInt(getEl('sum-efektif').innerText)||0; const bb=parseInt(getEl('input-jp-beban').value)||4; totalJPTersedia=ef*bb; 
+            if(getEl('disp-minggu-efektif')) getEl('disp-minggu-efektif').innerText=ef; 
+            if(getEl('disp-beban-jp')) getEl('disp-beban-jp').innerText=bb; 
+            if(getEl('disp-total-jp')) getEl('disp-total-jp').innerText=totalJPTersedia; 
+            await loadProtaDB(); updateSisaJP(); 
         }
-
-        // --- NEW: CONTEXT-AWARE SUB-BAB GENERATOR ---
+        async function loadProtaDB(){ protaData=[]; const {data}=await window.db.from('prota').select('*').eq('id_mapel_kelas',currentMapelId).order('kode_materi',{ascending:true}); if(data) protaData=data; renderProtaTable(); }
+        async function addManualProta() { 
+            if(!getEl('input-kd-code').value || !getEl('input-kd-text').value || !getEl('input-kd-jp').value) return alert("Isi semua data!"); 
+            const item = { id_mapel_kelas: currentMapelId, kode_materi: getEl('input-kd-code').value, topik_materi: getEl('input-kd-text').value, alokasi_jp: parseInt(getEl('input-kd-jp').value), semester: currentSemester }; 
+            const { data } = await window.db.from('prota').insert([item]).select(); if(data) { protaData.push(data[0]); protaData.sort((a,b)=>a.kode_materi.localeCompare(b.kode_materi,undefined,{numeric:true})); renderProtaTable(); clearProtaInputs(); }
+        }
+        
+        // --- SMART SUB-BAB GENERATOR (LOGIC BASED) ---
         function openGeneratorModal() {
-            const babCode = document.getElementById('input-kd-code').value; 
-            const topic = document.getElementById('input-kd-text').value; 
-            const totalJP = parseInt(document.getElementById('input-kd-jp').value);
+            const babCode = getEl('input-kd-code').value; const topic = getEl('input-kd-text').value; const totalJP = parseInt(getEl('input-kd-jp').value);
+            if(!babCode || !topic || !totalJP) return alert("Isi Kode, Materi, dan Total JP dulu!");
             
-            if(!babCode || !topic || !totalJP) return alert("Mohon isi KODE BAB, MATERI, dan TOTAL JP terlebih dahulu!");
-            document.getElementById('gen-topic-title').innerText = topic; generatedTempData = [];
-            
-            // 1. Detect Context (Math vs Science vs General)
-            const lowerTopic = topic.toLowerCase();
-            let templateType = "general";
-            if (lowerTopic.match(/hitung|limit|fungsi|persamaan|matriks|integral|vektor/)) templateType = "math";
-            else if (lowerTopic.match(/sel|hukum|gaya|reaksi|struktur|ekosistem|zat/)) templateType = "science";
-            else if (lowerTopic.match(/sejarah|perang|teks|puisi|drama|cerpen/)) templateType = "narrative";
+            getEl('gen-topic-title').innerText = topic; generatedTempData = [];
+            getEl('generator-modal').classList.add('active');
+            getEl('logic-loader').classList.remove('hidden-section');
 
-            // 2. Generate Logic based on JP & Context
-            let subTopics = [];
+            // SMART LOGIC: Determine context
+            const mapel = getEl('input-mapel').value;
+            const type = detectSubjectType(mapel);
+            const context = CONTEXT_DICT[type];
             
-            if (templateType === "math") {
-                subTopics.push(`Konsep Dasar ${topic}`);
-                if(totalJP > 4) subTopics.push(`Sifat dan Operasi ${topic}`);
-                if(totalJP > 8) subTopics.push(`Penyelesaian Masalah Kontekstual ${topic}`);
-                subTopics.push(`Latihan dan Evaluasi ${topic}`);
-            } else if (templateType === "science") {
-                subTopics.push(`Pengertian dan Karakteristik ${topic}`);
-                if(totalJP > 4) subTopics.push(`Struktur dan Fungsi dalam ${topic}`);
-                if(totalJP > 8) subTopics.push(`Analisis Fenomena ${topic}`);
-                subTopics.push(`Eksperimen/Observasi ${topic}`);
-            } else if (templateType === "narrative") {
-                subTopics.push(`Definisi dan Struktur ${topic}`);
-                if(totalJP > 4) subTopics.push(`Kaidah Kebahasaan/Unsur ${topic}`);
-                if(totalJP > 8) subTopics.push(`Analisis Teks/Peristiwa ${topic}`);
-                subTopics.push(`Menyusun/Merekonstruksi ${topic}`);
+            // Generate Sub-topics based on Bloom (C1 - C6 adapted)
+            let subTopics = [];
+            if(type === 'math') {
+                subTopics = [`Konsep Dasar ${topic}`, `Sifat dan Operasi ${topic}`, `Penyelesaian Masalah ${topic}`, `Latihan & Evaluasi ${topic}`];
+            } else if (type === 'science') {
+                subTopics = [`Pengertian dan Karakteristik ${topic}`, `Struktur/Komponen ${topic}`, `Analisis Fenomena ${topic}`, `Eksperimen ${topic}`];
+            } else if (type === 'lang') {
+                subTopics = [`Struktur Teks ${topic}`, `Unsur Kebahasaan ${topic}`, `Menyusun/Memproduksi ${topic}`, `Presentasi Karya ${topic}`];
             } else {
-                subTopics.push(`Memahami Konsep ${topic}`);
-                if(totalJP > 4) subTopics.push(`Menerapkan Prinsip ${topic}`);
-                if(totalJP > 8) subTopics.push(`Menganalisis Kasus ${topic}`);
-                subTopics.push(`Evaluasi ${topic}`);
+                subTopics = [`Memahami Konsep ${topic}`, `Analisis Faktor/Dampak ${topic}`, `Studi Kasus ${topic}`, `Evaluasi Pemahaman ${topic}`];
             }
 
-            // 3. Distribute JP
-            let jpPerItem = Math.floor(totalJP / subTopics.length);
+            // Distribute JP
+            let jpPerItem = Math.floor(totalJP/subTopics.length);
             let remainder = totalJP % subTopics.length;
 
-            subTopics.forEach((st, i) => {
-                let currentJp = jpPerItem + (i < remainder ? 1 : 0); // Distribute remainder
-                if(currentJp > 0) {
-                    generatedTempData.push({ id_mapel_kelas: currentMapelId, kode_materi: `${babCode}.${i+1}`, topik_materi: st, alokasi_jp: currentJp, semester: currentSemester });
-                }
-            });
-
-            // Render
-            const tbody = document.getElementById('gen-preview-body'); tbody.innerHTML = '';
-            generatedTempData.forEach((d, idx) => { tbody.innerHTML += `<tr><td><input type="text" value="${d.kode_materi}" class="w-full border border-slate-200 p-2 rounded-lg bg-white font-mono text-indigo-600 font-bold" onchange="generatedTempData[${idx}].kode_materi = this.value"></td><td><input type="text" value="${d.topik_materi}" class="w-full border border-slate-200 p-2 rounded-lg bg-white text-slate-700" onchange="generatedTempData[${idx}].topik_materi = this.value"></td><td><input type="number" value="${d.alokasi_jp}" class="w-16 border border-slate-200 p-2 rounded-lg text-center bg-white font-bold" onchange="generatedTempData[${idx}].alokasi_jp = parseInt(this.value)"></td></tr>`; });
-            document.querySelector('.modal-overlay').classList.add('active');
+            // Fake delay for UX
+            setTimeout(() => {
+                subTopics.forEach((st, i) => {
+                    let currentJp = jpPerItem + (i < remainder ? 1 : 0);
+                    if(currentJp > 0) generatedTempData.push({ id_mapel_kelas: currentMapelId, kode_materi: `${babCode}.${i+1}`, topik_materi: st, alokasi_jp: currentJp, semester: currentSemester });
+                });
+                
+                getEl('logic-loader').classList.add('hidden-section');
+                const tbody = getEl('gen-preview-body'); tbody.innerHTML = '';
+                generatedTempData.forEach((d, idx) => { tbody.innerHTML += `<tr><td><input type="text" value="${d.kode_materi}" class="w-full border p-2 rounded-lg bg-white" onchange="generatedTempData[${idx}].kode_materi = this.value"></td><td><input type="text" value="${d.topik_materi}" class="w-full border p-2 rounded-lg bg-white" onchange="generatedTempData[${idx}].topik_materi = this.value"></td><td><input type="number" value="${d.alokasi_jp}" class="w-16 border p-2 rounded-lg text-center bg-white" onchange="generatedTempData[${idx}].alokasi_jp = parseInt(this.value)"></td></tr>`; });
+            }, 600);
         }
 
-        function closeGeneratorModal() { document.querySelector('.modal-overlay').classList.remove('active'); }
-        async function confirmGenerator() { 
-            const { data } = await window.db.from('prota').insert(generatedTempData).select();
-            if(data) { protaData = [...protaData, ...data]; protaData.sort((a,b)=>a.kode_materi.localeCompare(b.kode_materi,undefined,{numeric:true})); renderProtaTable(); closeGeneratorModal(); clearProtaInputs(); }
-        }
-        function clearProtaInputs() { document.getElementById('input-kd-code').value=''; document.getElementById('input-kd-text').value=''; document.getElementById('input-kd-jp').value=''; }
-        function renderProtaTable() { const tb=document.getElementById('prota-list-body'); tb.innerHTML=''; let lastP=null; if(protaData.length===0){document.getElementById('prota-empty-msg').classList.remove('hidden-section');}else{document.getElementById('prota-empty-msg').classList.add('hidden-section'); protaData.forEach((d,i)=>{ const pref=d.kode_materi.split('.')[0]; if(pref!==lastP) tb.innerHTML+=`<tr class="bg-slate-50"><td colspan="4" class="p-2 text-[10px] font-bold text-center text-slate-500 uppercase tracking-widest border-y border-slate-200">Bab ${pref}</td></tr>`; lastP=pref; tb.innerHTML+=`<tr class="group hover:bg-slate-50 transition"><td class="p-3 font-bold text-indigo-600 font-mono border-b border-slate-100">${d.kode_materi}</td><td class="p-3 text-slate-700 border-b border-slate-100">${d.topik_materi}</td><td class="p-3 font-bold text-center text-slate-700 border-b border-slate-100">${d.alokasi_jp}</td><td class="p-3 text-center border-b border-slate-100"><button onclick="deleteProta(${d.id})" class="text-slate-300 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition px-2">×</button></td></tr>`; });} updateSisaJP(); }
-        async function deleteProta(id) { if(!confirm("Hapus materi ini?")) return; await window.db.from('prota').delete().eq('id', id); loadProtaDB(); }
-        function updateSisaJP(){ const used=protaData.reduce((a,b)=>a+b.alokasi_jp,0); const sisa=totalJPTersedia-used; const el=document.getElementById('warn-sisa'); el.innerText=`Sisa: ${sisa} JP`; el.className=sisa<0?"text-xs font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-600 border border-rose-200":"text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-600 border border-emerald-200"; }
+        function closeGeneratorModal() { getEl('generator-modal').classList.remove('active'); }
+        async function confirmGenerator() { const { data } = await window.db.from('prota').insert(generatedTempData).select(); if(data) { protaData = [...protaData, ...data]; protaData.sort((a,b)=>a.kode_materi.localeCompare(b.kode_materi,undefined,{numeric:true})); renderProtaTable(); closeGeneratorModal(); clearProtaInputs(); } }
+        function clearProtaInputs() { getEl('input-kd-code').value=''; getEl('input-kd-text').value=''; getEl('input-kd-jp').value=''; }
+        function renderProtaTable() { const tb=getEl('prota-list-body'); tb.innerHTML=''; let lastP=null; protaData.forEach((d,i)=>{ const pref=d.kode_materi.split('.')[0]; if(pref!==lastP) tb.innerHTML+=`<tr class="bg-slate-50"><td colspan="4" class="p-2 text-[10px] font-bold text-center text-slate-500 uppercase tracking-widest border-y border-slate-200">Bab ${pref}</td></tr>`; lastP=pref; tb.innerHTML+=`<tr class="hover:bg-slate-50"><td class="p-3 font-bold text-sky-600 font-mono border-b">${d.kode_materi}</td><td class="p-3 border-b">${d.topik_materi}</td><td class="p-3 font-bold text-center border-b">${d.alokasi_jp}</td><td class="p-3 text-center border-b"><button onclick="deleteProta(${d.id})" class="text-red-400 font-bold">×</button></td></tr>`; }); updateSisaJP(); }
+        async function deleteProta(id) { if(!confirm("Hapus?")) return; await window.db.from('prota').delete().eq('id', id); loadProtaDB(); }
+        function updateSisaJP(){ const used=protaData.reduce((a,b)=>a+b.alokasi_jp,0); const sisa=totalJPTersedia-used; if(getEl('warn-sisa')) getEl('warn-sisa').innerText=`Sisa: ${sisa} JP`; }
         async function saveStep3(loading){ /* Saved on Add */ }
 
-        // --- STEP 4: PROMES (AUTO-FILL) ---
-        async function initStep4Logic(){ const ids=protaData.map(p=>p.id); if(ids.length>0){const {data}=await window.db.from('promes').select('*').in('id_prota',ids); promesData=data||[];} else promesData=[]; if(promesData.length===0 && protaData.length>0) autoDistributePromes(); renderPromesTable(); }
+        // --- STEP 4 ---
+        async function initStep4Logic(){ const ids=protaData.map(p=>p.id); if(ids.length>0){const {data}=await window.db.from('promes').select('*').in('id_prota',ids); promesData=data||[];} else promesData=[]; if(promesData.length===0 && protaData.length>0) autoDistributePromes(); renderPromesTable(); document.addEventListener('keydown', handleArrowKey); }
         function autoDistributePromes() {
-            const bebanJP = parseInt(document.getElementById('input-jp-beban').value) || 4;
+            const bebanJP = parseInt(getEl('input-jp-beban').value) || 4;
             const months = (currentSemester === 'Genap') ? monthsGenap : monthsGanjil;
             let currentWeekIndex = 0; let allWeeks = [];
-            months.forEach(m => {
-                const mData = calendarData.filter(d => d.monthIdx === m.idx);
-                const maxW = mData.length ? Math.max(...mData.map(d => d.weekInMonth)) : 0;
-                for(let w=1; w<=maxW; w++) { const status = calendarWeeksStatus[`${m.idx+1}-${w}`] || 'Libur'; allWeeks.push({ month: m.idx+1, week: w, status: status }); }
-            });
-            protaData.forEach(p => {
-                let sisaJP = p.alokasi_jp;
-                while(sisaJP > 0 && currentWeekIndex < allWeeks.length) {
-                    const week = allWeeks[currentWeekIndex];
-                    if(week.status === 'Efektif') {
-                        const allocate = Math.min(sisaJP, bebanJP);
-                        promesData.push({ id_prota: p.id, bulan: week.month, minggu_ke: week.week, jp_minggu: allocate });
-                        sisaJP -= allocate; currentWeekIndex++;
-                    } else { currentWeekIndex++; }
-                }
-            });
+            months.forEach(m => { const mData = calendarData.filter(d => d.monthIdx === m.idx); const maxW = mData.length ? Math.max(...mData.map(d => d.weekInMonth)) : 0; for(let w=1; w<=maxW; w++) { const status = calendarWeeksStatus[`${m.idx+1}-${w}`] || 'Libur'; allWeeks.push({ month: m.idx+1, week: w, status: status }); } });
+            protaData.forEach(p => { let sisaJP = p.alokasi_jp; while(sisaJP > 0 && currentWeekIndex < allWeeks.length) { const week = allWeeks[currentWeekIndex]; if(week.status === 'Efektif') { const allocate = Math.min(sisaJP, bebanJP); promesData.push({ id_prota: p.id, bulan: week.month, minggu_ke: week.week, jp_minggu: allocate }); sisaJP -= allocate; currentWeekIndex++; } else { currentWeekIndex++; } } });
         }
         function renderPromesTable(){ 
-            const table=document.getElementById('promes-table'); const thead=table.querySelector('thead'); const tbody=table.querySelector('tbody'); thead.innerHTML=''; tbody.innerHTML='';
+            const table=getEl('promes-table'); const thead=table.querySelector('thead'); const tbody=table.querySelector('tbody'); thead.innerHTML=''; tbody.innerHTML='';
             const months=(currentSemester==='Genap')?monthsGenap:monthsGanjil; let rowMonth=`<tr><th class="p-3 bg-white border sticky-col min-w-[200px] z-30" rowspan="2">Materi</th>`; let rowWeek=`<tr>`;
-            months.forEach(m=>{ const mData=calendarData.filter(d=>d.monthIdx===m.idx); const maxW=mData.length?Math.max(...mData.map(d=>d.weekInMonth)):4; rowMonth+=`<th colspan="${maxW}" class="p-2 border text-center bg-slate-50 text-indigo-600 border-slate-200 text-[10px]">${m.name}</th>`; for(let w=1; w<=maxW; w++){ const status=calendarWeeksStatus[`${m.idx+1}-${w}`]||'Libur'; const color=status==='Libur'?'bg-rose-50 text-rose-300':'bg-white text-slate-500'; rowWeek+=`<th class="p-1 border text-center w-8 text-[9px] ${color} border-slate-200">${w}</th>`; } });
-            rowMonth+=`<th class="p-2 border bg-slate-50 min-w-[60px] text-xs" rowspan="2">Total</th></tr>`; rowWeek+=`</tr>`; thead.innerHTML=rowMonth+rowWeek;
-            protaData.forEach((prota,rIdx)=>{
-                const tr=document.createElement('tr'); tr.innerHTML=`<td class="p-2 border font-medium sticky-col text-xs text-slate-700 truncate max-w-[200px] border-slate-200 bg-white"><span class="text-indigo-600 font-bold mr-1">${prota.kode_materi}</span> ${prota.topik_materi}</td>`;
-                let rowTotal=0; let cIdx=0;
-                months.forEach(m=>{ const mData=calendarData.filter(d=>d.monthIdx===m.idx); const maxW=mData.length?Math.max(...mData.map(d=>d.weekInMonth)):4; for(let w=1; w<=maxW; w++){
-                    const status=calendarWeeksStatus[`${m.idx+1}-${w}`]||'Libur'; const isLibur=status==='Libur';
-                    const existing=promesData.find(x=>x.id_prota===prota.id&&x.bulan===(m.idx+1)&&x.minggu_ke===w); const val=existing?existing.jp_minggu:''; if(val) rowTotal+=parseInt(val);
-                    tr.innerHTML+=`<td class="p-0 border border-slate-200 ${isLibur?'bg-rose-50':'bg-white'}"><input type="text" class="promes-input w-full h-7 text-center text-[10px] outline-none ${isLibur?'cursor-not-allowed bg-rose-50 text-rose-300':''}" value="${val}" ${isLibur?'disabled':''} data-r="${rIdx}" data-c="${cIdx}" onchange="updatePromesData(${prota.id},${m.idx+1},${w},this.value)"></td>`; cIdx++;
-                } });
-                const totalColor=rowTotal===prota.alokasi_jp?'text-emerald-600 font-bold':'text-rose-500 font-bold'; tr.innerHTML+=`<td class="p-2 border text-center text-xs border-slate-200 ${totalColor}">${rowTotal} / ${prota.alokasi_jp}</td>`; tbody.appendChild(tr);
-            });
+            months.forEach(m=>{ const mData=calendarData.filter(d=>d.monthIdx===m.idx); const maxW=mData.length?Math.max(...mData.map(d=>d.weekInMonth)):4; rowMonth+=`<th colspan="${maxW}" class="p-2 border text-center bg-slate-50 text-sky-600">${m.name}</th>`; for(let w=1; w<=maxW; w++){ const status=calendarWeeksStatus[`${m.idx+1}-${w}`]||'Libur'; const color=status==='Libur'?'bg-red-50 text-red-300':'bg-white text-slate-500'; rowWeek+=`<th class="p-1 border text-center w-8 text-[10px] ${color}">${w}</th>`; } }); rowMonth+=`<th class="p-2 border bg-slate-50 min-w-[60px]" rowspan="2">Total</th></tr>`; rowWeek+=`</tr>`; thead.innerHTML=rowMonth+rowWeek;
+            protaData.forEach((prota,rIdx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td class="p-2 border font-medium sticky-col text-xs text-slate-700 truncate max-w-[200px] border-slate-200 bg-white">${prota.topik_materi}</td>`; let rowTotal=0; let cIdx=0; months.forEach(m=>{ const mData=calendarData.filter(d=>d.monthIdx===m.idx); const maxW=mData.length?Math.max(...mData.map(d=>d.weekInMonth)):4; for(let w=1; w<=maxW; w++){ const status=calendarWeeksStatus[`${m.idx+1}-${w}`]||'Libur'; const isLibur=status==='Libur'; const existing=promesData.find(x=>x.id_prota===prota.id&&x.bulan===(m.idx+1)&&x.minggu_ke===w); const val=existing?existing.jp_minggu:''; if(val) rowTotal+=parseInt(val); tr.innerHTML+=`<td class="p-0 border border-slate-200 ${isLibur?'bg-red-50':'bg-white'}"><input type="text" class="promes-input w-full h-7 text-center text-[10px] outline-none ${isLibur?'cursor-not-allowed bg-red-50':''}" value="${val}" ${isLibur?'disabled':''} data-r="${rIdx}" data-c="${cIdx}" onchange="updatePromesData(${prota.id},${m.idx+1},${w},this.value)"></td>`; cIdx++; } }); tr.innerHTML+=`<td class="p-2 border text-center text-xs border-slate-200">${rowTotal}</td>`; tbody.appendChild(tr); });
         }
+        function handleArrowKey(e) { if (!e.target.classList.contains('promes-input')) return; const currentR = parseInt(e.target.dataset.r); const currentC = parseInt(e.target.dataset.c); let nextInput = null; const findNext = (rDelta, cDelta) => { let r = currentR + rDelta; let c = currentC + cDelta; for(let i=0; i<50; i++) { const el = document.querySelector(`.promes-input[data-r="${r}"][data-c="${c}"]`); if(!el) return null; if(!el.disabled) return el; r += rDelta; c += cDelta; } return null; }; if (e.key === 'ArrowUp') nextInput = findNext(-1, 0); else if (e.key === 'ArrowDown') nextInput = findNext(1, 0); else if (e.key === 'ArrowLeft') nextInput = findNext(0, -1); else if (e.key === 'ArrowRight') nextInput = findNext(0, 1); if (nextInput) { e.preventDefault(); nextInput.focus(); nextInput.select(); } }
         function updatePromesData(pid,b,m,val){ promesData=promesData.filter(x=>!(x.id_prota===pid&&x.bulan===b&&x.minggu_ke===m)); if(val&&!isNaN(val)) promesData.push({id_prota:pid,bulan:b,minggu_ke:m,jp_minggu:parseInt(val)}); }
-        async function saveStep4(loading){ const btn=document.getElementById('btn-save-promes'); const txt=btn.innerText; if(loading){btn.innerText="Menyimpan..."; btn.disabled=true;} const ids=protaData.map(p=>p.id); if(ids.length) await window.db.from('promes').delete().in('id_prota',ids); if(promesData.length>0){ const pl=promesData.map(d=>({id_prota:d.id_prota,bulan:d.bulan,minggu_ke:d.minggu_ke,jp_minggu:d.jp_minggu})); await window.db.from('promes').insert(pl); renderPromesTable(); } if(loading){btn.innerText=txt; btn.disabled=false;} }
+        async function saveStep4(loading){ const btn=getEl('btn-save-promes'); if(btn && loading){btn.innerText="Menyimpan..."; btn.disabled=true;} const ids=protaData.map(p=>p.id); if(ids.length) await window.db.from('promes').delete().in('id_prota',ids); if(promesData.length>0){ const pl=promesData.map(d=>({id_prota:d.id_prota,bulan:d.bulan,minggu_ke:d.minggu_ke,jp_minggu:d.jp_minggu})); await window.db.from('promes').insert(pl); renderPromesTable(); } if(btn && loading){btn.innerText="Simpan & Lanjut RPP ➜"; btn.disabled=false;} }
 
-        // --- STEP 5: RPP RICH GENERATOR ---
-        async function initStep5Logic(){ const list=document.getElementById('rpp-materi-list'); list.innerHTML=''; protaData.forEach(p=>{ const div=document.createElement('div'); div.className="p-4 border rounded-xl hover:bg-indigo-50 cursor-pointer text-sm flex justify-between items-center mb-3 transition border-slate-100 shadow-sm"; div.innerHTML=`<div class="flex flex-col"><span class="font-bold text-indigo-700">${p.kode_materi}</span></div> <span class="text-xs text-slate-600 truncate ml-2 flex-1">${p.topik_materi}</span> <span class="text-[10px] text-slate-400 bg-slate-100 px-2 py-1 rounded-full whitespace-nowrap">${p.alokasi_jp} JP</span>`; div.onclick=()=>loadRPPEditor(p); list.appendChild(div); }); }
-        async function loadRPPEditor(prota){ activeRppProtaId=prota.id; document.getElementById('rpp-empty-state').classList.add('hidden-section'); document.getElementById('rpp-editor-container').classList.remove('hidden-section'); document.getElementById('rpp-title').innerText=prota.topik_materi; document.getElementById('rpp-subtitle').innerText=`Kode: ${prota.kode_materi} | ${prota.alokasi_jp} JP`; document.getElementById('select-metode').value=""; document.getElementById('input-tujuan').value=`Peserta didik mampu memahami ${prota.topik_materi} secara mendalam melalui proses pembelajaran yang aktif.`; document.getElementById('input-kegiatan').value=""; document.getElementById('input-penilaian').value="1. Sikap: Observasi Profil Pelajar Pancasila.\n2. Pengetahuan: Tes Tulis (Asesmen Harian).\n3. Keterampilan: Unjuk Kerja/Portofolio."; const {data}=await window.db.from('rpp').select('*').eq('id_prota',prota.id).maybeSingle(); if(data){ document.getElementById('input-tujuan').value=data.tujuan_pembelajaran||""; document.getElementById('input-kegiatan').value=data.kegiatan_pembelajaran||""; document.getElementById('input-penilaian').value=data.penilaian_pembelajaran||""; if(data.metode) document.getElementById('select-metode').value=data.metode; } }
-        
-        function generateKegiatanByMethod(){ 
-            const m=document.getElementById('select-metode').value; 
-            const topic=document.getElementById('rpp-title').innerText; 
-            if(RPP_TEMPLATES[m]) {
-                const content = RPP_TEMPLATES[m](topic);
-                document.getElementById('input-tujuan').value = content.tujuan;
-                document.getElementById('input-kegiatan').value = content.kegiatan;
-                document.getElementById('input-penilaian').value = content.penilaian;
-            }
+        // --- STEP 5: RPP (LOGIC ENGINE) ---
+        async function initStep5Logic(){ const list=getEl('rpp-materi-list'); list.innerHTML=''; protaData.forEach(p=>{ const div=document.createElement('div'); div.className="p-4 border rounded-xl hover:bg-sky-50 cursor-pointer text-sm mb-3 transition border-slate-100 shadow-sm"; div.innerHTML=`<b>${p.kode_materi}</b> ${p.topik_materi}`; div.onclick=()=>loadRPPEditor(p); list.appendChild(div); }); }
+        async function loadRPPEditor(prota){ 
+            activeRppProtaId=prota.id; 
+            getEl('rpp-empty-state').classList.add('hidden-section'); getEl('rpp-editor-container').classList.remove('hidden-section'); 
+            getEl('rpp-title').innerText=prota.topik_materi; getEl('rpp-subtitle').innerText=`Kode: ${prota.kode_materi} | ${prota.alokasi_jp} JP`;
+            getEl('select-metode').value=""; getEl('input-tujuan').value=""; getEl('input-kegiatan').value=""; getEl('input-penilaian').value=""; 
+            const {data}=await window.db.from('rpp').select('*').eq('id_prota',prota.id).maybeSingle(); 
+            if(data){ getEl('input-tujuan').value=data.tujuan_pembelajaran||""; getEl('input-kegiatan').value=data.kegiatan_pembelajaran||""; getEl('input-penilaian').value=data.penilaian_pembelajaran||""; if(data.metode) getEl('select-metode').value=data.metode; } 
         }
-        async function saveRPP(){ if(!activeRppProtaId)return; const pl={id_prota:activeRppProtaId, tujuan_pembelajaran:document.getElementById('input-tujuan').value, kegiatan_pembelajaran:document.getElementById('input-kegiatan').value, penilaian_pembelajaran:document.getElementById('input-penilaian').value, metode:document.getElementById('select-metode').value}; const {error}=await window.db.from('rpp').upsert(pl,{onConflict:'id_prota'}); if(error)alert("Gagal: "+error.message);else alert("Draft Tersimpan!"); }
+        
+        async function generateRPPSmart() {
+            const m = getEl('select-metode').value; 
+            const t = getEl('rpp-title').innerText;
+            if(!m) return alert("Pilih model dulu");
+            
+            // SMART LOGIC: Determine verbs based on context
+            const mapel = getEl('input-mapel').value;
+            const type = detectSubjectType(mapel);
+            const context = CONTEXT_DICT[type];
+            
+            // Generate Narrative
+            const tujuan = `Melalui model pembelajaran ${m}, peserta didik diharapkan mampu ${context.verbs[0]} konsep ${t}, ${context.verbs[1]}, serta ${context.verbs[2]} dengan sikap disiplin dan kerjasama.`;
+            
+            let kegiatan = `1. PENDAHULUAN (10 Menit)\n   - Guru membuka kelas dengan salam dan doa.\n   - Guru menyampaikan tujuan pembelajaran materi ${t}.\n   - Apersepsi: Mengaitkan ${t} dengan kehidupan sehari-hari.\n\n`;
+            
+            kegiatan += `2. KEGIATAN INTI - Model ${m} (70 Menit)\n`;
+            if(m === "PBL") {
+                kegiatan += `   - Fase 1: Orientasi Masalah. Guru menyajikan masalah nyata terkait ${t}.\n   - Fase 2: Organisasi Belajar. Siswa membentuk kelompok untuk menelaah ${t}.\n   - Fase 3: Penyelidikan. Siswa mengumpulkan data/informasi tentang ${t}.\n   - Fase 4: Penyajian Hasil. Kelompok mempresentasikan solusi ${t}.\n   - Fase 5: Evaluasi. Guru memberikan penguatan konsep ${t}.`;
+            } else if (m === "Discovery") {
+                kegiatan += `   - Stimulasi: Guru memberikan rangsangan berupa contoh kasus ${t}.\n   - Identifikasi Masalah: Siswa merumuskan hipotesis awal tentang ${t}.\n   - Pengumpulan Data: Siswa mencari referensi relevan.\n   - Pengolahan Data: Siswa mendiskusikan temuan tentang ${t}.\n   - Pembuktian: Verifikasi hasil diskusi.\n   - Kesimpulan: Menyimpulkan prinsip utama ${t}.`;
+            } else {
+                kegiatan += `   - Eksplorasi: Guru menjelaskan konsep inti ${t}.\n   - Elaborasi: Siswa melakukan ${context.syntax} terkait ${t}.\n   - Konfirmasi: Guru memberikan umpan balik hasil kerja siswa.`;
+            }
+            
+            kegiatan += `\n\n3. PENUTUP (10 Menit)\n   - Siswa bersama guru menyimpulkan poin-poin penting ${t}.\n   - Guru memberikan asesmen formatif/tugas rumah.`;
+
+            const penilaian = `1. Sikap: Observasi keaktifan dan kerjasama.\n2. Pengetahuan: Tes tulis (Pilihan Ganda/Uraian) tentang ${t}.\n3. Keterampilan: Unjuk kerja/Presentasi hasil ${context.syntax}.`;
+
+            getEl('input-tujuan').value = tujuan;
+            getEl('input-kegiatan').value = kegiatan;
+            getEl('input-penilaian').value = penilaian;
+        }
+        async function saveRPP(){ if(!activeRppProtaId)return; const pl={id_prota:activeRppProtaId, tujuan_pembelajaran:getEl('input-tujuan').value, kegiatan_pembelajaran:getEl('input-kegiatan').value, penilaian_pembelajaran:getEl('input-penilaian').value, metode:getEl('select-metode').value}; const {error}=await window.db.from('rpp').upsert(pl,{onConflict:'id_prota'}); if(error)alert("Gagal");else alert("Tersimpan!"); }
 
         // --- PRINTING ---
         async function printFullDocument(){
-            document.querySelectorAll('.p-mapel').forEach(e=>e.innerText=document.getElementById('input-mapel').value);
-            document.querySelectorAll('.p-kelas').forEach(e=>e.innerText=document.getElementById('input-kelas').value);
-            document.querySelectorAll('.p-tahun').forEach(e=>e.innerText=els.selTahun.options[els.selTahun.selectedIndex].text);
-            document.querySelectorAll('.p-guru').forEach(e=>e.innerText=document.getElementById('user-email').innerText);
-            document.querySelectorAll('.p-kepsek').forEach(e=>e.innerText=document.getElementById('input-kepsek').value);
-            document.querySelectorAll('.p-sekolah').forEach(e=>e.innerText=document.getElementById('input-sekolah').value);
-
-            const protaBody=document.getElementById('print-tbody-prota'); protaBody.innerHTML=''; let lastP=null;
+            // Populate
+            const mapel=getEl('input-mapel').value; const kelas=getEl('input-kelas').value; const tahun=els.selTahun.options[els.selTahun.selectedIndex].text; const guru=getEl('user-email').innerText; const kepsek=getEl('input-kepsek').value; const sekolah=getEl('input-sekolah').value;
+            document.querySelectorAll('.p-mapel').forEach(e=>e.innerText=mapel); document.querySelectorAll('.p-kelas').forEach(e=>e.innerText=kelas); document.querySelectorAll('.p-tahun').forEach(e=>e.innerText=tahun); document.querySelectorAll('.p-guru').forEach(e=>e.innerText=guru); document.querySelectorAll('.p-kepsek').forEach(e=>e.innerText=kepsek); document.querySelectorAll('.p-sekolah').forEach(e=>e.innerText=sekolah);
+            // Tables
+            const protaBody=getEl('print-tbody-prota'); protaBody.innerHTML=''; let lastP=null;
             protaData.forEach(d=>{ const pref=d.kode_materi.split('.')[0]; if(pref!==lastP) protaBody.innerHTML+=`<tr><td colspan="3" style="background:#f8fafc; font-weight:bold; text-align:center;">BAB ${pref}</td></tr>`; lastP=pref; protaBody.innerHTML+=`<tr><td class="text-center">${d.kode_materi}</td><td>${d.topik_materi}</td><td class="text-center">${d.alokasi_jp} JP</td></tr>`; });
-
-            const promesCont=document.getElementById('print-container-promes');
-            let promesHTML='<table class="official-table"><thead><tr><th rowspan="2" style="width:25%">MATERI</th><th rowspan="2" style="width:5%">JP</th>';
+            // Promes
+            const promesCont=getEl('print-container-promes'); let promesHTML='<table class="official-table"><thead><tr><th rowspan="2" style="width:25%">MATERI</th><th rowspan="2" style="width:5%">JP</th>';
             const months=(currentSemester==='Genap')?monthsGenap:monthsGanjil; let subHeader='<tr>';
             months.forEach(m=>{ const mData=calendarData.filter(d=>d.monthIdx===m.idx); const maxW=mData.length?Math.max(...mData.map(d=>d.weekInMonth)):4; promesHTML+=`<th colspan="${maxW}">${m.name}</th>`; for(let w=1; w<=maxW; w++){ const status=calendarWeeksStatus[`${m.idx+1}-${w}`]||'Libur'; const bg=status==='Libur'?'bg-red-print':''; subHeader+=`<th class="${bg}">${w}</th>`; } });
             promesHTML+='</tr>'+subHeader+'</tr></thead><tbody>';
             protaData.forEach(p=>{ promesHTML+=`<tr><td>${p.topik_materi}</td><td class="text-center">${p.alokasi_jp}</td>`; months.forEach(m=>{ const mData=calendarData.filter(d=>d.monthIdx===m.idx); const maxW=mData.length?Math.max(...mData.map(d=>d.weekInMonth)):4; for(let w=1; w<=maxW; w++){ const status=calendarWeeksStatus[`${m.idx+1}-${w}`]||'Libur'; const ex=promesData.find(x=>x.id_prota===p.id&&x.bulan===(m.idx+1)&&x.minggu_ke===w); const bg=status==='Libur'?'bg-red-print':''; promesHTML+=`<td class="text-center ${bg}">${ex?ex.jp_minggu:''}</td>`; } }); promesHTML+='</tr>'; });
             promesHTML+='</tbody></table>'; promesCont.innerHTML=promesHTML;
-
-            const rppCont=document.getElementById('print-container-rpp'); rppCont.innerHTML='';
+            // RPP
+            const rppCont=getEl('print-container-rpp'); rppCont.innerHTML='';
             const ids=protaData.map(p=>p.id); const {data:allRpps}=await window.db.from('rpp').select('*').in('id_prota',ids);
             protaData.forEach(p=>{
                 const rpp=allRpps?allRpps.find(r=>r.id_prota===p.id):null; const met=rpp?rpp.metode:'-';
-                const html=`<div class="page-break pt-10"><h3 style="text-align:center; border:none; margin-bottom:20px; text-decoration:underline; font-weight:bold;">RENCANA PELAKSANAAN PEMBELAJARAN (RPP)</h3><table style="width:100%; border:none; margin-bottom:20px;"><tr><td style="width:20%; border:none; font-weight:bold;">Mata Pelajaran</td><td style="border:none;">: ${document.getElementById('input-mapel').value}</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Materi Pokok</td><td style="border:none;">: ${p.topik_materi} (${p.kode_materi})</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Alokasi Waktu</td><td style="border:none;">: ${p.alokasi_jp} JP</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Metode</td><td style="border:none;">: ${met}</td></tr></table><h3>A. TUJUAN PEMBELAJARAN</h3><p style="white-space:pre-wrap;">${rpp?rpp.tujuan_pembelajaran:'(Belum diisi)'}</p><h3>B. KEGIATAN PEMBELAJARAN</h3><p style="white-space:pre-wrap;">${rpp?rpp.kegiatan_pembelajaran:'(Belum diisi)'}</p><h3>C. PENILAIAN</h3><p style="white-space:pre-wrap;">${rpp?rpp.penilaian_pembelajaran:'(Belum diisi)'}</p><div class="ttd-wrapper"><div class="ttd-box">Mengetahui,<br>Kepala Sekolah<br><br><br><br><b style="text-decoration:underline;">${document.getElementById('input-kepsek').value}</b></div><div class="ttd-box">Guru Mata Pelajaran<br><br><br><br><b style="text-decoration:underline;">${document.getElementById('user-email').innerText}</b></div></div></div>`;
+                const html=`<div class="page-break pt-10"><h3 style="text-align:center; border:none; margin-bottom:20px; text-decoration:underline;">RENCANA PELAKSANAAN PEMBELAJARAN (RPP)</h3><table style="width:100%; border:none; margin-bottom:20px;"><tr><td style="width:20%; border:none; font-weight:bold;">Mata Pelajaran</td><td style="border:none;">: ${mapel}</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Materi Pokok</td><td style="border:none;">: ${p.topik_materi} (${p.kode_materi})</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Alokasi Waktu</td><td style="border:none;">: ${p.alokasi_jp} JP</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Metode</td><td style="border:none;">: ${met}</td></tr></table><h3>A. TUJUAN PEMBELAJARAN</h3><p style="white-space:pre-wrap;">${rpp?marked.parse(rpp.tujuan_pembelajaran):'-'}</p><h3>B. KEGIATAN PEMBELAJARAN</h3><div>${rpp?marked.parse(rpp.kegiatan_pembelajaran):'-'}</div><h3>C. PENILAIAN</h3><p>${rpp?marked.parse(rpp.penilaian_pembelajaran):'-'}</p><div class="ttd-wrapper"><div class="ttd-box">Mengetahui,<br>Kepala Sekolah<br><br><br><br><b style="text-decoration:underline;">${kepsek}</b></div><div class="ttd-box">Guru Mapel<br><br><br><br><b style="text-decoration:underline;">${guru}</b></div></div></div>`;
                 rppCont.insertAdjacentHTML('beforeend',html);
             });
             window.print();
