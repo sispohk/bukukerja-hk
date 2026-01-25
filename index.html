@@ -56,6 +56,20 @@
                 margin: 0; padding: 0; background: white; z-index: 9999;
             }
             .page-break { page-break-before: always; }
+
+            /* Prevent lonely headings / keep sections together */
+            h1, h2, h3, h4 { break-after: avoid-page; page-break-after: avoid; }
+            .keep-with-next { break-inside: avoid; page-break-inside: avoid; }
+            table.official-table thead { display: table-header-group; }
+            table.official-table tr { page-break-inside: avoid; break-inside: avoid; }
+
+            /* Document separator page */
+            .doc-separator { display:flex; align-items:center; justify-content:center; height:95vh; }
+            .doc-sep-inner { text-align:center; border:3px double #000; padding:36px; width:85%; }
+            .doc-sep-small { font-size:11pt; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:12px; }
+            .doc-sep-title { font-size:18pt; margin:0 0 18px; }
+            .doc-sep-meta { display:flex; justify-content:center; gap:22px; font-size:11pt; }
+
             
             table.official-table { width: 100%; border-collapse: collapse; font-size: 10pt; margin: 15px 0; page-break-inside: avoid; }
             table.official-table th, table.official-table td { border: 1px solid black; padding: 5px; vertical-align: top; text-align: left; }
@@ -83,7 +97,23 @@
             .rpp-content-text ol { list-style-type: decimal; margin-left: 20px; }
             .rpp-content-text li { margin-bottom: 5px; padding-left: 5px; }
         }
-    </style>
+    
+/* Sticky action bar (konsisten untuk tombol Generate + Simpan/Cetak) */
+.sticky-actions{
+  position: sticky;
+  bottom: 0;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  z-index: 20;
+}
+@media print{
+  .sticky-actions{ display:none !important; }
+  details{ display:none !important; }
+}
+</style>
 </head>
 <body class="text-slate-800">
 
@@ -108,7 +138,8 @@
         <div id="wizard-step-1" class="hidden-section bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-3xl mx-auto">
             <div class="flex justify-between items-center mb-6 border-b pb-4"><h2 class="text-xl font-bold text-violet-700">Step 1: Identitas</h2></div>
             <form id="setup-form" class="space-y-5">
-                <div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tahun Ajaran</label>
                     <select id="select-tahun" class="w-full p-3 border rounded-xl bg-slate-50 font-semibold text-slate-700" required>
                         <option value="custom_2425">2024/2025</option>
@@ -116,8 +147,16 @@
                         <option value="custom_2627">2026/2027</option>
                     </select>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kurikulum</label>
+                        <select id="select-kurikulum" class="w-full p-3 border rounded-xl bg-slate-50 font-semibold text-slate-700" required>
+                            <option value="Merdeka">Merdeka (CP–TP–ATP + KKTP)</option>
+                            <option value="K13">K13 (KI–KD + KKM)</option>
+                        </select>
+                    </div>
+                </div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nama Sekolah / Madrasah</label>
                         <input type="text" id="input-sekolah" class="w-full p-3 border rounded-xl" placeholder="Contoh: MAN 1 Jakarta" required>
@@ -141,6 +180,8 @@
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tgl Pengesahan</label>
                         <input type="date" id="input-tgl-sah" class="w-full p-3 border rounded-xl text-center font-medium bg-white">
                     </div>
+
+                
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -182,15 +223,29 @@
             <div class="bg-gradient-to-br from-violet-50 to-white p-6 rounded-xl border border-violet-100 mb-6 relative overflow-hidden shadow-sm">
                 <h3 class="text-xs font-bold text-violet-600 mb-3 uppercase tracking-wide">Input Materi Baru</h3>
                 <div class="flex flex-col md:flex-row gap-3 items-end mb-4 relative z-10">
-                    <div class="w-full md:w-24"><label class="text-[10px] font-bold text-slate-400">BAB</label><input type="text" id="input-kd-code" class="w-full p-2.5 border rounded-lg text-center font-bold" placeholder="1"></div>
-                    <div class="w-full md:flex-1"><label class="text-[10px] font-bold text-slate-400">MATERI POKOK</label><input type="text" id="input-kd-text" class="w-full p-2.5 border rounded-lg" placeholder="Contoh: Limit Fungsi"></div>
-                    <div class="w-full md:w-28"><label class="text-[10px] font-bold text-slate-400">TOTAL JP</label><input type="number" id="input-kd-jp" class="w-full p-2.5 border rounded-lg text-center font-bold" placeholder="12"></div>
+                    <div class="w-full md:w-24"><label class="text-[10px] font-bold text-slate-400">KODE BAB</label><input type="text" id="input-kd-code" class="w-full p-2.5 border rounded-lg text-center font-bold" placeholder="1"></div>
+                    <div class="w-full md:flex-1"><label class="text-[10px] font-bold text-slate-400">JUDUL BAB</label><input type="text" id="input-kd-text" class="w-full p-2.5 border rounded-lg" placeholder="Contoh: Limit Fungsi (Bab 1)"></div>
+                    <div class="w-full md:w-28"><label class="text-[10px] font-bold text-slate-400">TOTAL JP BAB</label><input type="number" id="input-kd-jp" class="w-full p-2.5 border rounded-lg text-center font-bold" placeholder="12"></div>
                 </div>
-                <div class="flex gap-3 relative z-10">
-                    <button onclick="addManualProta()" class="px-5 py-2.5 bg-white border border-slate-300 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition">+ Manual</button>
-                    <button onclick="openAIBridge('subbab')" class="flex-1 bg-violet-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-violet-700 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95"><span>🤖</span> Generate Sub-Bab (AI)</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 relative z-10">
+                    <button onclick="openAIBridge('bab')" class="w-full bg-emerald-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-emerald-700 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95"><span>🤖</span> Generate BAB (AI)</button>
+                    <button onclick="openAIBridge('subbab_all')" class="w-full bg-violet-700 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-violet-800 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95"><span>🤖</span> Generate Sub-Bab Semua BAB</button>
+
                 </div>
-            </div>
+
+                <div class="mt-3 p-3 rounded-xl border bg-white/70">
+                    <div class="text-xs font-bold text-slate-700">Distribusi JP mengikuti kalender (Step 2)</div>
+                    <div class="mt-1 text-[11px] text-slate-600 leading-relaxed">
+                        Mapping JP ke minggu dilakukan di <b>Step 4 (Promes)</b> berdasarkan kalender efektif/libur yang kamu input.
+                    </div>
+                </div>
+
+                <p class="mt-3 text-[11px] text-slate-500">Generate BAB akan membuat daftar BAB sesuai kurikulum & jenjang/kelas yang dipilih di Step 1. Setelah dikonfirmasi, BAB akan tersimpan ke database dan siap digenerate sub-bab.</p>
+ akan membuat daftar BAB sesuai kurikulum & jenjang/kelas yang dipilih di Step 1. Setelah dikonfirmasi, BAB akan tersimpan ke database dan siap digenerate sub-bab.</p>
+            
+            
+
+</div>
 
             <div class="flex justify-between items-center mb-2 px-1"><span class="text-xs font-bold text-slate-400 tracking-wider">DAFTAR MATERI</span><span id="warn-sisa" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-500">Sisa: 0 JP</span></div>
             <div class="border rounded-xl overflow-hidden mb-6 bg-white shadow-sm min-h-[100px]"><table class="w-full text-sm text-left"><tbody id="prota-list-body" class="divide-y divide-slate-100"></tbody></table></div>
@@ -202,7 +257,13 @@
                 <h2 class="text-xl font-bold text-slate-800">Step 4: Promes</h2>
                 <div class="flex gap-2 items-center"><span class="bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">Merah = Libur</span><span class="text-xs text-slate-400 hidden md:inline">Navigasi: ⬆️⬇️⬅️➡️</span></div>
             </div>
-            <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 text-xs p-3 rounded mb-4">💡 <b>Info:</b> JP didistribusikan ke semua Bab yang muat dalam kalender. Jika terpotong, silakan edit manual.</div>
+            <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 text-xs p-3 rounded mb-4">💡 <b>Info:</b> JP didistribusikan <b>hanya untuk Sub-Bab</b> (kode 1.1, 1.2, dst) mengikuti minggu <b>Efektif</b> pada kalender Step 2. Jika perlu, edit manual.</div>
+            <div class="flex flex-wrap gap-3 mb-4">
+                <button onclick="rerunAutoPromesFromCalendar()" class="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 shadow">
+                    🔄 Auto-Distribusi Ulang dari Kalender
+                </button>
+                <span class="text-xs text-slate-500 self-center">Gunakan ini jika kamu mengubah kalender (Step 2) atau beban JP/minggu.</span>
+            </div>
             <div class="overflow-x-auto border rounded-xl shadow-inner mb-6 relative bg-white max-h-[600px]">
                 <table class="text-xs text-left w-full border-collapse" id="promes-table">
                     <thead class="bg-slate-100 text-slate-600 uppercase font-bold sticky top-0 z-20 shadow-sm"></thead>
@@ -214,30 +275,67 @@
 
         <div id="wizard-step-5" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-7xl mx-auto">
             <div class="flex justify-between items-center mb-6 border-b pb-4"><h2 class="text-xl font-bold text-slate-800">Step 5: Generator RPP</h2><span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded font-bold">Wajib Diisi</span></div>
-            
             <div class="bg-violet-50 p-4 rounded-xl border border-violet-200 mb-6 shadow-sm">
-                <label class="block text-xs font-bold text-violet-800 mb-2 uppercase">Metode Pembelajaran (Berlaku untuk 1 Bab)</label>
-                <select id="select-metode" class="w-full p-2.5 border border-violet-300 rounded-lg text-sm bg-white focus:ring-violet-500 font-bold text-slate-700">
-                    <option value="" disabled selected>-- Pilih Model --</option>
-                    <option value="Konvensional">Konvensional / Ceramah</option>
-                    <option value="PBL">Problem Based Learning (PBL)</option>
-                    <option value="PJBL">Project Based Learning (PjBL)</option>
-                    <option value="Discovery">Discovery Learning</option>
-                    <option value="Inquiry">Inquiry Learning</option>
-                    <option value="Kooperatif">Cooperative Learning</option>
-                </select>
-                <p class="text-[10px] text-violet-600 mt-1 italic">*Metode ini akan diterapkan ke semua sub-bab dalam Bab yang sama.</p>
+                <label class="block text-xs font-bold text-violet-800 mb-2 uppercase">Metode Pembelajaran & Target Generate</label>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <select id="select-metode" class="w-full p-2.5 border border-violet-300 rounded-lg text-sm bg-white focus:ring-violet-500 font-bold text-slate-700">
+                            <option value="" disabled selected>-- Pilih Model --</option>
+                            <option value="Konvensional">Konvensional / Ceramah Interaktif</option>
+                            <option value="Diskusi">Diskusi Terarah</option>
+                            <option value="Kooperatif">Cooperative Learning</option>
+                            <option value="Jigsaw">Kooperatif: Jigsaw</option>
+                            <option value="NHT">Kooperatif: Numbered Heads Together</option>
+                            <option value="TPS">Kooperatif: Think–Pair–Share</option>
+                            <option value="TGT">Kooperatif: Teams Games Tournament (TGT)</option>
+                            <option value="PBL">Problem Based Learning (PBL)</option>
+                            <option value="PJBL">Project Based Learning (PjBL)</option>
+                            <option value="Discovery">Discovery Learning</option>
+                            <option value="Inquiry">Inquiry Learning</option>
+                            <option value="STEM">STEM/STEAM</option>
+                            <option value="CTL">Contextual Teaching and Learning (CTL)</option>
+                            <option value="Flipped">Flipped Classroom</option>
+                            <option value="Blended">Blended Learning</option>
+                            <option value="Differensiasi">Pembelajaran Berdiferensiasi</option>
+                            <option value="GeniusHour">Mini Project (Genius Hour)</option>
+                        </select>
+                        <p class="text-[10px] text-violet-700 mt-1 italic">*Metode ini akan dipakai saat generate batch dan disimpan ke semua sub-bab yang dibuat.</p>
+                    </div>
+
+                    <div>
+                        <select id="select-rpp-scope" class="w-full p-2.5 border border-violet-300 rounded-lg text-sm bg-white focus:ring-violet-500 font-bold text-slate-700">
+                            <option value="" disabled selected>-- Pilih Target Generate --</option>
+                            <option value="all">RPP Semua BAB (Batch)</option>
+                        </select>
+                        <p class="text-[10px] text-violet-700 mt-1 italic">*Pilih <b>BAB</b> untuk generate 1 bab (semua sub-bab). “Semua BAB” untuk 1 semester.</p>
+                    </div>
+
+                    <div class="flex items-start">
+                        <button id="btn-generate-rpp" onclick="onClickGenerateRppBatch()" class="w-full bg-violet-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-violet-700 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95">
+                            <span>🤖</span> Generate
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="flex flex-col lg:flex-row gap-8">
+
                 <div class="w-full lg:w-1/4 border-r pr-4"><h3 class="font-bold text-slate-400 text-xs mb-4 uppercase tracking-wider">Pilih Materi (Per Sub-Bab)</h3><div id="rpp-materi-list" class="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scroll"></div></div>
                 <div class="w-full lg:w-3/4">
                     <div id="rpp-editor-container" class="hidden-section">
                         <div class="flex justify-between items-end mb-4">
                             <div><h3 class="font-bold text-xl text-slate-800" id="rpp-title">Materi X</h3><p class="text-xs text-slate-500 mt-1" id="rpp-subtitle">Kode: -</p></div>
-                            <button onclick="openAIBridge('rpp_full')" class="text-xs bg-violet-600 text-white px-3 py-2 rounded-lg font-bold hover:bg-violet-700 transition shadow-md flex items-center gap-2">
-                                <span>🤖</span> Generate RPP 1 Bab Full (Batch)
-                            </button>
+                            <!-- controls moved to top: metode + target + generate -->
+                        </div>
+                        <div id="rpp-batch-progress" class="hidden-section mb-4">
+                            <div class="flex justify-between text-[11px] text-slate-600 mb-1">
+                                <span id="rpp-progress-label">Memproses...</span>
+                                <span id="rpp-progress-pct">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                <div id="rpp-progress-bar" class="h-2 bg-violet-600 rounded-full" style="width:0%"></div>
+                            </div>
                         </div>
                         <div class="space-y-5">
                             <div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">2. Tujuan Pembelajaran</label><textarea id="input-tujuan" class="w-full p-4 border rounded-xl text-sm h-28 focus:ring-2 focus:ring-violet-500 bg-slate-50 focus:bg-white transition"></textarea></div>
@@ -248,19 +346,66 @@
                             </div>
 
                             <div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">4. Penilaian</label><textarea id="input-penilaian" class="w-full p-4 border rounded-xl text-sm h-28 focus:ring-2 focus:ring-violet-500 bg-slate-50 focus:bg-white transition"></textarea></div>
-                            
-                            <div class="flex justify-end pt-4"><button onclick="saveRPP()" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 shadow-lg transition transform active:scale-95 flex items-center gap-2"><span>💾</span> Simpan RPP Ini</button></div>
-                        </div>
+</div>
                     </div>
                     <div id="rpp-empty-state" class="flex flex-col items-center justify-center h-[400px] text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50"><div class="text-4xl mb-2">👈</div><p class="text-slate-400 font-medium">Pilih materi di daftar kiri untuk mulai menulis RPP.</p></div>
                 </div>
             </div>
-            <div class="mt-8 pt-4 border-t flex justify-between"><button onclick="goBackToStep4()" class="text-slate-500 font-bold text-sm hover:text-slate-800">← Kembali</button><button onclick="goStep6()" class="bg-violet-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-violet-700 shadow-md">Selesai & Cetak ➜</button></div>
+            <div class="mt-8 pt-4 border-t flex justify-between sticky-actions"><button onclick="goBackToStep4()" class="text-slate-500 font-bold text-sm hover:text-slate-800">← Kembali</button><button onclick="saveAndGoStep6()" class="bg-violet-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-violet-700 shadow-md">Simpan & Cetak ➜</button></div>
         </div>
 
         <div id="wizard-step-6" class="hidden-section bg-white p-10 rounded-2xl shadow-xl border border-slate-100 max-w-4xl mx-auto text-center">
             <h2 class="text-3xl font-bold text-slate-800 mb-6">Dokumen Siap!</h2>
-            <button onclick="printFullDocument()" class="bg-violet-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-violet-700 shadow-xl flex items-center justify-center gap-3 mx-auto transition transform hover:-translate-y-1"><span>🖨️</span> Download PDF</button>
+
+
+<div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 text-left mb-8 shadow-sm">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+        <div>
+            <h3 class="text-sm font-extrabold text-slate-800">Lampiran Kurikulum (SKL + Kurikulum)</h3>
+            <p class="text-xs text-slate-500 mt-1">Aturan: <b>generator-only</b>. Setelah hasil muncul, kamu boleh edit hasilnya lewat tabel (lebih mudah).</p>
+        </div>
+        <div class="hidden-section" id="kurikulum-actions-top"></div>
+    </div>
+
+    <div id="kurikulum-progress" class="hidden-section mt-3 mb-4">
+        <div class="flex justify-between text-[11px] text-slate-600 mb-1">
+            <span id="kurikulum-progress-label">Menyimpan...</span>
+            <span id="kurikulum-progress-pct">0%</span>
+        </div>
+        <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+            <div id="kurikulum-progress-bar" class="h-2 bg-emerald-600 rounded-full" style="width:0%"></div>
+        </div>
+    </div>
+
+    <div id="kurikulum-human-editor" class="hidden-section mt-4">
+      <div class="mb-4">
+        <label class="text-[11px] font-extrabold text-slate-700 uppercase">SKL</label>
+        <textarea id="kurikulum-skl-text" class="w-full mt-2 p-3 border rounded-xl text-sm bg-white focus:ring-violet-500" rows="3" placeholder="SKL akan muncul di sini..."></textarea>
+      </div>
+
+      <div id="kurikulum-structured-area"></div>
+
+      <details class="mt-4">
+        <summary class="cursor-pointer text-[12px] font-bold text-slate-600 hover:text-slate-800">Advanced: Lihat / Edit JSON</summary>
+        <textarea id="kurikulum-json-editor" class="w-full mt-3 p-3 border rounded-lg text-xs font-mono h-64 bg-white focus:ring-violet-500" placeholder="JSON hasil generator..." ></textarea>
+        <div class="mt-2 text-[11px] text-slate-500">
+          Catatan: setelah eksekusi SQL migrasi/penambahan kolom, jalankan <code>NOTIFY pgrst, 'reload schema';</code> agar endpoint REST tidak error 400.
+        </div>
+      </details>
+    </div>
+
+<div class="sticky-actions mt-4 flex flex-col md:flex-row gap-2 md:justify-end">
+      <button onclick="openAIBridge('kurikulum_bundle')" class="btn-secondary w-full md:w-auto px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center gap-2">
+        <span>🤖</span> Generate Lampiran
+      </button>
+      <button onclick="saveLampiranAndPrint()" class="btn-primary w-full md:w-auto px-4 py-2 rounded-xl text-sm font-extrabold bg-emerald-600 text-white hover:bg-emerald-700 shadow-md flex items-center justify-center gap-2">
+        <span>🖨️</span> Simpan & Cetak
+      </button>
+    </div>
+</div>
+
+<button onclick="printFullDocument()" id="btn-print-only" class="hidden-section bg-violet-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-violet-700 shadow-xl flex items-center justify-center gap-3 mx-auto transition transform hover:-translate-y-1"><span>🖨️</span> Download PDF (Tanpa Simpan)</button>
+
             <div class="mt-8 pt-6 border-t"><button onclick="goBackToStep5()" class="text-slate-400 hover:text-violet-600 text-sm font-semibold transition">Kembali Edit RPP</button></div>
         </div>
     </div>
@@ -303,20 +448,136 @@
                 <button onclick="closePreviewModal()" class="px-5 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold text-sm hover:bg-slate-200">Batal</button>
                 <button onclick="savePreviewedSubbabs()" class="px-5 py-2 bg-violet-600 text-white rounded-lg font-bold text-sm hover:bg-violet-700">Simpan ke Database</button>
             </div>
+        
+    </div>
+    </div>
+
+    <div id="preview-bab-modal" class="modal-overlay">
+        <div class="modal-box relative p-6 max-w-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-slate-800">Konfirmasi BAB</h3>
+                <button onclick="closeBabPreviewModal()" class="text-slate-400 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">Silakan cek dan edit daftar BAB sebelum disimpan ke database. Kamu bisa tambah/hapus baris.</p>
+            <div class="flex justify-between items-center mb-3">
+                <div class="text-xs text-slate-500">
+                    <span class="font-bold">Kurikulum:</span> <span id="bab-preview-kurikulum">-</span>
+                    <span class="mx-2">•</span>
+                    <span class="font-bold">Kelas/Jenjang:</span> <span id="bab-preview-jenjang">-</span>
+                </div>
+                <button onclick="addBabRow()" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200">+ Tambah Baris</button>
+            </div>
+            <div class="border rounded-xl overflow-hidden mb-4 bg-slate-50 max-h-[420px] overflow-y-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-200 text-slate-600 text-xs uppercase font-bold">
+                        <tr>
+                            <th class="p-2 w-20">Kode</th>
+                            <th class="p-2">Judul BAB</th>
+                            <th class="p-2 w-16 text-center">JP</th>
+                            <th class="p-2 w-10 text-center"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="bab-preview-tbody" class="divide-y divide-slate-200"></tbody>
+                </table>
+            </div>
+            <div class="flex justify-between items-center">
+                <div class="text-xs text-slate-500">
+                    <span class="font-bold">Total JP BAB:</span> <span id="bab-preview-totaljp">0</span> •
+                    <span class="font-bold">Target JP:</span> <span id="bab-preview-targetjp">0</span>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button onclick="closeBabPreviewModal()" class="px-5 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold text-sm hover:bg-slate-200">Batal</button>
+                    <button onclick="savePreviewedBabs()" class="px-5 py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700">Simpan BAB ke Database</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="print-area" style="display: none;">
+<div id="print-area" style="display: none;">
         <div class="print-page pt-10" style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:95vh;"><h1>BUKU KERJA GURU</h1><h2>BUKU 1 : PERENCANAAN</h2><br><br><div style="border:3px double black; padding:40px; margin:20px 0; width:60%; text-align:center;"><h2>MATA PELAJARAN : <span class="p-mapel"></span></h2><h2>KELAS : <span class="p-kelas"></span></h2><h2>TAHUN : <span class="p-tahun"></span></h2></div><br><br><p>Disusun Oleh:</p><p class="p-guru" style="font-weight:bold; text-decoration:underline; font-size:14pt;"></p><br><br><h2 class="p-sekolah"></h2></div>
         
         <div class="page-break pt-10"><h2 style="text-decoration:underline;">LEMBAR PENGESAHAN</h2><br><p style="text-align:justify; line-height:2;">Administrasi mata pelajaran <b><span class="p-mapel"></span></b> Kelas <b><span class="p-kelas"></span></b> Tahun <b><span class="p-tahun"></span></b> telah diperiksa dan disetujui.</p><div class="ttd-wrapper"><div class="ttd-box">Mengetahui,<br>Kepala Madrasah<br><br><br><br><b class="p-kepsek" style="text-decoration:underline;"></b></div><div class="ttd-box ttd-right"><span id="print-tgl-sah">............, ....................</span><br>Guru Mata Pelajaran<br><br><br><br><b class="p-guru" style="text-decoration:underline;"></b></div></div></div>
         
-        <div class="page-break"><h3>PROGRAM TAHUNAN</h3><table class="official-table"><thead><tr><th style="width:10%">KODE</th><th>MATERI POKOK</th><th style="width:10%">JP</th></tr></thead><tbody id="print-tbody-prota"></tbody></table></div>
         
-        <div class="page-break landscape-section"><h3>PROGRAM SEMESTER (SMT 1)</h3><div id="print-promes-smt1"></div></div>
-        <div class="page-break landscape-section"><h3>PROGRAM SEMESTER (SMT 2)</h3><div id="print-promes-smt2"></div></div>
+
+<div class="page-break doc-separator">
+    <div class="doc-sep-inner">
+        <h2 class="doc-sep-small">Lampiran Dokumen</h2>
+        <h1 class="doc-sep-title">STANDAR KOMPETENSI LULUSAN (SKL)</h1>
+        <div class="doc-sep-meta">
+            <div><b>Mapel:</b> <span class="p-mapel"></span></div>
+            <div><b>Kelas:</b> <span class="p-kelas"></span></div>
+            <div><b>Tahun:</b> <span class="p-tahun"></span></div>
+        </div>
+    </div>
+</div>
+
+<div class="page-break keep-with-next"><h3>STANDAR KOMPETENSI LULUSAN (SKL)</h3>
+    <div id="print-skl" style="white-space:pre-wrap; line-height:1.6;"></div>
+</div>
+
+
+<div class="page-break doc-separator">
+    <div class="doc-sep-inner">
+        <h2 class="doc-sep-small">Lampiran Dokumen</h2>
+        <h1 class="doc-sep-title">LAMPIRAN KURIKULUM</h1>
+        <div class="doc-sep-meta">
+            <div><b>Mapel:</b> <span class="p-mapel"></span></div>
+            <div><b>Kelas:</b> <span class="p-kelas"></span></div>
+            <div><b>Tahun:</b> <span class="p-tahun"></span></div>
+        </div>
+    </div>
+</div>
+
+<div class="page-break keep-with-next"><h3 id="print-kompetensi-title">LAMPIRAN KURIKULUM</h3>
+    <div id="print-kompetensi" style="white-space:pre-wrap; line-height:1.6;"></div>
+</div>
+
+
+<div class="page-break doc-separator">
+    <div class="doc-sep-inner">
+        <h2 class="doc-sep-small">Dokumen</h2>
+        <h1 class="doc-sep-title">PROGRAM TAHUNAN</h1>
+        <div class="doc-sep-meta">
+            <div><b>Mapel:</b> <span class="p-mapel"></span></div>
+            <div><b>Kelas:</b> <span class="p-kelas"></span></div>
+            <div><b>Tahun:</b> <span class="p-tahun"></span></div>
+        </div>
+    </div>
+</div>
+
+<div class="page-break keep-with-next"><h3>PROGRAM TAHUNAN</h3><table class="official-table"><thead><tr><th style="width:10%">KODE</th><th>MATERI POKOK</th><th style="width:10%">JP</th></tr></thead><tbody id="print-tbody-prota"></tbody></table></div>
         
-        <div id="print-container-rpp"></div>
+        
+<div class="page-break doc-separator">
+    <div class="doc-sep-inner">
+        <h2 class="doc-sep-small">Dokumen</h2>
+        <h1 class="doc-sep-title">PROGRAM SEMESTER</h1>
+        <div class="doc-sep-meta">
+            <div><b>Mapel:</b> <span class="p-mapel"></span></div>
+            <div><b>Kelas:</b> <span class="p-kelas"></span></div>
+            <div><b>Tahun:</b> <span class="p-tahun"></span></div>
+        </div>
+    </div>
+</div>
+
+<div class="page-break landscape-section keep-with-next"><h3>PROGRAM SEMESTER (SMT 1)</h3><div id="print-promes-smt1"></div></div>
+        <div class="page-break landscape-section keep-with-next"><h3>PROGRAM SEMESTER (SMT 2)</h3><div id="print-promes-smt2"></div></div>
+        
+        
+<div class="page-break doc-separator">
+    <div class="doc-sep-inner">
+        <h2 class="doc-sep-small">Dokumen</h2>
+        <h1 class="doc-sep-title">RENCANA PELAKSANAAN PEMBELAJARAN</h1>
+        <div class="doc-sep-meta">
+            <div><b>Mapel:</b> <span class="p-mapel"></span></div>
+            <div><b>Kelas:</b> <span class="p-kelas"></span></div>
+            <div><b>Tahun:</b> <span class="p-tahun"></span></div>
+        </div>
+    </div>
+</div>
+
+<div id="print-container-rpp"></div>
     </div>
 
     <script src="supabase.js"></script>
@@ -329,13 +590,125 @@
         const HARI_NAMES = ['A','S','S','R','K','J','S'];
         let calendarData=[], protaData=[], promesData=[], calendarWeeksStatus={}; 
         let currentMapelId=null, currentSemester='Ganjil', currentTahunLabel=0, totalJPTersedia=0;
+        let currentKurikulum='Merdeka';
         let activeRppProtaId=null, currentBridgeContext=null;
+        let selectedRppBabPrefix = null;
         let pendingSubbabData = [];
+        let pendingSubbabMode = 'single';
+        let pendingBabData = [];
 
         const monthsFull = [
             {name:'Juli',idx:6}, {name:'Agustus',idx:7}, {name:'September',idx:8}, {name:'Oktober',idx:9}, {name:'November',idx:10}, {name:'Desember',idx:11},
             {name:'Januari',idx:0}, {name:'Februari',idx:1}, {name:'Maret',idx:2}, {name:'April',idx:3}, {name:'Mei',idx:4}, {name:'Juni',idx:5}
         ];
+
+        // --- PROGRESS + BATCH HELPERS ---
+        const sleep = (ms)=> new Promise(res=>setTimeout(res, ms));
+
+        function showProgress(blockId, show=true){
+            const el = getEl(blockId);
+            if(!el) return;
+            if(show) el.classList.remove('hidden-section');
+            else el.classList.add('hidden-section');
+        }
+        function setProgress(blockPrefix, pct, label){
+            const bar = getEl(blockPrefix + '-bar');
+            const pctEl = getEl(blockPrefix + '-pct');
+            const lblEl = getEl(blockPrefix + '-label');
+            if(bar) bar.style.width = `${Math.max(0,Math.min(100,pct))}%`;
+            if(pctEl) pctEl.innerText = `${Math.round(pct)}%`;
+            if(lblEl && label) lblEl.innerText = label;
+        }
+
+        // Validasi & sanitasi link kompetensi -> sub-bab (Step 3)
+        // - allowedSet: Set kode_subbab yang valid (string)
+        // - links: array kode_subbab dari AI (bisa angka/string)
+        // Catatan: fungsi ini TIDAK melempar error; ia akan membuang link invalid agar proses simpan tidak gagal.
+        function assertValidLinks(links, allowedSet, label=''){
+            try{
+                if(!allowedSet || typeof allowedSet.has !== 'function') return;
+                if(!Array.isArray(links)) return;
+                const valid = [];
+                const invalid = [];
+                for(const x of links){
+                    const key = String(x).trim();
+                    if(!key) continue;
+                    if(allowedSet.has(key)) valid.push(key);
+                    else invalid.push(key);
+                }
+                if(invalid.length){
+                    console.warn(`[SYNC] Link sub-bab invalid dibuang (${label}):`, invalid);
+                }
+                // Mutasi array asli agar pemanggil tetap pakai hasil yang bersih
+                links.length = 0;
+                for(const v of valid) links.push(v);
+            }catch(e){
+                console.warn('assertValidLinks warning:', e);
+            }
+        }
+
+
+        async function withRetry(fn, {retries=4, baseDelay=400}={}){
+            let lastErr;
+            for(let i=0;i<=retries;i++){
+                try{ return await fn(); }
+                catch(e){
+                    lastErr = e;
+                    // retry on network-ish errors / 5xx / http2 protocol / fetch failed
+                    const msg = (e?.message || '').toLowerCase();
+                    const code = e?.code || e?.status || '';
+                    const shouldRetry = msg.includes('http2') || msg.includes('failed to fetch') || msg.includes('network') || msg.includes('timeout') || (String(code).startsWith('5')) || code===429;
+                    if(!shouldRetry || i===retries) throw e;
+                    await sleep(baseDelay * Math.pow(2,i));
+                }
+            }
+            throw lastErr;
+        }
+
+        async function insertBatched(table, rows, {chunkSize=200, onConflict=null}={}, progress){
+            if(!rows || !rows.length) return;
+            const total = rows.length;
+            for(let i=0;i<total;i+=chunkSize){
+                const chunk = rows.slice(i, i+chunkSize);
+                const pct = ((i+chunk.length)/total)*100;
+                if(progress) progress(pct, `Menyimpan ${table} (${i+chunk.length}/${total})...`);
+                await withRetry(async ()=>{
+                    let q = window.db.from(table);
+                    if(onConflict){
+                        const {error} = await q.upsert(chunk, { onConflict }).select();
+                        if(error) throw error;
+                    }else{
+                        const {error} = await q.insert(chunk);
+                        if(error) throw error;
+                    }
+                });
+            }
+        }
+
+        function applyKurikulumUI(){
+            const sel = getEl('select-kurikulum');
+            const kur = (sel && sel.value) ? sel.value : (currentKurikulum || 'Merdeka');
+            currentKurikulum = kur;
+
+            // Update judul Step 3 dan Step 5 agar istilah konsisten
+            const step3Title = document.querySelector('#wizard-step-3 h2');
+            if(step3Title) step3Title.innerText = (kur === 'K13') ? 'Step 3: Program Tahunan + K13' : 'Step 3: Program Tahunan + Merdeka';
+
+            const step5Title = document.querySelector('#wizard-step-5 h2');
+            if(step5Title) step5Title.innerText = (kur === 'K13') ? 'Step 5: Generator RPP (K13)' : 'Step 5: Generator Modul Ajar (Merdeka)';
+
+            // Step 5 badge tetap "Wajib Diisi", tapi ganti label cetak RPP
+            const printContainer = getEl('print-container-rpp');
+            // (tidak wajib update sekarang, print memakai data yang sama)
+
+            // Toggle hint di Step 3 editor (biarkan selalu tampil)
+        }
+
+        document.addEventListener('change', (e)=>{
+            if(e.target && e.target.id === 'select-kurikulum'){
+                applyKurikulumUI();
+            }
+        });
 
         // --- AUTH ---
         window.onload = async function() {
@@ -350,13 +723,15 @@
                 if(data.id_tahun_ajaran && els.selTahun.querySelector(`option[value="${data.id_tahun_ajaran}"]`)) {
                     els.selTahun.value=data.id_tahun_ajaran;
                 }
-                getEl('input-mapel').value=data.nama_mapel; getEl('input-kelas').value=data.kelas; getEl('input-jp-beban').value=data.beban_jp_minggu;
+                getEl('input-mapel').value=data.nama_mapel; getEl('input-kelas').value=data.kelas; getEl('input-jp-beban').value=data.beban_jp_minggu; 
+                if(getEl('select-kurikulum')) { currentKurikulum = data.jenis_kurikulum || 'Merdeka'; getEl('select-kurikulum').value = currentKurikulum; }
+                applyKurikulumUI();
                 const {data:th}=await window.db.from('tahun_ajaran').select('*').eq('id',data.id_tahun_ajaran).single();
                 if(th){currentSemester=th.semester; currentTahunLabel=parseInt(th.nama.split('/')[0]);}
                 // REMOVED LOCALSTORAGE RESTORE
             }
         }
-        function showApp(user){ hideAllSteps(); els.step1.classList.remove('hidden-section'); els.auth.classList.add('hidden-section'); els.logout.classList.remove('hidden-section'); els.email.textContent=user.email; loadTahunAjaran(); }
+        function showApp(user){ hideAllSteps(); els.step1.classList.remove('hidden-section'); els.auth.classList.add('hidden-section'); els.logout.classList.remove('hidden-section'); els.email.textContent=user.email; loadTahunAjaran(); applyKurikulumUI(); }
         function showLogin(){ hideAllSteps(); els.auth.classList.remove('hidden-section'); els.logout.classList.add('hidden-section'); }
         function hideAllSteps(){ document.querySelectorAll('[id^="wizard-step-"]').forEach(el=>el.classList.add('hidden-section')); }
         getEl('auth-form').addEventListener('submit', async(e)=>{e.preventDefault(); const email=getEl('email').value, password=getEl('password').value; let {data,error}=await window.db.auth.signInWithPassword({email,password}); if(error){if(error.message.includes("Invalid login")){await window.db.auth.signUp({email,password}); alert("Akun dibuat! Login lagi.");}else alert(error.message);}else{showApp(data.user); await restoreSessionData(data.user.id);}});
@@ -367,6 +742,17 @@
         async function goStep4(){ await saveStep3(false); hideAllSteps(); els.step4.classList.remove('hidden-section'); await initStep4Logic(); }
         async function goStep5(){ await saveStep4(true); hideAllSteps(); els.step5.classList.remove('hidden-section'); await initStep5Logic(); }
         async function goStep6(){ hideAllSteps(); els.step6.classList.remove('hidden-section'); }
+
+        async function saveAndGoStep6(){
+            // Simpan draft RPP aktif (kalau ada), lalu lanjut Step 6
+            try{
+                if(activeRppProtaId) await saveRPP(true);
+            }catch(e){
+                console.warn(e);
+            }
+            await goStep6();
+        }
+
         async function goBackToStep1(){ await saveStep2(false); hideAllSteps(); els.step1.classList.remove('hidden-section'); }
         async function goBackToStep2(){ if(!els.step3.classList.contains('hidden-section')) await saveStep3(false); hideAllSteps(); els.step2.classList.remove('hidden-section'); const loaded=await loadCalendarFromDB(); if(!loaded && calendarData.length===0) populateCalendarData(); renderDailyCalendarUI(); }
         async function goBackToStep3(){ await saveStep4(false); hideAllSteps(); els.step3.classList.remove('hidden-section'); await initStep3Logic(); }
@@ -390,7 +776,8 @@
             currentSemester=opt.dataset.semester || 'Ganjil'; 
             currentTahunLabel=parseInt(opt.dataset.tahun || opt.text.split('/')[0]); 
 
-            const payload={user_id:user.id, id_tahun_ajaran:els.selTahun.value, nama_mapel:getEl('input-mapel').value, kelas:getEl('input-kelas').value, beban_jp_minggu:parseInt(getEl('input-jp-beban').value)}; 
+            const payload={user_id:user.id, id_tahun_ajaran:els.selTahun.value, nama_mapel:getEl('input-mapel').value, kelas:getEl('input-kelas').value, beban_jp_minggu:parseInt(getEl('input-jp-beban').value), jenis_kurikulum:(getEl('select-kurikulum')?.value || 'Merdeka')};
+            currentKurikulum = payload.jenis_kurikulum; applyKurikulumUI(); 
             
             const {data,error}=await window.db.from('mapel_kelas').insert([payload]).select(); 
             if(!error){ 
@@ -436,7 +823,26 @@
         }
         function toggleWeek(mIdx,y,w){ const targets=calendarData.filter(d=>d.monthIdx===mIdx&&d.year===y&&d.weekInMonth===w); if(!targets.length)return; const newVal=targets.some(d=>d.status==='Efektif')?'Tidak Efektif':'Efektif'; targets.forEach(d=>d.status=newVal); renderDailyCalendarUI(); }
         function calcStep2Summary(){ calendarWeeksStatus={}; let total=0, efektif=0; const weeks={}; calendarData.forEach(d=>{ const k=`${d.year}-W${Math.ceil((((new Date(d.date)-new Date(d.year,0,1))/86400000)+new Date(d.year,0,1).getDay()+1)/7)}`; if(!weeks[k]) weeks[k]=0; if(d.status==='Efektif') weeks[k]++; }); Object.values(weeks).forEach(cnt=>{ total++; if(cnt>=MIN_HARI_EFEKTIF_PER_MINGGU) efektif++; }); getEl('sum-total').innerText=total; getEl('sum-libur').innerText=total-efektif; getEl('sum-efektif').innerText=efektif; monthsFull.forEach(m=>{ const mData=calendarData.filter(d=>d.monthIdx===m.idx); if(!mData.length) return; const maxW=Math.max(...mData.map(d=>d.weekInMonth)); for(let w=1; w<=maxW; w++){ const daysInWeek=mData.filter(d=>d.weekInMonth===w); const efCount=daysInWeek.filter(d=>d.status==='Efektif').length; calendarWeeksStatus[`${m.idx+1}-${w}`]=(efCount>=MIN_HARI_EFEKTIF_PER_MINGGU)?'Efektif':'Libur'; } }); }
-        async function saveStep2(loading){ const btn=getEl('btn-next-step2'); const txt=btn.innerText; if(loading){btn.innerText="Menyimpan..."; btn.disabled=true;} const tid=els.selTahun.value; await window.db.from('kalender_akademik').delete().eq('id_tahun_ajaran',tid); const payload=calendarData.map(d=>({id_tahun_ajaran:tid, tanggal:d.date, status:d.status})); await window.db.from('kalender_akademik').insert(payload); if(loading){btn.innerText=txt; btn.disabled=false;} }
+        
+        async function saveStep2(loading){
+            const btn=getEl('btn-next-step2');
+            const txt=btn.innerText;
+            if(loading){ btn.innerText="Menyimpan..."; btn.disabled=true; }
+
+            const tid=els.selTahun.value;
+            // Hapus dulu data lama (lebih aman daripada update satu-satu)
+            await withRetry(async ()=>{
+                const { error } = await window.db.from('kalender_akademik').delete().eq('id_tahun_ajaran',tid);
+                if(error) throw error;
+            });
+
+            const payload=calendarData.map(d=>({id_tahun_ajaran:tid, tanggal:d.date, status:d.status}));
+
+            // Simpan bertahap untuk menghindari error HTTP2 / limit request
+            await insertBatched('kalender_akademik', payload, {chunkSize: 200});
+
+            if(loading){ btn.innerText=txt; btn.disabled=false; }
+        }
         async function saveStep3(loading){ return true; } 
 
         async function initStep3Logic(){ 
@@ -448,34 +854,338 @@
             protaData=[]; const {data}=await window.db.from('prota').select('*').eq('id_mapel_kelas',currentMapelId).order('kode_materi',{ascending:true}); if(data) protaData=data; 
             protaData.sort((a,b) => a.kode_materi.localeCompare(b.kode_materi, undefined, {numeric: true, sensitivity: 'base'})); renderProtaTable(); 
         }
+        async function saveBabManual(){
+            const code=(getEl('input-kd-code').value||'').trim();
+            if(!code) return alert('Isi Kode Bab terlebih dulu!');
+            if(code.includes('.')) return alert('Kode Bab tidak boleh berisi titik. Contoh: 1');
+            return addManualProta();
+        }
+
+        async function ensureBabSaved(){
+            if(!currentMapelId) throw new Error("Selesaikan Step 1 dulu (Mapel/Kelas belum tersimpan).");
+            const bab = (getEl('input-kd-code').value||'').trim();
+            const judul = (getEl('input-kd-text').value||'').trim();
+            const jp = parseInt(getEl('input-kd-jp').value||'0') || 0;
+
+            if(!bab) throw new Error("Kode bab belum diisi.");
+            if(bab.includes('.')) throw new Error("Kode bab tidak boleh mengandung titik. Contoh: 1");
+            if(!judul) throw new Error("Judul bab belum diisi.");
+            if(!jp) throw new Error("Total JP bab belum diisi.");
+
+            // Cek apakah bab sudah ada
+            const { data, error } = await window.db
+                .from('prota')
+                .select('id,kode_materi')
+                .eq('id_mapel_kelas', currentMapelId)
+                .eq('semester', currentSemester)
+                .eq('kode_materi', bab)
+                .maybeSingle();
+            if(error) throw error;
+
+            if(!data){
+                await withRetry(async ()=>{
+                    const { error:insErr } = await window.db.from('prota').insert([{
+                        id_mapel_kelas: currentMapelId,
+                        kode_materi: bab,
+                        topik_materi: judul,
+                        alokasi_jp: jp,
+                        semester: currentSemester
+                    }]);
+                    if(insErr) throw insErr;
+                });
+                await loadProtaDB();
+            }
+        }
+
+
         async function addManualProta() { 
             if(!getEl('input-kd-code').value || !getEl('input-kd-text').value || !getEl('input-kd-jp').value) return alert("Isi semua data!"); 
             const item = { id_mapel_kelas: currentMapelId, kode_materi: getEl('input-kd-code').value, topik_materi: getEl('input-kd-text').value, alokasi_jp: parseInt(getEl('input-kd-jp').value), semester: currentSemester }; 
             const { data } = await window.db.from('prota').insert([item]).select(); if(data) { protaData.push(data[0]); loadProtaDB(); clearProtaInputs(); }
         }
         
-        function openAIBridge(type) {
+        async function openAIBridge(type) {
             currentBridgeContext = type; getEl('bridge-modal').classList.add('active');
             let promptText = "";
             if (type === 'subbab') {
+                try{ await ensureBabSaved(); }catch(e){ alert(e.message||e); closeBridgeModal(); return; }
+
                 const mapel = getEl('input-mapel').value; const bab = getEl('input-kd-code').value; const topic = getEl('input-kd-text').value; const jp = getEl('input-kd-jp').value;
-                promptText = `Sebagai guru mata pelajaran ${mapel}, pecah materi "${topic}" (Bab ${bab}) menjadi sub-bab untuk total alokasi waktu ${jp} Jam Pelajaran (JP). \n\nSangat Penting: Berikan jawaban HANYA dalam format JSON Murni berikut (tanpa markdown):\n\n[{"sub": "Judul Sub Bab 1", "jp": 2}, {"sub": "Judul Sub Bab 2", "jp": 4}]`;
-            } else if (type === 'rpp_full') { 
-                const topic = getEl('rpp-title').innerText; 
+                promptText = `Sebagai guru mata pelajaran ${mapel}, pecah materi "${topic}" (Bab ${bab}) menjadi sub-bab untuk total alokasi waktu ${jp} Jam Pelajaran (JP).
+
+Sangat Penting: Berikan jawaban HANYA dalam format JSON Murni (tanpa markdown) berupa ARRAY seperti ini:
+
+[{"kode":"${bab}.1","judul":"Judul Sub Bab 1","minggu_ke":1,"jp":2},{"kode":"${bab}.2","judul":"Judul Sub Bab 2","minggu_ke":2,"jp":4}]`;
+            
+            
+            
+            } else if (type === 'subbab_all') {
+                // Batch generate sub-bab untuk semua BAB yang sudah ada di database (hasil konfirmasi user)
+                if(!currentMapelId) { alert("Selesaikan Step 1 dulu (Mapel/Kelas belum tersimpan)."); closeBridgeModal(); return; }
+
+                // Pastikan data PROTA terbaru
+                try{ await loadProtaDB(); }catch(e){ console.warn(e); }
+
+                const babs = (protaData || [])
+                    .filter(r => r && r.kode_materi && !String(r.kode_materi).includes('.') )
+                    .map(r => ({
+                        bab: String(r.kode_materi).trim(),
+                        judul: String(r.topik_materi || '').trim(),
+                        jp: parseInt(r.alokasi_jp) || 0
+                    }))
+                    .filter(r => r.bab && r.judul);
+
+                if(!babs.length){
+                    alert("Belum ada BAB tersimpan. Generate/isi BAB dulu, konfirmasi, lalu simpan ke DB.");
+                    closeBridgeModal();
+                    return;
+                }
+
+                const mapel = getEl('input-mapel').value || 'Mata Pelajaran';
+                const kelas = getEl('input-kelas').value || 'Kelas';
+                const kur = getEl('select-kurikulum')?.value || currentKurikulum || 'Kurikulum';
+
+                promptText = `Sebagai guru ${mapel} (${kelas}, ${kur}), pecah SETIAP BAB berikut menjadi SUB-BAB. 
+Setiap sub-bab harus punya: kode, judul, minggu_ke (perkiraan), jp. Total jp sub-bab per BAB harus sama dengan jp BAB.
+
+Daftar BAB (JSON):
+${JSON.stringify(babs, null, 2)}
+
+Sangat Penting: Jawab HANYA dalam JSON Murni (tanpa markdown) berupa ARRAY dengan format ini:
+
+[
+  {
+    "bab":"1",
+    "judul":"Judul BAB 1",
+    "alokasi_jp":12,
+    "subbab":[
+      {"kode":"1.1","judul":"...","minggu_ke":1,"jp":2},
+      {"kode":"1.2","judul":"...","minggu_ke":2,"jp":4}
+    ]
+  },
+  {
+    "bab":"2",
+    "judul":"Judul BAB 2",
+    "alokasi_jp":10,
+    "subbab":[ ... ]
+  }
+]`;
+} else if (type === 'bab') {
+                const sekolah = getEl('input-sekolah').value || 'Sekolah/Madrasah';
+                const mapel = getEl('input-mapel').value || 'Mata Pelajaran';
+                const kelas = getEl('input-kelas').value || 'Kelas';
+                const kur = getEl('select-kurikulum')?.value || currentKurikulum || 'Merdeka';
+                const jenjang = detectJenjangFromKelas(kelas);
+                const targetJP = parseInt(getEl('disp-total-jp')?.innerText || '0') || 0;
+
+                promptText = `Buat daftar BAB (topik besar) untuk ${mapel} (${kelas}, jenjang ${jenjang}) di ${sekolah} dengan kurikulum ${kur}.
+Total alokasi waktu semester ini adalah ${targetJP} JP.
+
+Syarat keluaran:
+1) Jawaban HARUS JSON murni (tanpa markdown, tanpa penjelasan).
+2) Format berupa ARRAY objek: [{"kode":"1","judul":"...","jp":12},{"kode":"2","judul":"...","jp":10}]
+3) Kode BAB berupa angka berurutan mulai 1.
+4) Total jp jika dijumlahkan harus mendekati ${targetJP} (boleh selisih max 1 JP jika perlu penyesuaian).
+5) Buat BAB yang wajar untuk 1 semester (misal 6–12 BAB), judul ringkas dan sesuai level siswa.`;
+
+} else if (type === 'kurikulum_bundle') {
+                const sekolah = getEl('input-sekolah').value || 'Sekolah';
+                const mapel = getEl('input-mapel').value || 'Mapel';
+                const kelas = getEl('input-kelas').value || 'Kelas';
+                const semester = currentSemester || 'Ganjil';
+                const kurikulum = currentKurikulum || (getEl('select-kurikulum')?.value || 'Merdeka');
+
+                // Sinkronisasi: Lampiran kurikulum WAJIB mengacu ke kode sub-bab yang sudah ada (hasil Step 3).
+                // Ambil langsung dari DB (biar selalu up-to-date, tidak tergantung cache protaData).
+                const { data: protaRows, error: protaErr } = await window.db
+                    .from('prota')
+                    .select('kode_materi, topik_materi, alokasi_jp')
+                    .eq('id_mapel_kelas', currentMapelId)
+                    .eq('semester', currentSemester)
+                    .order('kode_materi', { ascending: true });
+                if (protaErr) {
+                    console.warn(protaErr);
+                    alert("⚠️ Gagal memuat Prota/Sub-bab dari DB. Coba refresh halaman.");
+                    closeBridgeModal();
+                    return;
+                }
+                const subbabItems = (protaRows || []).filter(p => String(p.kode_materi || '').includes('.'));
+                if (!subbabItems.length) {
+                    alert("⚠️ Belum ada SUB-BAB di Step 3 untuk semester ini. Buat/generate sub-bab dulu, baru generate Lampiran Kurikulum.");
+                    closeBridgeModal();
+                    return;
+                }
+                const listSubBabGlobal = subbabItems
+                    .map(p => `- ${p.kode_materi}: ${p.topik_materi} (JP ${p.alokasi_jp || 0})`)
+                    .join('\n');
+
+                promptText =
+`Kamu adalah asisten penyusun dokumen pembelajaran. Buat output JSON murni (tanpa markdown, tanpa penjelasan).
+
+Konteks:
+- Sekolah: ${sekolah}
+- Mapel: ${mapel}
+- Kelas: ${kelas}
+- Semester: ${semester}
+- Kurikulum: ${kurikulum} (pilih salah satu: "Merdeka" atau "K13")
+
+PENTING (Sinkronisasi Materi):
+- Berikut adalah KODE SUB-BAB RESMI yang SUDAH ADA dari Step 3. Kamu WAJIB memakai kode-kode ini untuk mengaitkan kompetensi.
+- Jangan membuat bab/subbab baru. Jangan membuat kode sub-bab baru.
+- Jika perlu, cukup pilih kode yang paling relevan.
+
+DAFTAR SUB-BAB RESMI (gunakan persis kodenya):
+${listSubBabGlobal}
+
+Aturan output:
+1) Selalu isi "skl" (string).
+2) Jangan buat struktur bab/subbab. Fokus pada SKL + kompetensi.
+3) Semua TP/KD WAJIB punya "link_subbab": array kode sub-bab, misal ["1.1","1.2"]. Kode di link_subbab harus berasal dari daftar di atas.
+4) Jika Kurikulum = "Merdeka":
+   - Isi "merdeka.cp" minimal 1 CP.
+   - Di tiap CP buat "tp" minimal 6 item.
+   - Tiap TP wajib punya: kode_tp, deskripsi_tp, semester, kktp{model,deskripsi}, dan link_subbab.
+   - (Opsional) "atp" boleh kosong.
+5) Jika Kurikulum = "K13":
+   - Isi "k13.ki" minimal 2 item (ki_no 3 dan 4).
+   - Di tiap KI buat "kd" minimal 6 item.
+   - Tiap KD wajib punya: kode, jenis ("Pengetahuan"/"Keterampilan"), deskripsi, kkm (60-85), dan link_subbab.
+6) Output harus mengikuti struktur key berikut (nama key jangan diubah):
+{
+  "skl": "...",
+  "merdeka": {
+    "cp": [
+      {
+        "fase":"...",
+        "kode_cp":"...",
+        "deskripsi_cp":"...",
+        "tp":[
+          {"kode_tp":"...","deskripsi_tp":"...","semester":"...","kktp":{"model":"deskripsi","deskripsi":"..."},"link_subbab":["1.1"]}
+        ],
+        "atp":[]
+      }
+    ]
+  },
+  "k13": {
+    "ki":[
+      {"ki_no":3,"deskripsi":"...","kd":[{"kode":"3.1","jenis":"Pengetahuan","deskripsi":"...","kkm":75,"link_subbab":["1.1"]}]}
+    ]
+  }
+}
+
+Sekarang hasilkan JSON sesuai konteks di atas.`;
+
+                        } else if (type === 'rpp_full') { 
                 const model = getEl('select-metode').value;
                 if(!model) { alert("Pilih model pembelajaran di atas dulu!"); closeBridgeModal(); return; }
 
-                if(!activeRppProtaId) return alert("Pilih salah satu materi dulu!");
-                const currentP = protaData.find(p => p.id === activeRppProtaId);
-                const babPrefix = currentP.kode_materi.split('.')[0];
-                const subBabs = protaData.filter(p => p.kode_materi.startsWith(babPrefix + '.'));
-                const listSubBab = subBabs.map(p => `- Kode ${p.kode_materi}: ${p.topik_materi}`).join('\n');
-                
-                promptText = `Buatkan konten RPP Kurikulum Merdeka yang SANGAT DETAIL dan LENGKAP untuk Bab: "${topic}". \nModel Pembelajaran: ${model}.\n\nDaftar Sub-Bab yang WAJIB dibuatkan RPP-nya (Output harus mencakup SEMUA kode di bawah ini):\n${listSubBab}\n\nInstruksi Khusus:\n1. Tujuan: Gunakan prinsip ABCD.\n2. Kegiatan: Berikan langkah-langkah pembelajaran lengkap dalam bentuk poin-poin teks (misal: - Pendahuluan... - Inti... - Penutup...). JANGAN gunakan format JSON untuk bagian ini, cukup string teks biasa.\n3. Penilaian: Sebutkan teknik dan instrumennya.\n\nSangat Penting: Berikan jawaban HANYA dalam format JSON ARRAY Murni berikut:\n\n[
-  {"kode": "1.1", "tujuan": "...", "kegiatan": "- Pendahuluan: ... \n- Inti: ... \n- Penutup: ...", "penilaian": "..."},
-  {"kode": "1.2", "tujuan": "...", "kegiatan": "...", "penilaian": "..."}
+                // Tentukan BAB target:
+                // 1) Jika user memilih BAB dari dropdown target generate, gunakan itu.
+                // 2) Jika tidak, fallback ke BAB dari sub-bab yang sedang aktif.
+                let babPrefix = null;
+                if(selectedRppBabPrefix){
+                    babPrefix = String(selectedRppBabPrefix).trim();
+                    selectedRppBabPrefix = null; // reset setelah dipakai
+                } else if(activeRppProtaId){
+                    const cur = (protaData || []).find(p => p.id === activeRppProtaId);
+                    if(cur) babPrefix = String(cur.kode_materi || '').split('.')[0];
+                }
+
+                if(!babPrefix){
+                    alert("Pilih target BAB di dropdown (atas), atau klik salah satu sub-bab di daftar kiri.");
+                    closeBridgeModal();
+                    return;
+                }
+
+                const babRow = (protaData || []).find(p => String(p.kode_materi || '') === babPrefix && !String(p.kode_materi || '').includes('.')) || null;
+                const babTitle = (babRow && babRow.topik_materi) ? babRow.topik_materi : `BAB ${babPrefix}`;
+
+                const subBabs = (protaData || []).filter(p => String(p.kode_materi || '').startsWith(babPrefix + '.'));
+                if(!subBabs.length){
+                    alert("Tidak ada sub-bab pada BAB " + babPrefix + ". Pastikan Step 3 sudah berisi sub-bab.");
+                    closeBridgeModal();
+                    return;
+                }
+
+                const listSubBab = subBabs
+                    .sort((a,b)=>String(a.kode_materi).localeCompare(String(b.kode_materi), undefined, {numeric:true, sensitivity:'base'}))
+                    .map(p => `- Kode ${p.kode_materi} (${p.alokasi_jp} JP): ${p.topik_materi}`)
+                    .join('\n');
+
+                const kur = currentKurikulum || 'Merdeka';
+                const dok = (kur === 'K13') ? 'RPP (K13)' : 'Modul Ajar (Kurikulum Merdeka)';
+
+                promptText =
+`Buatkan konten ${dok} yang DETAIL tapi RINGKAS untuk target 1 halaman A4 per SUB-BAB (setelah header & tanda tangan) untuk BAB: "${babTitle}".
+Model Pembelajaran: ${model}.
+
+DAFTAR SUB-BAB (WAJIB LENGKAP, output harus mencakup SEMUA kode di bawah ini):
+${listSubBab}
+
+Instruksi isi (untuk tiap sub-bab):
+- "tujuan": 3–5 poin, pakai prinsip ABCD, operasional, terukur, relevan dengan sub-bab.
+- "kegiatan": tulis sebagai string panjang yang rapi (bukan JSON), pakai heading singkat + poin, urutan disarankan:
+  1) Materi inti (poin ringkas)
+  2) Media/Alat & Sumber belajar (minimal 3 sumber, bisa buku/lembar kerja/link umum)
+  3) Langkah pembelajaran dengan estimasi waktu dan aktivitas guru–siswa:
+     - Pendahuluan (±10 menit)
+     - Inti (±70 menit) — sesuaikan alur dengan model ${model} (misal PBL: orientasi masalah–organisasi–penyelidikan–presentasi–refleksi)
+     - Penutup (±10 menit)
+  4) Diferensiasi (konten/proses/produk) + layanan remedial/pengayaan (singkat).
+  5) Penguatan karakter + literasi/numerasi + refleksi/penutup (singkat).
+- "penilaian": tulis padat namun lengkap:
+  diagnostik/formative/sumatif, teknik (observasi/tes/produk), instrumen (contoh butir/indikator), dan rubrik mini (3 level) + tindak lanjut.
+
+Sangat penting:
+- Output HANYA JSON murni (tanpa markdown) berupa ARRAY.
+- Gunakan tanda kutip ganda untuk semua key dan string.
+- Jangan ada teks di luar JSON.
+
+Format:
+[
+  {"kode":"1.1","tujuan":"...","kegiatan":"...","penilaian":"..."},
+  {"kode":"1.2","tujuan":"...","kegiatan":"...","penilaian":"..."}
 ]`;
+
+            } else if (type === 'rpp_all') {
+                const model = getEl('select-metode').value;
+                if(!model) { alert("Pilih model pembelajaran di atas dulu!"); closeBridgeModal(); return; }
+
+                const kur = currentKurikulum || (getEl('select-kurikulum')?.value || 'Merdeka');
+                const dok = (kur === 'K13') ? 'RPP (K13)' : 'Modul Ajar (Kurikulum Merdeka)';
+
+                // Ambil semua sub-bab (kode mengandung titik) di semester aktif
+                const subBabs = (protaData || []).filter(p => String(p.kode_materi||'').includes('.'));
+                if(!subBabs.length) { alert("Belum ada sub-bab. Selesaikan Step 3 dulu!"); closeBridgeModal(); return; }
+
+                const list = subBabs.map(p => `- Kode ${p.kode_materi} (${p.alokasi_jp} JP): ${p.topik_materi}`).join('\n');
+
+                promptText =
+`Buatkan konten ${dok} yang DETAIL tapi RINGKAS (target 1 halaman A4 per SUB-BAB setelah header & tanda tangan) untuk SEMUA sub-bab berikut (semester ${currentSemester}). 
+Model Pembelajaran: ${model}.
+
+Daftar Sub-Bab (WAJIB lengkap, kodenya harus sama persis):
+${list}
+
+Instruksi isi (untuk tiap sub-bab):
+- "tujuan": 3–5 poin (ABCD), operasional, terukur.
+- "kegiatan": string panjang rapi (bukan JSON) dengan:
+  (1) Materi inti (ringkas)
+  (2) Media/Alat & Sumber (min 3)
+  (3) Langkah pembelajaran (Pendahuluan–Inti–Penutup) + estimasi waktu + aktivitas guru–siswa, disesuaikan dengan model ${model}.
+  (4) Diferensiasi + remedial/pengayaan (singkat)
+  (5) Penguatan karakter + literasi/numerasi + refleksi (singkat)
+- "penilaian": diagnostik/formative/sumatif, teknik, instrumen, rubrik mini 3 level, dan tindak lanjut.
+
+Output HARUS JSON murni (tanpa markdown) berupa ARRAY:
+[
+  {"kode":"1.1","tujuan":"...","kegiatan":"...","penilaian":"..."},
+  {"kode":"1.2","tujuan":"...","kegiatan":"...","penilaian":"..."}
+]
+
+Jangan sertakan teks apa pun di luar JSON.`;
             }
+
             getEl('prompt-area').value = promptText; getEl('ai-response-area').value = "";
         }
 
@@ -498,10 +1208,29 @@
         function copyToClipboard(id) { const el = getEl(id); el.select(); document.execCommand('copy'); alert("Prompt tersalin!"); }
         
         function extractJSON(text) {
-            let clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const firstBracket = clean.search(/[{\[]/); const lastBracket = clean.lastIndexOf(/[}\]]/);
-            if (firstBracket !== -1 && lastBracket !== -1) return clean.substring(firstBracket, lastBracket + 1);
-            return clean;
+            // Bersihkan fence markdown dan whitespace
+            let clean = String(text || '')
+                .replace(/```json/gi, '')
+                .replace(/```/g, '')
+                .trim();
+
+            // Cari awal JSON (object/array)
+            const first = clean.search(/[\{\[]/);
+            if (first === -1) return clean;
+
+            // Cari penutup JSON terakhir (} atau ]) dengan scan dari belakang
+            let last = -1;
+            for (let i = clean.length - 1; i >= first; i--) {
+                const ch = clean[i];
+                if (ch === '}' || ch === ']') { last = i; break; }
+            }
+
+            let candidate = (last === -1) ? clean.substring(first) : clean.substring(first, last + 1);
+            candidate = candidate.trim()
+                .replace(/[“”]/g, '"')
+                .replace(/[‘’]/g, "'"); // normalisasi quote “aneh”
+
+            return candidate;
         }
 
         function safeRender(content) {
@@ -509,78 +1238,800 @@
             return content ? marked.parse(content) : '-';
         }
 
-        function processAIResponse() {
-            let raw = getEl('ai-response-area').value; if(!raw) return alert("Paste dulu jawaban AI-nya!");
+
+        // --- SUBBAB PREVIEW MODAL HELPERS ---
+        function closePreviewModal(){
+            getEl('preview-subbab-modal')?.classList.remove('active');
+            pendingSubbabMode = 'single';
+        }
+
+        function renderSubbabPreview(){
+            const tbody = getEl('preview-tbody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            (pendingSubbabData || []).forEach((row, idx)=>{
+
+if(pendingSubbabMode === 'all'){
+    const prev = (idx>0) ? (pendingSubbabData[idx-1]?.bab) : null;
+    if(idx===0 || (row.bab && row.bab !== prev)){
+        const trSep = document.createElement('tr');
+        trSep.innerHTML = `<td colspan="3" class="p-2 bg-slate-100 text-xs font-bold text-slate-700">BAB ${row.bab || ''}</td>`;
+        tbody.appendChild(trSep);
+    }
+}
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2 align-top">
+                        <input data-idx="${idx}" data-field="code"
+                               class="w-full p-1.5 border rounded-md text-xs bg-white"
+                               value="${(row.code || '').replace(/"/g,'&quot;')}" />
+                    </td>
+                    <td class="p-2 align-top">
+                        <input data-idx="${idx}" data-field="sub"
+                               class="w-full p-1.5 border rounded-md text-xs bg-white"
+                               value="${(row.sub || '').replace(/"/g,'&quot;')}" />
+                    </td>
+                    <td class="p-2 align-top text-center">
+                        <input data-idx="${idx}" data-field="jp"
+                               type="number" min="0"
+                               class="w-16 p-1.5 border rounded-md text-xs bg-white text-center"
+                               value="${Number(row.jp || 0)}" />
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // live update ke pendingSubbabData saat user edit
+            tbody.querySelectorAll('input[data-idx]').forEach(inp=>{
+                inp.addEventListener('input', (e)=>{
+                    const i = parseInt(e.target.getAttribute('data-idx'));
+                    const field = e.target.getAttribute('data-field');
+                    if(!pendingSubbabData[i]) return;
+                    if(field === 'jp') pendingSubbabData[i][field] = parseInt(e.target.value||'0') || 0;
+                    else pendingSubbabData[i][field] = e.target.value;
+                });
+            });
+        }
+
+        
+        function closeBabPreviewModal(){
+            getEl('preview-bab-modal')?.classList.remove('active');
+        }
+
+        function addBabRow(){
+            pendingBabData ||= [];
+            // cari kode berikutnya
+            const next = (pendingBabData.length ? (Math.max(...pendingBabData.map(r=>parseInt(r.kode)||0)) + 1) : 1);
+            pendingBabData.push({ kode: String(next), judul: '', jp: 0 });
+            renderBabPreview();
+        }
+
+        function removeBabRow(idx){
+            if(!confirm('Hapus baris BAB ini?')) return;
+            pendingBabData.splice(idx, 1);
+            renderBabPreview();
+        }
+
+        function renderBabPreview(){
+            const tbody = getEl('bab-preview-tbody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            const kur = getEl('select-kurikulum')?.value || currentKurikulum || '-';
+            const kelas = getEl('input-kelas')?.value || '-';
+            const jenjang = detectJenjangFromKelas(kelas);
+            const targetJP = parseInt(getEl('disp-total-jp')?.innerText || '0') || 0;
+
+            if(getEl('bab-preview-kurikulum')) getEl('bab-preview-kurikulum').innerText = kur;
+            if(getEl('bab-preview-jenjang')) getEl('bab-preview-jenjang').innerText = `${kelas} (${jenjang})`;
+            if(getEl('bab-preview-targetjp')) getEl('bab-preview-targetjp').innerText = String(targetJP);
+
+            (pendingBabData || []).forEach((row, idx)=>{
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2 align-top">
+                        <input data-idx="${idx}" data-field="kode"
+                               class="w-full p-1.5 border rounded-md text-xs bg-white text-center font-bold"
+                               value="${(row.kode || '').replace(/"/g,'&quot;')}" />
+                    </td>
+                    <td class="p-2 align-top">
+                        <input data-idx="${idx}" data-field="judul"
+                               class="w-full p-1.5 border rounded-md text-xs bg-white"
+                               value="${(row.judul || '').replace(/"/g,'&quot;')}" />
+                    </td>
+                    <td class="p-2 align-top text-center">
+                        <input data-idx="${idx}" data-field="jp"
+                               type="number" min="0"
+                               class="w-16 p-1.5 border rounded-md text-xs bg-white text-center"
+                               value="${Number(row.jp || 0)}" />
+                    </td>
+                    <td class="p-2 align-top text-center">
+                        <button onclick="removeBabRow(${idx})" class="text-red-400 font-bold hover:text-red-600 transition">×</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // live update
+            tbody.querySelectorAll('input[data-idx]').forEach(inp=>{
+                inp.addEventListener('input', (e)=>{
+                    const i = parseInt(e.target.getAttribute('data-idx'));
+                    const field = e.target.getAttribute('data-field');
+                    if(!pendingBabData[i]) return;
+                    if(field === 'jp') pendingBabData[i][field] = parseInt(e.target.value||'0') || 0;
+                    else pendingBabData[i][field] = e.target.value;
+                    // update total JP
+                    const total = pendingBabData.reduce((a,b)=>a+(parseInt(b.jp)||0),0);
+                    if(getEl('bab-preview-totaljp')) getEl('bab-preview-totaljp').innerText = String(total);
+                });
+            });
+
+            const total = (pendingBabData || []).reduce((a,b)=>a+(parseInt(b.jp)||0),0);
+            if(getEl('bab-preview-totaljp')) getEl('bab-preview-totaljp').innerText = String(total);
+        }
+
+        async function savePreviewedBabs(){
+            try{
+                if(!pendingBabData || !pendingBabData.length) return alert('Tidak ada data BAB untuk disimpan.');
+                if(!currentMapelId) return alert('Selesaikan Step 1 dulu (Mapel/Kelas belum tersimpan).');
+
+                // validasi kode bab (tanpa titik)
+                const cleaned = pendingBabData.map(r=>({
+                    kode: String(r.kode||'').trim(),
+                    judul: String(r.judul||'').trim(),
+                    jp: parseInt(r.jp)||0
+                })).filter(r=>r.kode && r.judul);
+
+                if(!cleaned.length) return alert('Daftar BAB kosong. Pastikan ada judul BAB.');
+                if(cleaned.some(r=>r.kode.includes('.'))) return alert('Kode BAB tidak boleh mengandung titik. Contoh: 1, 2, 3');
+
+                const targetJP = parseInt(getEl('disp-total-jp')?.innerText || '0') || 0;
+                const total = cleaned.reduce((a,b)=>a+(b.jp||0),0);
+                if(targetJP && Math.abs(total - targetJP) > 2){
+                    const ok = confirm(`Total JP BAB (${total}) cukup jauh dari target (${targetJP}). Tetap simpan?`);
+                    if(!ok) return;
+                }
+
+                // kalau sudah ada data prota, tawarkan overwrite
+                if((protaData||[]).length){
+                    const ok = confirm('Data PROTA sudah ada. Simpan BAB hasil generate akan MENGHAPUS semua PROTA (BAB & Sub-BAB) di semester ini, lalu menggantinya. Lanjut?');
+                    if(!ok) return;
+                }
+
+                // hapus prota lama semester ini
+                await withRetry(async ()=>{
+                    const { error:delErr } = await window.db
+                        .from('prota')
+                        .delete()
+                        .eq('id_mapel_kelas', currentMapelId)
+                        .eq('semester', currentSemester);
+                    if(delErr) throw delErr;
+                });
+
+                // insert bab baru
+                const rows = cleaned.map(r=>({
+                    id_mapel_kelas: currentMapelId,
+                    kode_materi: r.kode,
+                    topik_materi: r.judul,
+                    alokasi_jp: r.jp || 0,
+                    semester: currentSemester
+                }));
+
+                await withRetry(async ()=>{
+                    const { error:insErr } = await window.db.from('prota').insert(rows);
+                    if(insErr) throw insErr;
+                });
+
+                closeBabPreviewModal();
+                await loadProtaDB();
+
+                // auto pilih bab pertama biar user tinggal generate sub-bab
+                const first = rows.sort((a,b)=>String(a.kode_materi).localeCompare(String(b.kode_materi), undefined, {numeric:true}))[0];
+                if(first){
+                    getEl('input-kd-code').value = first.kode_materi;
+                    getEl('input-kd-text').value = first.topik_materi;
+                    getEl('input-kd-jp').value = first.alokasi_jp;
+                }
+
+                alert('✅ BAB berhasil disimpan. Selanjutnya pilih BAB lalu Generate Sub-Bab.');
+            }catch(err){
+                console.error(err);
+                alert('❌ Gagal menyimpan BAB: ' + (err?.message || err));
+            }
+        }
+
+async function savePreviewedSubbabs(){
+            try{
+                if(!pendingSubbabData || !pendingSubbabData.length) return alert("Tidak ada data sub-bab untuk disimpan.");
+                
+if(pendingSubbabMode === 'all'){
+    // Batch mode: simpan sub-bab untuk semua BAB sekaligus
+    const grouped = {};
+    (pendingSubbabData || []).forEach(r=>{
+        const code = String(r.code || '').trim();
+        if(!code.includes('.')) return;
+        const bab = code.split('.')[0];
+        if(!grouped[bab]) grouped[bab] = [];
+        grouped[bab].push(r);
+    });
+
+    const babCodes = Object.keys(grouped).sort((a,b)=> String(a).localeCompare(String(b), undefined, {numeric:true, sensitivity:'base'}));
+    if(!babCodes.length) return alert("Tidak ada sub-bab valid untuk disimpan (batch).");
+
+    for(const babCode of babCodes){
+        // hapus sub-bab lama untuk BAB ini
+        await withRetry(async ()=>{
+            const { error:delErr } = await window.db
+                .from('prota')
+                .delete()
+                .eq('id_mapel_kelas', currentMapelId)
+                .eq('semester', currentSemester)
+                .like('kode_materi', babCode + '.%');
+            if(delErr) throw delErr;
+        });
+
+        const rows = (grouped[babCode]||[])
+            .filter(r => (String(r.code||'').includes('.')) && (r.sub||'').trim())
+            .map(r => ({
+                id_mapel_kelas: currentMapelId,
+                kode_materi: String(r.code).trim(),
+                topik_materi: String(r.sub).trim(),
+                alokasi_jp: parseInt(r.jp) || 0,
+semester: currentSemester
+            }));
+
+        if(rows.length){
+            await withRetry(async ()=>{
+                const { error:insErr } = await window.db.from('prota').insert(rows);
+                if(insErr) throw insErr;
+            });
+        }
+}
+
+    await loadProtaDB();
+    closePreviewModal();
+    pendingSubbabMode = 'single';
+    alert("✅ Sub-bab (SEMUA BAB) berhasil disimpan ke database.");
+    return;
+}
+
+await ensureBabSaved(); // pastikan BAB utama sudah ada
+
+                const babCode = getEl('input-kd-code').value;
+                if(!babCode) return alert("Kode BAB kosong. Isi dulu Kode BAB di Step 3.");
+
+                // bersihkan sub-bab lama untuk bab ini (agar regenerate idempotent)
+                await withRetry(async ()=>{
+                    const { error:delErr } = await window.db
+                        .from('prota')
+                        .delete()
+                        .eq('id_mapel_kelas', currentMapelId)
+                        .eq('semester', currentSemester)
+                        .like('kode_materi', babCode + '.%');
+                    if(delErr) throw delErr;
+                });
+
+                const rows = pendingSubbabData
+                    .filter(r => (r.code||'').includes('.') && (r.sub||'').trim())
+                    .map(r => ({
+                        id_mapel_kelas: currentMapelId,
+                        kode_materi: String(r.code).trim(),
+                        topik_materi: String(r.sub).trim(),
+                        alokasi_jp: parseInt(r.jp) || 0,
+                        semester: currentSemester
+                    }));
+
+                if(!rows.length) return alert("Tidak ada sub-bab valid untuk disimpan.");
+
+                await withRetry(async ()=>{
+                    const { error:insErr } = await window.db.from('prota').insert(rows);
+                    if(insErr) throw insErr;
+                });
+
+                await loadProtaDB();
+                closePreviewModal();
+                alert("✅ Sub-bab berhasil disimpan ke database.");
+            }catch(err){
+                console.error(err);
+                alert("❌ Gagal menyimpan sub-bab: " + (err?.message || err));
+            }
+        }
+
+
+        
+        async function processAIResponse() {
+            const raw = getEl('ai-response-area')?.value;
+            if (!raw) return alert("Paste dulu jawaban AI-nya!");
+
             try {
                 const jsonStr = extractJSON(raw);
-                const json = JSON.parse(jsonStr);
-                
-                if (currentBridgeContext === 'subbab') {
-                    if(!Array.isArray(json)) throw new Error("Format harus Array JSON");
-                    const babCode = getEl('input-kd-code').value;
-                    pendingSubbabData = json.map((item, idx) => ({ 
-                        code: `${babCode}.${idx + 1}`, 
-                        sub: item.sub, 
-                        jp: item.jp 
+                let json;
+                try {
+                    json = JSON.parse(jsonStr);
+                } catch (parseErr) {
+                    console.error("JSON parse gagal:", parseErr);
+                    console.error("Potongan JSON (awal 800 char):", (jsonStr || '').slice(0, 800));
+                    alert("⚠️ Jawaban AI bukan JSON valid. Pastikan output berupa JSON murni (pakai tanda kutip ganda, tanpa koma trailing, dan tidak ada teks lain di dalam blok). Detail: " + (parseErr?.message || parseErr));
+                    return;
+                }
+
+                const ctx = currentBridgeContext;
+
+                // 1) Generate BAB
+                if (ctx === 'bab') {
+                    if (!Array.isArray(json)) throw new Error("Format harus Array JSON");
+                    pendingBabData = json.map((item, idx) => ({
+                        kode: item.kode ? String(item.kode).trim() : String(idx + 1),
+                        judul: String(item.judul || item.bab || '').trim(),
+                        jp: parseInt(item.jp) || 0
+                    })).filter(r => r.kode && r.judul);
+
+                    if (!pendingBabData.length) throw new Error("Data BAB kosong / tidak valid.");
+                    renderBabPreview();
+                    closeBridgeModal();
+                    getEl('preview-bab-modal')?.classList.add('active');
+                    return;
+                }
+
+                // 2) Generate SUB-BAB SEMUA BAB (batch)
+                if (ctx === 'subbab_all') {
+                    // Format: [{bab,judul,alokasi_jp, subbab:[{kode,judul,minggu_ke,jp}]}]
+                    if (!Array.isArray(json)) throw new Error("Format harus Array JSON (batch BAB).");
+                    pendingSubbabMode = 'all';
+
+                    const flat = [];
+                    json.forEach((babObj) => {
+                        const bab = String(babObj?.bab || '').trim();
+                        const list = babObj?.subbab;
+                        if (!bab || !Array.isArray(list)) return;
+                        list.forEach((item, idx) => {
+                            const code = item?.kode ? String(item.kode).trim() : `${bab}.${idx + 1}`;
+                            flat.push({
+                                bab,
+                                code,
+                                sub: item?.judul || item?.sub || '',
+                                jp: parseInt(item?.jp) || 0,
+                                minggu_ke: (item?.minggu_ke ?? null)
+                            });
+                        });
+                    });
+
+                    if (!flat.length) throw new Error("Batch kosong. Pastikan format JSON sesuai contoh (subbab harus array).");
+                    flat.sort((a, b) => String(a.code).localeCompare(String(b.code), undefined, { numeric: true, sensitivity: 'base' }));
+                    pendingSubbabData = flat;
+
+                    renderSubbabPreview();
+                    closeBridgeModal();
+                    getEl('preview-subbab-modal')?.classList.add('active');
+                    return;
+                }
+
+                // 3) Generate sub-bab single (legacy — tombol sudah dihapus)
+                if (ctx === 'subbab') {
+                    pendingSubbabMode = 'single';
+                    if (!Array.isArray(json)) throw new Error("Format harus Array JSON");
+                    const babCode = getEl('input-kd-code')?.value || '';
+                    pendingSubbabData = json.map((item, idx) => ({
+                        code: item?.kode ? String(item.kode).trim() : `${babCode}.${idx + 1}`,
+                        sub: item?.judul || item?.sub || '',
+                        jp: parseInt(item?.jp) || 0,
+                        minggu_ke: (item?.minggu_ke ?? null)
                     }));
                     renderSubbabPreview();
                     closeBridgeModal();
-                    getEl('preview-subbab-modal').classList.add('active');
-                
-                } else if (currentBridgeContext === 'rpp_full') {
-                    if(!Array.isArray(json)) throw new Error("Format harus Array JSON untuk Batch RPP");
-                    const model = getEl('select-metode').value;
-                    const upserts = json.map(item => {
-                        const protaItem = protaData.find(p => p.kode_materi == item.kode); 
-                        if(!protaItem) return null;
-                        return {
-                            id_prota: protaItem.id,
-                            tujuan_pembelajaran: item.tujuan,
-                            kegiatan_pembelajaran: item.kegiatan, 
-                            penilaian_pembelajaran: item.penilaian,
-                            metode: model
-                        };
-                    }).filter(x => x !== null);
-
-                    if(upserts.length > 0) {
-                        window.db.from('rpp').upsert(upserts, {onConflict: 'id_prota'}).then(({error}) => {
-                            if(error) alert("Gagal batch save: " + error.message);
-                            else { 
-                                alert(`Berhasil menyimpan ${upserts.length} RPP sekaligus!`);
-                                if(activeRppProtaId) loadRPPEditor(protaData.find(p => p.id === activeRppProtaId));
-                                closeBridgeModal(); 
-                            }
-                        });
-                    } else { alert("Tidak ada kode materi yang cocok."); }
+                    getEl('preview-subbab-modal')?.classList.add('active');
+                    return;
                 }
-            } catch(e) { alert("Gagal membaca JSON. Pastikan format benar.\nDetail: " + e.message); }
+
+                // 4) Lampiran kurikulum (K13/Merdeka)
+                if (ctx === 'kurikulum_bundle') {
+                    try {
+                        showKurikulumHumanEditor(json);
+                        closeBridgeModal();
+                        alert("✅ Hasil generator lampiran kurikulum sudah masuk. Silakan edit lewat tabel, lalu klik 'Simpan & Cetak'.");
+                    } catch (e) {
+                        console.warn(e);
+                        const editor = getEl('kurikulum-json-editor');
+                        if (editor) { editor.value = JSON.stringify(json, null, 2); editor.disabled = false; }
+                        closeBridgeModal();
+                        alert("✅ Hasil generator masuk. Jika editor tabel gagal, kamu masih bisa edit lewat JSON (Advanced).");
+                    }
+                    return;
+                }
+
+                // 5) RPP batch
+                if (ctx === 'rpp_full' || ctx === 'rpp_all') {
+                    if (!Array.isArray(json)) throw new Error("Format harus Array JSON");
+                    const model = getEl('select-metode')?.value || '';
+                    if (!model) throw new Error("Pilih model pembelajaran dulu (dropdown Model Pembelajaran).");
+
+                    const mapKode = {};
+                    (protaData || []).forEach(p => { mapKode[String(p.kode_materi)] = p; });
+
+                    const payload = [];
+                    const skipped = [];
+                    json.forEach(item => {
+                        const kode = String(item?.kode ?? item?.kd ?? '');
+                        const p = mapKode[kode];
+                        if (!p) { skipped.push(kode); return; }
+                        payload.push({
+                            id_prota: p.id,
+                            tujuan_pembelajaran: item?.tujuan || '',
+                            kegiatan_pembelajaran: item?.kegiatan || '',
+                            penilaian_pembelajaran: item?.penilaian || '',
+                            metode: model
+                        });
+                    });
+
+                    if (!payload.length) throw new Error("Tidak ada item yang match dengan kode sub-bab di Prota.");
+                    const { error } = await window.db.from('rpp').upsert(payload, { onConflict: 'id_prota' });
+                    if (error) throw error;
+
+                    closeBridgeModal();
+                    if (skipped.length) {
+                        alert(`✅ RPP tersimpan (${payload.length} item). ⚠️ Ada kode tidak ditemukan di Prota: ${skipped.slice(0, 8).join(', ')}${skipped.length > 8 ? '...' : ''}`);
+                    } else {
+                        alert(`✅ RPP tersimpan (${payload.length} item).`);
+                    }
+
+                    if (activeRppProtaId) {
+                        const cur = (protaData || []).find(p => p.id === activeRppProtaId);
+                        if (cur) await loadRPPEditor(cur);
+                    }
+                    return;
+                }
+
+                alert("Konteks AI tidak dikenali: " + ctx);
+
+            } catch (err) {
+                console.warn(err);
+                alert("Gagal memproses jawaban AI: " + (err?.message || err));
+            }
         }
 
-        function renderSubbabPreview() {
-            const tbody = getEl('preview-tbody'); tbody.innerHTML = '';
-            pendingSubbabData.forEach((row, idx) => {
-                tbody.innerHTML += `<tr><td class="p-2"><input type="text" class="w-full p-1 border rounded text-xs font-bold text-center bg-white" value="${row.code}" onchange="updatePendingSubbab(${idx}, 'code', this.value)"></td><td class="p-2"><input type="text" class="w-full p-1 border rounded text-xs bg-white" value="${row.sub}" onchange="updatePendingSubbab(${idx}, 'sub', this.value)"></td><td class="p-2"><input type="number" class="w-full p-1 border rounded text-xs text-center font-bold bg-white" value="${row.jp}" onchange="updatePendingSubbab(${idx}, 'jp', this.value)"></td></tr>`;
-            });
-        }
-        window.updatePendingSubbab = (idx, field, val) => { pendingSubbabData[idx][field] = val; };
-        function closePreviewModal() { getEl('preview-subbab-modal').classList.remove('active'); pendingSubbabData = []; }
-        
-        async function savePreviewedSubbabs() {
-            if(pendingSubbabData.length === 0) return closePreviewModal();
-            const items = pendingSubbabData.map(item => ({ 
-                id_mapel_kelas: currentMapelId, 
-                kode_materi: item.code, 
-                topik_materi: item.sub, 
-                alokasi_jp: parseInt(item.jp), 
-                semester: currentSemester 
-            }));
-            const { data, error } = await window.db.from('prota').insert(items).select();
-            if(error) { alert("Gagal simpan: " + error.message); } else { loadProtaDB(); clearProtaInputs(); closePreviewModal(); }
-        }
 
-        function closeBridgeModal() { getEl('bridge-modal').classList.remove('active'); }
+        function applyKurikulumBundleFromEditor(){
+    const editor = getEl('kurikulum-json-editor');
+    if(!editor) return;
+    if(editor.disabled) return alert("Generate Lampiran Kurikulum dulu, lalu paste hasilnya dan klik Simpan.");
+    const raw = editor.value;
+    try{
+        const json = JSON.parse(raw);
+        return applyKurikulumBundle(json);
+    }catch(e){
+        alert("JSON tidak valid: " + e.message);
+        throw e;
+    }
+}
+
+async function saveLampiranAndPrint(){
+    // Buka window cetak di awal (harus sinkron dengan klik, agar tidak diblokir popup)
+    const printWin = window.open('', '_blank');
+    if(!printWin){
+        alert('⚠️ Popup diblokir. Izinkan popup untuk fitur cetak, lalu ulangi.');
+        return;
+    }
+
+    // Pastikan textarea JSON (Advanced) selalu sinkron dengan editor tabel
+    try{ syncKurikulumJsonTextarea(); }catch(e){}
+    try{
+        printWin.document.open();
+        printWin.document.write('<p style="font-family:system-ui; padding:16px;">Menyiapkan dokumen…</p>');
+        printWin.document.close();
+    }catch(e){ /* ignore */ }
+
+    // 1) Simpan lampiran (kalau ada)
+    const editor = getEl('kurikulum-json-editor');
+    const hasJson = editor && !editor.disabled && (editor.value||'').trim().length>2;
+
+    showProgress('kurikulum-progress', true);
+    setProgress('kurikulum-progress', 0, hasJson ? 'Menyiapkan penyimpanan...' : 'Menyiapkan cetak...');
+
+    try{
+        if(hasJson){
+            await applyKurikulumBundleFromEditor();
+            setProgress('kurikulum-progress', 100, 'Selesai menyimpan. Menyiapkan PDF...');
+        }else{
+            setProgress('kurikulum-progress', 30, 'Tidak ada lampiran baru. Menyiapkan PDF...');
+        }
+        await sleep(150);
+        showProgress('kurikulum-progress', false);
+        await printFullDocument(printWin);
+    }catch(err){
+        console.error(err);
+        setProgress('kurikulum-progress', 0, 'Gagal menyimpan.');
+        showProgress('kurikulum-progress', false);
+        try{ printWin.close(); }catch(e){}
+        alert('⚠️ Gagal: ' + (err?.message || err));
+    }
+}
+
+
+async function saveKompetensiMapping(rows){
+    if(!rows || !rows.length) return;
+
+    // Tabel public.kompetensi_materi_map saat ini: id_mapel_kelas, semester, kode_subbab, id_tp, id_kd
+    // Bersihkan mapping lama untuk mapel+semester agar idempotent.
+    try{
+        await withRetry(async ()=>{
+            await window.db
+                .from('kompetensi_materi_map')
+                .delete()
+                .eq('id_mapel_kelas', currentMapelId)
+                .eq('semester', currentSemester);
+        });
+    }catch(e){
+        // jika tabel belum ada/ belum terbaca, biarkan caller menangani
+        throw e;
+    }
+
+    // Simpan bertahap (aman free tier)
+    await insertBatched('kompetensi_materi_map', rows, {chunkSize: 250});
+}
+
+
+async function fetchSubbabCodesForSync(){
+    try{
+        // Kalau protaData sudah ada, pakai dulu (lebih cepat)
+        const local = (protaData || []).filter(r =>
+            r && r.id_mapel_kelas === currentMapelId &&
+            r.semester === currentSemester &&
+            String(r.kode_materi || '').includes('.')
+        ).map(r => r.kode_materi).filter(Boolean);
+
+        if(local.length) return local;
+
+        // Fallback: query DB
+        const { data, error } = await window.db
+            .from('prota')
+            .select('kode_materi')
+            .eq('id_mapel_kelas', currentMapelId)
+            .eq('semester', currentSemester);
+
+        if(error) throw error;
+
+        return (data || [])
+            .map(d => d.kode_materi)
+            .filter(c => c && String(c).includes('.'));
+    }catch(err){
+        console.warn("fetchSubbabCodesForSync gagal:", err);
+        return [];
+    }
+}
+
+async function applyKurikulumBundle(bundle){
+    if(!currentMapelId) throw new Error("Mapel/Kelas belum tersimpan. Selesaikan Step 1 dulu.");
+    if(!bundle || typeof bundle !== 'object') throw new Error("Data kosong/invalid.");
+
+    const kur = currentKurikulum || (getEl('select-kurikulum')?.value || 'Merdeka');
+
+    // Sinkronisasi wajib: lampiran kurikulum harus mengacu pada sub-bab yang sudah ada dari Step 3.
+    const allowedSubbabCodes = await fetchSubbabCodesForSync();
+    if(!allowedSubbabCodes.length){
+        throw new Error("Belum ada SUB-BAB di Step 3 untuk semester ini. Buat/generate sub-bab dulu agar lampiran kurikulum bisa disinkronkan.");
+    }
+    const allowedSet = new Set(allowedSubbabCodes);
+
+    showProgress('kurikulum-progress', true);
+    setProgress('kurikulum-progress', 8, 'Menyimpan SKL & kurikulum...');
+    // Mapping kompetensi -> sub-bab (akan disimpan bertahap + fallback schema)
+    const mappingRows = [];
+// 1) SKL
+    if(typeof bundle.skl === 'string'){
+        try{
+            const { error } = await window.db
+                .from('skl')
+                .upsert({ id_mapel_kelas: currentMapelId, deskripsi: bundle.skl }, { onConflict: 'id_mapel_kelas' })
+                .select();
+            if(error) throw error;
+        }catch(e){
+            console.warn("SKL gagal disimpan:", e);
+            alert("⚠️ Gagal simpan SKL. Pastikan tabel/kolom sudah ada & schema sudah refresh (NOTIFY pgrst, 'reload schema'). Lihat console untuk detail.");
+        }
+    }
+
+    // 2) Kurikulum (Merdeka / K13)
+    if(kur === 'Merdeka'){
+        const cpList = bundle.merdeka?.cp;
+        if(Array.isArray(cpList) && cpList.length){
+            // hapus CP/TP lama (cascade menghapus alur_tujuan & kriteria_ketuntasan)
+            await window.db.from('kompetensi_dasar').delete().eq('id_mapel_kelas', currentMapelId).in('jenis', ['CP','TP']);
+
+            for(const cp of cpList){
+                // CP
+                const cpRow = { id_mapel_kelas: currentMapelId, kode: cp.kode_cp || null, deskripsi: cp.deskripsi_cp || null, jenis: 'CP' };
+                await window.db.from('kompetensi_dasar').insert([cpRow]);
+
+                // TP
+                const tpList = Array.isArray(cp.tp) ? cp.tp : [];
+                for(const tp of tpList){
+                    // Validasi sinkronisasi ke sub-bab Step 3
+                    assertValidLinks(tp.link_subbab, allowedSet, `TP ${tp.kode_tp || ''}`);
+                    // Simpan TP dulu untuk mendapatkan id_tp, lalu mapping TP -> sub-bab
+                    const tpRow = { id_mapel_kelas: currentMapelId, kode: tp.kode_tp || null, deskripsi: tp.deskripsi_tp || null, jenis: 'TP' };
+                    const {data:tpInserted, error:tpErr} = await window.db.from('kompetensi_dasar').insert([tpRow]).select();
+                    if(tpErr) throw tpErr;
+                    const tpId = tpInserted?.[0]?.id;
+
+                    // Mapping TP -> sub-bab (pakai id_tp sesuai skema tabel mapping)
+                    if(tpId){
+                        for(const sb of (Array.isArray(tp.link_subbab)?tp.link_subbab:[])){
+                            mappingRows.push({
+                                id_mapel_kelas: currentMapelId,
+                                semester: currentSemester,
+                                kode_subbab: String(sb),
+                                id_tp: tpId,
+                                id_kd: null
+                            });
+                        }
+                    }
+
+                    // alur_tujuan (anggap sebagai item ATP per-TP)
+                    if(tpId){
+                        const atpRow = { id_kompetensi: tpId, kode_atp: tp.kode_tp || null, deskripsi_atp: tp.deskripsi_tp || null, semester: tp.semester || currentSemester };
+                        const {data:atpInserted, error:atpErr} = await window.db.from('alur_tujuan').insert([atpRow]).select();
+                        if(atpErr) throw atpErr;
+                        const atpId = atpInserted?.[0]?.id;
+
+                        // KKTP di kriteria_ketuntasan (upsert biar aman jika diproses ulang)
+                        const kktpDesc = tp.kktp?.deskripsi || null;
+                        if(atpId && kktpDesc){
+                            await window.db.from('kriteria_ketuntasan').delete().eq('id_alur_tujuan', atpId);
+                                    await window.db.from('kriteria_ketuntasan').insert([{
+                                        id_alur_tujuan: atpId,
+                                        kompleksitas: null,
+                                        daya_dukung: null,
+                                        intake: null,
+                                        nilai_kkm: null,
+                                        deskripsi_kktp: kktpDesc
+                                    }]);
+                        }
+                    }
+                }
+            }
+        }
+    } else if (kur === 'K13'){
+        const kiList = bundle.k13?.ki;
+        if(Array.isArray(kiList) && kiList.length){
+            try{
+                // bersihkan KD & KI lama untuk mapel ini (menghindari 23505 saat simpan ulang)
+                await window.db.from('kompetensi_dasar').delete().eq('id_mapel_kelas', currentMapelId).not('jenis','in','("CP","TP")');
+                await window.db.from('kompetensi_inti').delete().eq('id_mapel_kelas', currentMapelId);
+
+                for(const ki of kiList){
+                    const {data:kiIns, error:kiErr} = await window.db.from('kompetensi_inti').insert([{
+                        id_mapel_kelas: currentMapelId,
+                        ki_no: ki.ki_no,
+                        deskripsi: ki.deskripsi
+                    }]).select();
+                    if(kiErr) throw kiErr;
+                    const kiId = kiIns?.[0]?.id;
+
+                    const kdList = Array.isArray(ki.kd) ? ki.kd : [];
+                    for(const kd of kdList){
+                        // Validasi sinkronisasi ke sub-bab Step 3
+                        assertValidLinks(kd.link_subbab, allowedSet, `KD ${kd.kode || ''}`);
+                        // Simpan KD dulu untuk mendapatkan id_kd, lalu mapping KD -> sub-bab
+                        const {data:kdInserted, error:kdErr} = await window.db.from('kompetensi_dasar').insert([{
+                                    id_mapel_kelas: currentMapelId,
+                                    id_ki: kiId,
+                                    kode: kd.kode || null,
+                                    deskripsi: kd.deskripsi || null,
+                                    jenis: kd.jenis || null,
+                                    kkm: kd.kkm || null
+                                }]).select('id');
+                        if(kdErr) throw kdErr;
+                        const kdId = kdInserted?.[0]?.id;
+
+                        // Mapping KD -> sub-bab (pakai id_kd sesuai skema tabel mapping)
+                        if(kdId){
+                            for(const sb of (Array.isArray(kd.link_subbab)?kd.link_subbab:[])){
+                                mappingRows.push({
+                                    id_mapel_kelas: currentMapelId,
+                                    semester: currentSemester,
+                                    kode_subbab: String(sb),
+                                    id_tp: null,
+                                    id_kd: kdId
+                                });
+                            }
+                        }
+                    }
+                }
+            }catch(e){
+                console.warn("K13 gagal disimpan:", e);
+                alert("⚠️ Gagal simpan KI/KD/KKM. Pastikan tabel/kolom sudah ada (kompetensi_inti + kolom id_ki & kkm) dan schema sudah refresh (NOTIFY pgrst, 'reload schema'). Lihat console untuk detail.");
+            }
+        }
+    }
+
+    // Simpan mapping kompetensi -> sub-bab (jika tabel ada)
+    if(mappingRows.length){
+        try{
+            setProgress('kurikulum-progress', 92, `Menyimpan mapping kompetensi (${mappingRows.length})...`);
+            await saveKompetensiMapping(mappingRows);
+        }catch(e){
+            console.warn("Mapping kompetensi_materi_map gagal disimpan (tabel belum ada atau schema belum refresh):", e);
+        }
+    }
+    setProgress('kurikulum-progress', 100, 'Selesai.');
+	}
+
+
+function closeBridgeModal() { getEl('bridge-modal').classList.remove('active'); }
         function clearProtaInputs() { getEl('input-kd-code').value=''; getEl('input-kd-text').value=''; getEl('input-kd-jp').value=''; }
-        function renderProtaTable() { const tb=getEl('prota-list-body'); tb.innerHTML=''; let lastP=null; protaData.forEach((d,i)=>{ const pref=d.kode_materi.split('.')[0]; if(pref!==lastP) tb.innerHTML+=`<tr class="bg-slate-50"><td colspan="4" class="p-2 text-[10px] font-bold text-center text-slate-500 uppercase tracking-widest border-y border-slate-200">Bab ${pref}</td></tr>`; lastP=pref; tb.innerHTML+=`<tr class="hover:bg-slate-50"><td class="p-3 font-bold text-violet-600 font-mono border-b">${d.kode_materi}</td><td class="p-3 border-b">${d.topik_materi}</td><td class="p-3 font-bold text-center border-b">${d.alokasi_jp}</td><td class="p-3 text-center border-b"><button onclick="deleteProta(${d.id})" class="text-red-400 font-bold hover:text-red-600 transition">×</button></td></tr>`; }); updateSisaJP(); }
+        function renderProtaTable() {
+  const tb = getEl('prota-list-body');
+  tb.innerHTML = '';
+
+  // Pisahkan metadata BAB (kode tanpa titik) dan SUB-BAB (kode dengan titik)
+  const babMeta = {};
+  const subbab = [];
+  (protaData || []).forEach(d => {
+    const k = String(d.kode_materi || '').trim();
+    if (!k) return;
+    if (k.includes('.')) subbab.push(d);
+    else babMeta[k] = d;
+  });
+
+  // Group SUB-BAB per prefix bab
+  const groups = {};
+  subbab.forEach(d => {
+    const pref = String(d.kode_materi).split('.')[0];
+    (groups[pref] ||= []).push(d);
+  });
+
+  const babKeys = Array.from(new Set([...Object.keys(babMeta), ...Object.keys(groups)])).sort((a,b)=>a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
+  babKeys.forEach(pref => {
+    const meta = babMeta[pref] || { topik_materi: `BAB ${pref}`, alokasi_jp: '' };
+
+    // Header BAB (tidak bisa dihapus)
+    tb.innerHTML += `
+      <tr class="bg-slate-50">
+        <td colspan="4" class="p-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest border-y border-slate-200">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              <span class="truncate block">BAB ${pref} — ${escapeHtml(meta.topik_materi || '')}</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-slate-500">${meta.alokasi_jp ? (meta.alokasi_jp + ' JP') : ''}</span>
+              <button onclick="pickBab('${pref}')" class="px-2 py-1 bg-white border rounded-lg text-[10px] font-bold text-slate-700 hover:bg-slate-50">Pilih</button>
+              <!-- per-BAB generate sub-bab dihapus: gunakan "Generate Sub-Bab Semua BAB" di atas -->
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+
+
+    if(!groups[pref] || !groups[pref].length){
+      tb.innerHTML += `
+        <tr>
+          <td colspan="4" class="p-3 text-xs text-slate-500 border-b">
+            Belum ada sub-bab untuk BAB ${pref}. Klik <span class="font-bold">Generate Sub-Bab Semua BAB</span> di atas untuk membuatnya.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+groups[pref].sort((a,b)=>String(a.kode_materi).localeCompare(String(b.kode_materi), undefined, {numeric:true, sensitivity:'base'}))
+      .forEach(d => {
+        tb.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-3 font-bold text-violet-600 font-mono border-b">${d.kode_materi}</td>
+            <td class="p-3 border-b">${escapeHtml(d.topik_materi || '')}</td>
+            <td class="p-3 font-bold text-center border-b">${d.alokasi_jp}</td>
+            <td class="p-3 text-center border-b">
+              <button onclick="deleteProta(${d.id})" class="text-red-400 font-bold hover:text-red-600 transition">×</button>
+            </td>
+          </tr>
+        `;
+      });
+  });
+
+  updateSisaJP();
+}
         async function deleteProta(id) { if(!confirm("Hapus?")) return; await window.db.from('prota').delete().eq('id', id); loadProtaDB(); }
         function updateSisaJP(){ const used=protaData.reduce((a,b)=>a+b.alokasi_jp,0); const sisa=totalJPTersedia-used; if(getEl('warn-sisa')) getEl('warn-sisa').innerText=`Sisa: ${sisa} JP`; }
 
@@ -604,7 +2055,7 @@
                 } 
             });
             promesData = []; 
-            protaData.forEach(p => { 
+            (protaData || []).filter(p => String(p.kode_materi || '').includes('.')).forEach(p => { 
                 let sisaJP = p.alokasi_jp; 
                 while(sisaJP > 0 && currentWeekIndex < allWeeks.length) { 
                     const week = allWeeks[currentWeekIndex]; 
@@ -616,6 +2067,21 @@
                 } 
             });
         }
+
+
+function rerunAutoPromesFromCalendar(){
+    const ok = confirm("Auto-distribusi ulang akan MENIMPA pembagian JP di tabel Promes saat ini. Lanjut?");
+    if(!ok) return;
+    try{
+        autoDistributePromes();
+        renderPromesTable();
+        alert("✅ Promes berhasil di-auto-distribusi ulang dari kalender (Step 2).");
+    }catch(err){
+        console.error(err);
+        alert("❌ Gagal auto-distribusi ulang: " + (err?.message || err));
+    }
+}
+
 
         function renderPromesTable(){ 
             const table=getEl('promes-table'); const thead=table.querySelector('thead'); const tbody=table.querySelector('tbody'); thead.innerHTML=''; tbody.innerHTML='';
@@ -630,7 +2096,8 @@
             }); 
             rowMonth+=`<th class="p-2 border bg-slate-50 min-w-[80px]" rowspan="2">TOTAL</th></tr>`; rowWeek+=`</tr>`; thead.innerHTML=rowMonth+rowWeek;
             
-            protaData.forEach((prota,rIdx)=>{ 
+            const promesRows = (protaData || []).filter(p => String(p.kode_materi || '').includes('.'));
+            promesRows.forEach((prota,rIdx)=>{ 
                 const tr=document.createElement('tr'); tr.innerHTML=`<td class="p-2 border font-medium sticky-col text-xs text-slate-700 truncate max-w-[200px] border-slate-200 bg-white">${prota.topik_materi}</td>`; 
                 let rowTotal=0; let cIdx=0; 
                 monthsFull.forEach(m=>{ 
@@ -641,52 +2108,572 @@
                         const existing=promesData.find(x=>x.id_prota===prota.id&&x.bulan===(m.idx+1)&&x.minggu_ke===w); 
                         const val=existing?existing.jp_minggu:''; 
                         if(val) rowTotal+=parseInt(val); 
-                        tr.innerHTML+=`<td class="p-0 border border-slate-200 ${isLibur?'bg-red-50':'bg-white'}"><input type="text" class="promes-input w-full h-7 text-center text-[10px] outline-none ${isLibur?'cursor-not-allowed bg-red-50':''}" value="${val}" ${isLibur?'disabled':''} data-r="${rIdx}" data-c="${cIdx}" onchange="updatePromesData(${prota.id},${m.idx+1},${w},this.value)"></td>`; cIdx++; 
+                        tr.innerHTML += '<td class="p-0 border border-slate-200 ' + (isLibur ? 'bg-red-50' : 'bg-white') + '"><input type="text" class="promes-input w-full h-7 text-center text-[10px] outline-none ' + (isLibur ? 'cursor-not-allowed bg-red-50' : '') + '" value="' + val + '" ' + (isLibur ? 'disabled' : '') + ' data-r="' + rIdx + '" data-c="' + cIdx + '" onchange="updatePromesData(' + prota.id + ',' + (m.idx+1) + ',' + w + ',this.value)"></td>'; cIdx++; 
                     } 
                 }); 
                 const color = rowTotal === prota.alokasi_jp ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
-                tr.innerHTML+=`<td class="p-2 border text-center text-xs border-slate-200 font-bold ${color}">${rowTotal} / ${prota.alokasi_jp}</td>`; tbody.appendChild(tr); 
+                tr.innerHTML += '<td class="p-2 border text-center text-xs border-slate-200 font-bold ' + color + '">' + rowTotal + ' / ' + prota.alokasi_jp + '</td>'; tbody.appendChild(tr); 
             });
         }
         
         function handleArrowKey(e) { if (!e.target.classList.contains('promes-input')) return; const currentR = parseInt(e.target.dataset.r); const currentC = parseInt(e.target.dataset.c); let nextInput = null; const findNext = (rDelta, cDelta) => { let r = currentR + rDelta; let c = currentC + cDelta; for(let i=0; i<50; i++) { const el = document.querySelector(`.promes-input[data-r="${r}"][data-c="${c}"]`); if(!el) return null; if(!el.disabled) return el; r += rDelta; c += cDelta; } return null; }; if (e.key === 'ArrowUp') nextInput = findNext(-1, 0); else if (e.key === 'ArrowDown') nextInput = findNext(1, 0); else if (e.key === 'ArrowLeft') nextInput = findNext(0, -1); else if (e.key === 'ArrowRight') nextInput = findNext(0, 1); if (nextInput) { e.preventDefault(); nextInput.focus(); nextInput.select(); } }
         function updatePromesData(pid,b,m,val){ promesData=promesData.filter(x=>!(x.id_prota===pid&&x.bulan===b&&x.minggu_ke===m)); if(val&&!isNaN(val)) promesData.push({id_prota:pid,bulan:b,minggu_ke:m,jp_minggu:parseInt(val)}); renderPromesTable(); }
-        async function saveStep4(loading){ const btn=getEl('btn-save-promes'); if(btn && loading){btn.innerText="Menyimpan..."; btn.disabled=true;} const ids=protaData.map(p=>p.id); if(ids.length) await window.db.from('promes').delete().in('id_prota',ids); if(promesData.length>0){ const pl=promesData.map(d=>({id_prota:d.id_prota,bulan:d.bulan,minggu_ke:d.minggu_ke,jp_minggu:d.jp_minggu})); await window.db.from('promes').insert(pl); renderPromesTable(); } if(btn && loading){btn.innerText="Simpan & Lanjut RPP ➜"; btn.disabled=false;} }
+        async function saveStep4(loading){ const btn=getEl('btn-save-promes'); if(btn && loading){btn.innerText="Menyimpan..."; btn.disabled=true;} const ids=(protaData||[]).filter(p=>String(p.kode_materi||'').includes('.')).map(p=>p.id); if(ids.length) await window.db.from('promes').delete().in('id_prota',ids); if(promesData.length>0){ const pl=promesData.map(d=>({id_prota:d.id_prota,bulan:d.bulan,minggu_ke:d.minggu_ke,jp_minggu:d.jp_minggu})); await window.db.from('promes').insert(pl); renderPromesTable(); } if(btn && loading){btn.innerText="Simpan & Lanjut RPP ➜"; btn.disabled=false;} }
 
-        async function initStep5Logic(){ const list=getEl('rpp-materi-list'); list.innerHTML=''; protaData.forEach(p=>{ const div=document.createElement('div'); div.className="p-4 border rounded-xl hover:bg-violet-50 cursor-pointer text-sm mb-3 transition border-slate-100 shadow-sm flex justify-between items-center group"; div.innerHTML=`<div class="flex flex-col"><span class="font-bold text-violet-700">${p.kode_materi}</span></div><span class="text-xs text-slate-600 truncate ml-2 flex-1">${p.topik_materi}</span><span class="text-xs text-slate-400 font-bold bg-slate-100 px-2 py-1 rounded-full whitespace-nowrap group-hover:bg-white">${p.alokasi_jp} JP</span>`; div.onclick=()=>loadRPPEditor(p); list.appendChild(div); }); }
-        
-        async function loadRPPEditor(prota){ 
-            activeRppProtaId=prota.id; 
-            getEl('rpp-empty-state').classList.add('hidden-section'); getEl('rpp-editor-container').classList.remove('hidden-section'); 
-            getEl('rpp-title').innerText=prota.topik_materi; getEl('rpp-subtitle').innerText=`Kode: ${prota.kode_materi} | ${prota.alokasi_jp} JP`;
-            getEl('input-tujuan').value=""; getEl('input-penilaian').value=""; getEl('input-kegiatan').value="";
-            
-            const {data}=await window.db.from('rpp').select('*').eq('id_prota',prota.id).maybeSingle(); 
-            if(data){ 
-                getEl('input-tujuan').value=data.tujuan_pembelajaran||""; 
-                getEl('input-penilaian').value=data.penilaian_pembelajaran||""; 
-                if(data.metode && !getEl('select-metode').value) getEl('select-metode').value=data.metode; 
-                
-                let kContent = data.kegiatan_pembelajaran || '';
-                try {
-                    const parsed = JSON.parse(kContent);
-                    if(Array.isArray(parsed)) {
-                        kContent = parsed.map(k => `* [${k.tahap}] ${k.deskripsi} (${k.waktu})`).join('\n');
-                    }
-                } catch(e) { }
-                getEl('input-kegiatan').value = kContent;
+        function populateRppScopeOptions(){
+            const sel = getEl('select-rpp-scope');
+            if(!sel) return;
+
+            // reset options
+            sel.innerHTML = '<option value="" disabled selected>-- Pilih Target Generate --</option>' +
+                            '<option value="all">RPP Semua BAB (Batch)</option>';
+
+            // ambil daftar BAB (kode tanpa titik)
+            const babRows = (protaData || [])
+                .filter(p => {
+                    const k = String(p.kode_materi || '');
+                    return k && !k.includes('.');
+                })
+                .sort((a,b)=>String(a.kode_materi).localeCompare(String(b.kode_materi), undefined, {numeric:true, sensitivity:'base'}));
+
+            babRows.forEach(b=>{
+                const kode = String(b.kode_materi || '').trim();
+                const judul = String(b.topik_materi || '').trim();
+                if(!kode) return;
+                sel.insertAdjacentHTML('beforeend',
+                    `<option value="bab:${escapeHtml(kode)}">RPP BAB ${escapeHtml(kode)} — ${escapeHtml(judul || ('BAB ' + kode))}</option>`
+                );
+            });
+        }
+
+        function onClickGenerateRppBatch(){
+            const model = getEl('select-metode')?.value || '';
+            if(!model) return alert("Pilih model pembelajaran dulu.");
+            const scope = getEl('select-rpp-scope')?.value || '';
+            if(!scope) return alert("Pilih target generate (BAB atau Semua BAB).");
+
+            // show RPP editor container so user sees context/progress even if belum memilih sub-bab
+            getEl('rpp-empty-state')?.classList.add('hidden-section');
+            getEl('rpp-editor-container')?.classList.remove('hidden-section');
+
+            if(scope === 'all'){
+                return openAIBridge('rpp_all');
+            }
+            if(scope.startsWith('bab:')){
+                selectedRppBabPrefix = scope.split(':')[1];
+                return openAIBridge('rpp_full');
+            }
+            alert("Target generate tidak dikenali.");
+        }
+
+
+        async function initStep5Logic(){
+  const list = getEl('rpp-materi-list');
+  list.innerHTML = '';
+
+  // siapkan dropdown target generate (BAB / semua BAB)
+  populateRppScopeOptions();
+
+  // Hanya tampilkan SUB-BAB (3.1, 3.2, dst). Bab (3) tetap dipakai sebagai metadata grup.
+  const subbabItems = (protaData || []).filter(p => String(p.kode_materi || '').includes('.'));
+  const babMeta = {};
+  (protaData || []).forEach(p => {
+    const k = String(p.kode_materi || '');
+    if (!k.includes('.')) babMeta[k] = p;
+  });
+
+  // Group per bab prefix
+  const groups = {};
+  subbabItems.forEach(p => {
+    const pref = String(p.kode_materi).split('.')[0];
+    (groups[pref] ||= []).push(p);
+  });
+
+  const babKeys = Array.from(new Set([...Object.keys(babMeta), ...Object.keys(groups)])).sort((a,b)=>a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
+  babKeys.forEach(pref => {
+    const meta = babMeta[pref] || { topik_materi: `BAB ${pref}`, alokasi_jp: '' };
+
+    // Header grup (non-row, tidak ada tombol delete)
+    const header = document.createElement('div');
+    header.className = "px-4 py-2 mb-2 mt-4 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-600 flex items-center justify-between";
+    header.innerHTML = `<span class="uppercase tracking-widest">BAB ${pref} — ${escapeHtml(meta.topik_materi || '')}</span><span class="text-[11px] text-slate-500">${meta.alokasi_jp ? (meta.alokasi_jp + ' JP') : ''}</span>`;
+    list.appendChild(header);
+
+    const items = (groups[pref] || []).slice()
+
+
+      .sort((a,b)=>String(a.kode_materi).localeCompare(String(b.kode_materi), undefined, {numeric:true, sensitivity:'base'}));
+
+
+    if (items.length === 0) {
+
+
+      const empty = document.createElement('div');
+
+
+      empty.className = "px-4 py-3 mb-3 rounded-xl border border-dashed border-slate-200 text-xs text-slate-500";
+
+
+      empty.innerHTML = `Belum ada sub-bab untuk BAB ${pref}. Silakan generate sub-bab di Step 3.`;
+
+
+      list.appendChild(empty);
+
+
+    }
+
+
+    items.forEach(p => {
+        const div = document.createElement('div');
+        div.dataset.protaId = p.id;
+        div.className = "p-4 border rounded-xl hover:bg-violet-50 cursor-pointer text-sm mb-3 transition border-slate-100 shadow-sm flex justify-between items-center group rpp-item";
+        div.innerHTML = `
+          <div class="flex flex-col">
+            <span class="font-bold text-violet-700">${p.kode_materi}</span>
+          </div>
+          <span class="text-xs text-slate-600 truncate ml-2 flex-1">${escapeHtml(p.topik_materi || '')}</span>
+          <span class="text-xs text-slate-400 font-bold bg-slate-100 px-2 py-1 rounded-full whitespace-nowrap group-hover:bg-white">${p.alokasi_jp} JP</span>
+        `;
+        div.onclick = () => loadRPPEditor(p);
+        list.appendChild(div);
+      });
+  });
+}
+
+        function normalizeToText(v){
+            if(v === null || v === undefined) return '';
+            if(typeof v === 'string'){
+                const s = v.trim();
+                // kalau tersimpan sebagai JSON string, coba parse
+                if((s.startsWith('{') && s.endsWith('}')) || (s.startsWith('[') && s.endsWith(']'))){
+                    try{
+                        const parsed = JSON.parse(s);
+                        if(Array.isArray(parsed)){
+                            return parsed.map(x => (typeof x === 'string' ? x : JSON.stringify(x))).join('\n');
+                        }
+                        if(typeof parsed === 'object'){
+                            return JSON.stringify(parsed, null, 2);
+                        }
+                    }catch(e){}
+                }
+                return v;
+            }
+            if(Array.isArray(v)){
+                return v.map(x => (typeof x === 'string' ? x : JSON.stringify(x))).join('\n');
+            }
+            if(typeof v === 'object'){
+                return JSON.stringify(v, null, 2);
+            }
+            return String(v);
+        }
+
+        async function loadRPPEditor(protaItem){
+            if(!protaItem) return;
+
+            // highlight item aktif
+            document.querySelectorAll('#rpp-materi-list .rpp-item').forEach(el=>{
+                el.classList.remove('ring-2','ring-violet-400','bg-violet-50');
+            });
+            const activeEl = document.querySelector(`#rpp-materi-list .rpp-item[data-prota-id="${protaItem.id}"]`);
+            if(activeEl){
+                activeEl.classList.add('ring-2','ring-violet-400','bg-violet-50');
+            }
+
+            activeRppProtaId = protaItem.id;
+
+            // Judul: tampilkan Bab + judul bab (kalau ada)
+            const kode = String(protaItem.kode_materi || '');
+            const pref = kode.split('.')[0];
+            const babMeta = (protaData || []).find(x => String(x.kode_materi || '') === pref) || null;
+
+            const titleText = babMeta?.topik_materi ? `BAB ${pref} — ${babMeta.topik_materi}` : `BAB ${pref}`;
+            getEl('rpp-title').innerText = titleText;
+            getEl('rpp-subtitle').innerText = `Kode Sub-Bab: ${kode} • JP: ${protaItem.alokasi_jp ?? 0}`;
+
+            // Tampilkan editor, sembunyikan empty-state
+            getEl('rpp-empty-state').classList.add('hidden-section');
+            getEl('rpp-editor-container').classList.remove('hidden-section');
+
+            // ambil draft dari DB
+            let row = null;
+            try{
+                const {data, error} = await window.db.from('rpp').select('*').eq('id_prota', protaItem.id).maybeSingle();
+                if(error) throw error;
+                row = data || null;
+            }catch(e){
+                console.warn('loadRPPEditor error', e);
+                row = null;
+            }
+
+            const tujuan = normalizeToText(row?.tujuan_pembelajaran || '');
+            const kegiatan = normalizeToText(row?.kegiatan_pembelajaran || '');
+            const penilaian = normalizeToText(row?.penilaian_pembelajaran || '');
+
+            getEl('input-tujuan').value = tujuan;
+            getEl('input-kegiatan').value = kegiatan;
+            getEl('input-penilaian').value = penilaian;
+
+            // restore metode bila dropdown belum dipilih
+            if(row?.metode && getEl('select-metode') && !getEl('select-metode').value){
+                getEl('select-metode').value = row.metode;
             }
         }
-        
-        async function saveRPP(){ 
+
+
+        async function saveRPP(silent=false){ 
             if(!activeRppProtaId)return; 
             const globalMethod = getEl('select-metode').value;
             const pl={id_prota:activeRppProtaId, tujuan_pembelajaran:getEl('input-tujuan').value, kegiatan_pembelajaran:getEl('input-kegiatan').value, penilaian_pembelajaran:getEl('input-penilaian').value, metode: globalMethod}; 
             const {error}=await window.db.from('rpp').upsert(pl,{onConflict:'id_prota'}); 
-            if(error)alert("Gagal: "+error.message);else alert("Draft RPP Tersimpan!"); 
+            if(!silent){ if(error)alert("Gagal: "+error.message);else alert("Draft RPP Tersimpan!"); } 
         }
 
-        async function printFullDocument(){
+async function buildKompetensiHTML(kur){
+    if(!currentMapelId) return "<i>(Mapel/Kelas belum tersimpan)</i>";
+    if(kur === 'K13'){
+        let out = '';
+        try{
+            const {data:kiRows} = await window.db.from('kompetensi_inti').select('id,ki_no,deskripsi').eq('id_mapel_kelas', currentMapelId).order('ki_no',{ascending:true});
+            if(!kiRows || kiRows.length===0) return "<i>(Belum ada data KI/KD)</i>";
+            for(const ki of kiRows){
+                out += `<h4 style="margin:14px 0 6px; font-weight:700;">KI-${ki.ki_no}</h4><div style="margin-bottom:8px;">${escapeHtml(ki.deskripsi||'')}</div>`;
+                const {data:kdRows} = await window.db.from('kompetensi_dasar').select('kode,jenis,deskripsi,kkm').eq('id_mapel_kelas', currentMapelId).eq('id_ki', ki.id).order('kode',{ascending:true});
+                if(kdRows && kdRows.length){
+                    out += `<table class="official-table"><thead><tr><th style="width:12%">Kode</th><th style="width:18%">Jenis</th><th>Deskripsi</th><th style="width:10%">KKM</th></tr></thead><tbody>`;
+                    kdRows.forEach(kd=>{
+                        out += `<tr><td class="text-center">${escapeHtml(kd.kode||'')}</td><td class="text-center">${escapeHtml(kd.jenis||'')}</td><td>${escapeHtml(kd.deskripsi||'')}</td><td class="text-center">${kd.kkm ?? ''}</td></tr>`;
+                    });
+                    out += `</tbody></table>`;
+                }else{
+                    out += `<div><i>(KD belum ada)</i></div>`;
+                }
+            }
+            return out;
+        }catch(e){
+            console.warn(e);
+            return "<i>(Gagal memuat KI/KD)</i>";
+        }
+    } else {
+        // Merdeka
+        try{
+            const {data:cpRows} = await window.db.from('kompetensi_dasar').select('id,kode,deskripsi').eq('id_mapel_kelas', currentMapelId).eq('jenis','CP').order('kode',{ascending:true});
+            const {data:tpRows} = await window.db.from('kompetensi_dasar').select('id,kode,deskripsi').eq('id_mapel_kelas', currentMapelId).eq('jenis','TP').order('kode',{ascending:true});
+            if((!cpRows || cpRows.length===0) && (!tpRows || tpRows.length===0)) return "<i>(Belum ada data CP/TP)</i>";
+            let out = '';
+            if(cpRows && cpRows.length){
+                for(let i=0;i<cpRows.length;i++){
+                    const cp = cpRows[i];
+                    out += `<h4 style="margin:14px 0 6px; font-weight:700;">CP ${escapeHtml(cp.kode||'')}</h4><div style="margin-bottom:8px;">${escapeHtml(cp.deskripsi||'')}</div>`;
+                    if(i===0 && tpRows && tpRows.length){
+                        out += `<table class="official-table"><thead><tr><th style="width:14%">Kode TP</th><th>Deskripsi TP</th><th style="width:12%">Semester</th><th style="width:30%">KKTP</th></tr></thead><tbody>`;
+
+                        // Batch fetch: alur_tujuan untuk semua TP, lalu kriteria_ketuntasan untuk semua alur
+                        const tpIds = tpRows.map(x=>x.id);
+                        let alurByTp = {};
+                        let kktpByAlur = {};
+                        try{
+                            const {data:alurRows} = await window.db
+                              .from('alur_tujuan')
+                              .select('id,id_kompetensi,semester')
+                              .in('id_kompetensi', tpIds);
+
+                            if(alurRows && alurRows.length){
+                                for(const r of alurRows){ alurByTp[r.id_kompetensi] = r; }
+                                const alurIds = alurRows.map(r=>r.id);
+                                const {data:kktpRows} = await window.db
+                                  .from('kriteria_ketuntasan')
+                                  .select('id_alur_tujuan,deskripsi_kktp')
+                                  .in('id_alur_tujuan', alurIds);
+                                if(kktpRows && kktpRows.length){
+                                    for(const r of kktpRows){ kktpByAlur[r.id_alur_tujuan] = r; }
+                                }
+                            }
+                        }catch(e){}
+
+                        for(const tp of tpRows){
+                            let semester = currentSemester;
+                            let kktpDesc = "";
+                            const alur = alurByTp[tp.id];
+                            if(alur){
+                                if(alur.semester) semester = alur.semester;
+                                const kktp = kktpByAlur[alur.id];
+                                if(kktp && kktp.deskripsi_kktp) kktpDesc = kktp.deskripsi_kktp;
+                            }
+                            out += `<tr><td>${escapeHtml(tp.kode||'')}</td><td>${escapeHtml(tp.deskripsi||'')}</td><td>${escapeHtml(semester||'')}</td><td>${escapeHtml(kktpDesc||'')}</td></tr>`;
+                        }
+                        out += `</tbody></table>`;
+                    }
+                }
+            }else if(tpRows && tpRows.length){
+                out += `<h4 style="margin:14px 0 6px; font-weight:700;">TP</h4>`;
+                out += `<ul>`;
+                tpRows.forEach(tp=>{ out += `<li><b>${escapeHtml(tp.kode||'')}</b> — ${escapeHtml(tp.deskripsi||'')}</li>`;});
+                out += `</ul>`;
+            }
+            return out;
+        }catch(e){
+            console.warn(e);
+            return "<i>(Gagal memuat CP/TP)</i>";
+        }
+    }
+}
+
+function escapeHtml(str){
+    return String(str ?? '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#039;');
+}
+
+
+function detectJenjangFromKelas(kelasRaw){
+    const k = String(kelasRaw || '').toUpperCase().trim();
+    // heuristik sederhana: angka romawi/arab
+    if(/\bVII\b|\bVIII\b|\bIX\b|\b7\b|\b8\b|\b9\b/.test(k)) return 'MTs/SMP';
+    if(/\bXII\b|\bXI\b|\bX\b|\b10\b|\b11\b|\b12\b/.test(k)) return 'MA/SMA';
+    return 'Umum';
+}
+
+function pickBab(kodeBab){
+    const k = String(kodeBab || '').trim();
+    if(!k) return;
+    const meta = (protaData || []).find(d => String(d.kode_materi||'').trim() === k && !String(d.kode_materi||'').includes('.'));
+    if(!meta) return;
+    getEl('input-kd-code').value = meta.kode_materi || '';
+    getEl('input-kd-text').value = meta.topik_materi || '';
+    getEl('input-kd-jp').value = meta.alokasi_jp || '';
+    // scroll kecil biar user sadar field terisi
+    getEl('input-kd-code')?.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+
+// ====== Kurikulum Human Editor (Tabel) ======
+let kurikulumState = null;
+let _kurikulumSyncTimer = null;
+
+function _debounceSyncKurikulumJson(){
+  clearTimeout(_kurikulumSyncTimer);
+  _kurikulumSyncTimer = setTimeout(syncKurikulumJsonTextarea, 250);
+}
+
+function syncKurikulumJsonTextarea(){
+  const ta = getEl('kurikulum-json-editor');
+  if(!ta || !kurikulumState) return;
+  ta.value = JSON.stringify(kurikulumState, null, 2);
+}
+
+function _setDeep(obj, path, value){
+  const parts = path.split('.');
+  let cur = obj;
+  for(let i=0;i<parts.length-1;i++){
+    const key = parts[i];
+    const nextKey = parts[i+1];
+    const isIndex = !isNaN(parseInt(nextKey,10));
+    if(!(key in cur)) cur[key] = isIndex ? [] : {};
+    cur = cur[key];
+  }
+  cur[parts[parts.length-1]] = value;
+}
+
+function _renderInputRow(label, value, path, opts={}){
+  const type = opts.type || 'text';
+  const rows = opts.rows || 2;
+  if(type === 'textarea'){
+    return `
+      <div class="mb-3">
+        <label class="text-[11px] font-bold text-slate-600">${label}</label>
+        <textarea class="kur-ui w-full mt-1 p-2.5 border rounded-xl text-sm" data-path="${path}" rows="${rows}">${escapeHtml(value||'')}</textarea>
+      </div>
+    `;
+  }
+  return `
+    <div class="mb-3">
+      <label class="text-[11px] font-bold text-slate-600">${label}</label>
+      <input class="kur-ui w-full mt-1 p-2.5 border rounded-xl text-sm" data-path="${path}" value="${escapeHtml(value||'')}" />
+    </div>
+  `;
+}
+
+function showKurikulumHumanEditor(json){
+  kurikulumState = json || {};
+  const panel = getEl('kurikulum-human-editor');
+  if(panel) panel.classList.remove('hidden-section');
+
+  const sklTa = getEl('kurikulum-skl-text');
+  if(sklTa){
+    sklTa.value = (kurikulumState.skl || '');
+    sklTa.oninput = (e)=>{ kurikulumState.skl = e.target.value; _debounceSyncKurikulumJson(); };
+  }
+
+  renderKurikulumStructuredEditor();
+  syncKurikulumJsonTextarea();
+
+  // Jika user edit JSON advanced, kita juga update state (best effort)
+  const jsonTa = getEl('kurikulum-json-editor');
+  if(jsonTa){
+    jsonTa.oninput = ()=>{ 
+      try{ 
+        const parsed = JSON.parse(jsonTa.value);
+        kurikulumState = parsed;
+        if(sklTa) sklTa.value = parsed.skl || '';
+        renderKurikulumStructuredEditor();
+      }catch(e){ /* ignore */ }
+    };
+  }
+}
+
+function renderKurikulumStructuredEditor(){
+  const area = getEl('kurikulum-structured-area');
+  if(!area) return;
+  area.innerHTML = '';
+
+  const isMerdeka = !!(kurikulumState?.merdeka?.cp?.length);
+  const isK13 = !!(kurikulumState?.k13?.ki?.length);
+
+  if(!isMerdeka && !isK13){
+    area.innerHTML = `<div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
+      Struktur kurikulum belum terbaca. Gunakan tombol Generate, atau buka Advanced JSON untuk memperbaiki struktur.
+    </div>`;
+    return;
+  }
+
+  // Event delegation untuk input editor
+  area.oninput = (e)=>{
+    const el = e.target;
+    if(!el.classList.contains('kur-ui')) return;
+    const path = el.getAttribute('data-path');
+    if(!path) return;
+
+    if(el.getAttribute('data-kind') === 'link_subbab'){
+      const arr = String(el.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      _setDeep(kurikulumState, path, arr);
+    } else if(el.getAttribute('data-kind') === 'number'){
+      const num = parseInt(el.value, 10);
+      _setDeep(kurikulumState, path, isNaN(num) ? null : num);
+    } else {
+      _setDeep(kurikulumState, path, el.value);
+    }
+    _debounceSyncKurikulumJson();
+  };
+
+  if(isMerdeka){
+    const cps = kurikulumState.merdeka.cp || [];
+    cps.forEach((cp, cpi)=>{
+      const card = document.createElement('div');
+      card.className = "p-4 rounded-2xl border border-slate-200 bg-white shadow-sm mb-4";
+      card.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <div class="font-extrabold text-slate-800 text-sm">CP ${cpi+1}</div>
+          <div class="text-[11px] text-slate-500 font-bold bg-slate-100 px-2 py-1 rounded-full">Merdeka</div>
+        </div>
+        ${_renderInputRow('Fase', cp.fase, `merdeka.cp.${cpi}.fase`)}
+        ${_renderInputRow('Kode CP', cp.kode_cp, `merdeka.cp.${cpi}.kode_cp`)}
+        ${_renderInputRow('Deskripsi CP', cp.deskripsi_cp, `merdeka.cp.${cpi}.deskripsi_cp`, {type:'textarea', rows:3})}
+        <div class="mt-3">
+          <div class="text-[11px] font-extrabold text-slate-700 uppercase mb-2">TP (Tujuan Pembelajaran)</div>
+          <div class="overflow-x-auto border rounded-xl">
+            <table class="min-w-full text-xs">
+              <thead class="bg-slate-100 text-slate-600">
+                <tr>
+                  <th class="p-2 text-left">Kode</th>
+                  <th class="p-2 text-left">Deskripsi</th>
+                  <th class="p-2 text-center">Semester</th>
+                  <th class="p-2 text-left">KKTP</th>
+                  <th class="p-2 text-left">Link Subbab</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y">
+                ${(cp.tp||[]).map((tp, tpi)=>`
+                  <tr>
+                    <td class="p-2 align-top w-28">
+                      <input class="kur-ui w-full p-2 border rounded-lg" data-path="merdeka.cp.${cpi}.tp.${tpi}.kode_tp" value="${escapeHtml(tp.kode_tp||'')}" />
+                    </td>
+                    <td class="p-2 align-top min-w-[280px]">
+                      <textarea class="kur-ui w-full p-2 border rounded-lg" data-path="merdeka.cp.${cpi}.tp.${tpi}.deskripsi_tp" rows="2">${escapeHtml(tp.deskripsi_tp||'')}</textarea>
+                    </td>
+                    <td class="p-2 align-top w-24">
+                      <input class="kur-ui w-full p-2 border rounded-lg text-center" data-path="merdeka.cp.${cpi}.tp.${tpi}.semester" value="${escapeHtml(tp.semester||'')}" />
+                    </td>
+                    <td class="p-2 align-top min-w-[240px]">
+                      <textarea class="kur-ui w-full p-2 border rounded-lg" data-path="merdeka.cp.${cpi}.tp.${tpi}.kktp.deskripsi" rows="2">${escapeHtml(tp.kktp?.deskripsi||'')}</textarea>
+                    </td>
+                    <td class="p-2 align-top min-w-[180px]">
+                      <input class="kur-ui w-full p-2 border rounded-lg" data-kind="link_subbab" data-path="merdeka.cp.${cpi}.tp.${tpi}.link_subbab" value="${escapeHtml((tp.link_subbab||[]).join(', '))}" />
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-500">Tip: Link Subbab isi dengan kode seperti <b>1.1, 1.2</b> (dipisah koma).</div>
+        </div>
+      `;
+      area.appendChild(card);
+    });
+  }
+
+  if(isK13){
+    const kis = kurikulumState.k13.ki || [];
+    kis.forEach((ki, kii)=>{
+      const card = document.createElement('div');
+      card.className = "p-4 rounded-2xl border border-slate-200 bg-white shadow-sm mb-4";
+      card.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <div class="font-extrabold text-slate-800 text-sm">KI ${ki.ki_no}</div>
+          <div class="text-[11px] text-slate-500 font-bold bg-slate-100 px-2 py-1 rounded-full">K13</div>
+        </div>
+        ${_renderInputRow('Deskripsi KI', ki.deskripsi, `k13.ki.${kii}.deskripsi`, {type:'textarea', rows:3})}
+        <div class="mt-3">
+          <div class="text-[11px] font-extrabold text-slate-700 uppercase mb-2">KD (Kompetensi Dasar)</div>
+          <div class="overflow-x-auto border rounded-xl">
+            <table class="min-w-full text-xs">
+              <thead class="bg-slate-100 text-slate-600">
+                <tr>
+                  <th class="p-2 text-left">Kode</th>
+                  <th class="p-2 text-left">Jenis</th>
+                  <th class="p-2 text-left">Deskripsi</th>
+                  <th class="p-2 text-center">KKM</th>
+                  <th class="p-2 text-left">Link Subbab</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y">
+                ${(ki.kd||[]).map((kd, kdi)=>`
+                  <tr>
+                    <td class="p-2 align-top w-24">
+                      <input class="kur-ui w-full p-2 border rounded-lg" data-path="k13.ki.${kii}.kd.${kdi}.kode" value="${escapeHtml(kd.kode||'')}" />
+                    </td>
+                    <td class="p-2 align-top w-32">
+                      <input class="kur-ui w-full p-2 border rounded-lg" data-path="k13.ki.${kii}.kd.${kdi}.jenis" value="${escapeHtml(kd.jenis||'')}" />
+                    </td>
+                    <td class="p-2 align-top min-w-[320px]">
+                      <textarea class="kur-ui w-full p-2 border rounded-lg" data-path="k13.ki.${kii}.kd.${kdi}.deskripsi" rows="2">${escapeHtml(kd.deskripsi||'')}</textarea>
+                    </td>
+                    <td class="p-2 align-top w-20">
+                      <input class="kur-ui w-full p-2 border rounded-lg text-center" data-kind="number" data-path="k13.ki.${kii}.kd.${kdi}.kkm" value="${escapeHtml(kd.kkm ?? '')}" />
+                    </td>
+                    <td class="p-2 align-top min-w-[180px]">
+                      <input class="kur-ui w-full p-2 border rounded-lg" data-kind="link_subbab" data-path="k13.ki.${kii}.kd.${kdi}.link_subbab" value="${escapeHtml((kd.link_subbab||[]).join(', '))}" />
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-500">Tip: Link Subbab isi dengan kode seperti <b>1.1, 1.2</b> (dipisah koma).</div>
+        </div>
+      `;
+      area.appendChild(card);
+    });
+  }
+}
+// ====== End Kurikulum Human Editor ======
+
+
+
+
+async function printFullDocument(printWin){
             const mapel=getEl('input-mapel').value; const kelas=getEl('input-kelas').value; const tahun=els.selTahun.options[els.selTahun.selectedIndex].text; const guru=getEl('input-guru').value; const kepsek=getEl('input-kepsek').value; const sekolah=getEl('input-sekolah').value;
             const tglSah = getEl('input-tgl-sah').value;
             
@@ -695,6 +2682,29 @@
             const d = new Date(tglSah || new Date());
             const formattedDate = d.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
             if(getEl('print-tgl-sah')) getEl('print-tgl-sah').innerText = `Jakarta, ${formattedDate}`; 
+
+// --- Lampiran Kurikulum (SKL + Kurikulum) ---
+try{
+    const kur = currentKurikulum || (getEl('select-kurikulum')?.value || 'Merdeka');
+
+    // SKL
+    let sklText = "";
+    try{
+        const {data:sklData} = await window.db.from('skl').select('deskripsi').eq('id_mapel_kelas', currentMapelId).maybeSingle();
+        if(sklData && sklData.deskripsi) sklText = sklData.deskripsi;
+    }catch(e){ /* ignore */ }
+    if(getEl('print-skl')) getEl('print-skl').innerText = sklText || "(Belum di-generate)";
+
+    if(getEl('print-kompetensi-title')){
+        getEl('print-kompetensi-title').innerText = (kur === 'K13') ? "LAMPIRAN KURIKULUM (KI–KD–KKM)" : "LAMPIRAN KURIKULUM (CP–TP–KKTP)";
+    }
+    if(getEl('print-kompetensi')){
+        getEl('print-kompetensi').innerHTML = await buildKompetensiHTML(kur);
+    }
+}catch(e){
+    console.warn("Gagal memuat lampiran kurikulum untuk cetak:", e);
+}
+
 
             const protaBody=getEl('print-tbody-prota'); protaBody.innerHTML=''; let lastP=null;
             protaData.forEach(d=>{ const pref=d.kode_materi.split('.')[0]; if(pref!==lastP) protaBody.innerHTML+=`<tr><td colspan="3" style="background:#f3f4f6; font-weight:bold; text-align:center;">BAB ${pref}</td></tr>`; lastP=pref; protaBody.innerHTML+=`<tr><td class="text-center">${d.kode_materi}</td><td>${d.topik_materi}</td><td class="text-center">${d.alokasi_jp} JP</td></tr>`; });
@@ -737,9 +2747,12 @@
             renderSplitPromes('print-promes-smt2', 6, 12);
 
             const rppCont=getEl('print-container-rpp'); rppCont.innerHTML='';
-            const ids=protaData.map(p=>p.id); const {data:allRpps}=await window.db.from('rpp').select('*').in('id_prota',ids);
+            // RPP dicetak PER SUB-BAB saja (bukan per BAB)
+            const rppItems = (protaData || []).filter(p => String(p.kode_materi || '').includes('.'));
+            const ids=rppItems.map(p=>p.id);
+            const {data:allRpps}=await window.db.from('rpp').select('*').in('id_prota',ids);
             
-            protaData.forEach(p=>{
+            rppItems.forEach(p=>{
                 const rpp=allRpps?allRpps.find(r=>r.id_prota===p.id):null; const met=rpp?rpp.metode:'-';
                 let kegiatanHtml = '<p>-</p>';
                 if(rpp && rpp.kegiatan_pembelajaran) {
@@ -754,7 +2767,22 @@
                 const html=`<div class="page-break pt-10"><h3 style="text-align:center; border:none; margin-bottom:20px; text-decoration:underline;">RENCANA PELAKSANAAN PEMBELAJARAN (RPP)</h3><table style="width:100%; border:none; margin-bottom:20px;"><tr><td style="width:20%; border:none; font-weight:bold;">Mata Pelajaran</td><td style="border:none;">: ${mapel}</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Materi Pokok</td><td style="border:none;">: ${p.topik_materi} (${p.kode_materi})</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Alokasi Waktu</td><td style="border:none;">: ${p.alokasi_jp} JP</td></tr><tr><td style="width:20%; border:none; font-weight:bold;">Metode</td><td style="border:none;">: ${met}</td></tr></table><h3>A. TUJUAN PEMBELAJARAN</h3><div class="rpp-content-text">${safeRender(rpp?rpp.tujuan_pembelajaran:'-')}</div><h3>B. KEGIATAN PEMBELAJARAN</h3><div class="rpp-content-text">${kegiatanHtml}</div><h3>C. PENILAIAN</h3><div class="rpp-content-text">${safeRender(rpp?rpp.penilaian_pembelajaran:'-')}</div><div class="ttd-wrapper"><div class="ttd-box">Mengetahui,<br>Kepala Madrasah<br><br><br><br><b style="text-decoration:underline;">${kepsek}</b></div><div class="ttd-box ttd-right">${getEl('print-tgl-sah').innerText}<br>Guru Mata Pelajaran<br><br><br><br><b style="text-decoration:underline;">${guru}</b></div></div></div>`;
                 rppCont.insertAdjacentHTML('beforeend',html);
             });
-            window.print();
+// Cetak ke window yang sudah dibuka lebih dulu (agar tidak diblokir popup)
+try{
+    const styles = Array.from(document.querySelectorAll('style')).map(s=>s.innerHTML).join('\n');
+    const bodyHtml = getEl('print-area') ? getEl('print-area').innerHTML : '';
+    const w = printWin || window.open('', '_blank');
+    if(!w) throw new Error('Popup diblokir. Izinkan popup untuk fitur cetak.');
+    w.document.open();
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Cetak Buku Kerja</title><style>${styles}</style></head><body>${bodyHtml}</body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(()=>{ try{ w.print(); } catch(e){ console.warn(e); } }, 300);
+    w.onafterprint = ()=>{ try{ w.close(); } catch(e){} };
+}catch(e){
+    console.warn(e);
+    alert('⚠️ Gagal membuka jendela cetak. Coba izinkan popup di browser, lalu ulangi.');
+}
         }
     </script>
 </body>
