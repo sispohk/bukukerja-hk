@@ -220,7 +220,7 @@
                 <div><div class="text-[10px] uppercase text-red-400 font-bold">Libur</div><div id="sum-libur" class="font-bold text-xl text-red-600">0</div></div>
                 <div><div class="text-[10px] uppercase text-green-500 font-bold">Efektif</div><div id="sum-efektif" class="font-bold text-xl text-green-600">0</div></div>
             </div>
-            <div class="flex gap-4"><button onclick="goBackToStep1()" class="w-1/3 bg-slate-100 p-3 rounded-xl font-bold hover:bg-slate-200">← Kembali</button><button id="btn-next-step2" onclick="goStep3()" class="w-2/3 bg-violet-600 text-white p-3 rounded-xl font-bold hover:bg-violet-700 shadow-md">Simpan & Lanjut ➜</button></div>
+            <div class="mt-8 pt-4 border-t flex justify-between sticky-actions"><button onclick="goBackToStep1()" class="text-slate-500 font-bold text-sm hover:text-slate-800">← Kembali</button><button id="btn-next-step2" onclick="goStep3()" class="bg-violet-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-violet-700 shadow-md transition transform active:scale-95">Simpan &amp; Lanjut ➜</button></div>
         </div>
 
         <div id="wizard-step-3" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-5xl mx-auto">
@@ -229,36 +229,41 @@
                 <div class="text-xs bg-violet-50 text-violet-700 px-3 py-1 rounded-full font-bold border border-violet-100">Target: <span id="disp-minggu-efektif">0</span> Pekan x <span id="disp-beban-jp">0</span> JP = <span id="disp-total-jp">0</span> Total JP</div>
             </div>
 
+
+            <!-- Hidden legacy inputs (UI manual input removed). Keep for backward compatibility with existing JS handlers. -->
+            <div class="hidden" aria-hidden="true">
+                <input id="input-kd-code" value="" />
+                <input id="input-kd-text" value="" />
+                <input id="input-kd-jp" value="" />
+            </div>
+
             <div class="bg-gradient-to-br from-violet-50 to-white p-6 rounded-xl border border-violet-100 mb-6 relative overflow-hidden shadow-sm">
-                <h3 class="text-xs font-bold text-violet-600 mb-3 uppercase tracking-wide">Input Materi Baru</h3>
-                <div class="flex flex-col md:flex-row gap-3 items-end mb-4 relative z-10">
-                    <div class="w-full md:w-24"><label class="text-[10px] font-bold text-slate-400">KODE BAB</label><input type="text" id="input-kd-code" class="w-full p-2.5 border rounded-lg text-center font-bold" placeholder="1"></div>
-                    <div class="w-full md:flex-1"><label class="text-[10px] font-bold text-slate-400">JUDUL BAB</label><input type="text" id="input-kd-text" class="w-full p-2.5 border rounded-lg" placeholder="Contoh: Limit Fungsi (Bab 1)"></div>
-                    <div class="w-full md:w-28"><label class="text-[10px] font-bold text-slate-400">TOTAL JP BAB</label><input type="number" id="input-kd-jp" class="w-full p-2.5 border rounded-lg text-center font-bold" placeholder="12"></div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 relative z-10">
-                    <button onclick="openAIBridge('bab')" class="w-full bg-emerald-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-emerald-700 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95"><span>🤖</span> Generate BAB (AI)</button>
-                    <button onclick="openAIBridge('subbab_all')" class="w-full bg-violet-700 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-violet-800 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95"><span>🤖</span> Generate Sub-Bab Semua BAB</button>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3 relative z-10">
+    <button onclick="openAIBridge('bab')" class="w-full bg-emerald-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-emerald-700 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95">
+      <span>🤖</span> Generate Materi (BAB)
+    </button>
+    <button onclick="openAIBridge('subbab_all')" class="w-full bg-violet-700 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-violet-800 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95">
+      <span>🤖</span> Generate Semua Sub-BAB
+    </button>
+  </div>
 
-                </div>
+  <div class="mt-3 p-3 rounded-xl border bg-white/70">
+    <div class="text-xs font-bold text-slate-700">Distribusi JP mengikuti kalender (Step 2)</div>
+    <div class="mt-1 text-[11px] text-slate-600 leading-relaxed">
+      Mapping JP ke minggu dilakukan di <b>Step 4 (Promes)</b> berdasarkan kalender efektif/libur yang kamu input.
+    </div>
+  </div>
 
-                <div class="mt-3 p-3 rounded-xl border bg-white/70">
-                    <div class="text-xs font-bold text-slate-700">Distribusi JP mengikuti kalender (Step 2)</div>
-                    <div class="mt-1 text-[11px] text-slate-600 leading-relaxed">
-                        Mapping JP ke minggu dilakukan di <b>Step 4 (Promes)</b> berdasarkan kalender efektif/libur yang kamu input.
-                    </div>
-                </div>
-
-                <p class="mt-3 text-[11px] text-slate-500">Generate BAB akan membuat daftar BAB sesuai kurikulum & jenjang/kelas yang dipilih di Step 1. Setelah dikonfirmasi, BAB akan tersimpan ke database dan siap digenerate sub-bab.</p>
- akan membuat daftar BAB sesuai kurikulum & jenjang/kelas yang dipilih di Step 1. Setelah dikonfirmasi, BAB akan tersimpan ke database dan siap digenerate sub-bab.</p>
-            
-            
-
+  <p class="mt-3 text-[11px] text-slate-500">
+    Generate Materi (BAB) membuat daftar BAB sesuai kurikulum & jenjang/kelas di Step 1. Setelah dikonfirmasi, BAB tersimpan dan siap digenerate sub-bab.
+  </p>
 </div>
 
-            <div class="flex justify-between items-center mb-2 px-1"><span class="text-xs font-bold text-slate-400 tracking-wider">DAFTAR MATERI</span><span id="warn-sisa" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-500">Sisa: 0 JP</span></div>
+
+<div id="ai-slot-step3" class="mt-4"></div>
+<div class="flex justify-between items-center mb-2 px-1"><span class="text-xs font-bold text-slate-400 tracking-wider">DAFTAR MATERI</span><span id="warn-sisa" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-500">Sisa: 0 JP</span></div>
             <div class="border rounded-xl overflow-hidden mb-6 bg-white shadow-sm min-h-[100px]"><table class="w-full text-sm text-left"><tbody id="prota-list-body" class="divide-y divide-slate-100"></tbody></table></div>
-            <div class="sticky-actions mt-6 flex flex-col md:flex-row gap-3"><button onclick="goBackToStep2()" class="w-full md:w-1/2 bg-white border border-slate-200 text-slate-700 py-3.5 rounded-xl font-extrabold hover:bg-slate-50 shadow-sm">← Kembali</button><button onclick="goStep4()" class="w-full md:w-1/2 bg-violet-600 text-white py-3.5 rounded-xl font-extrabold shadow-md hover:bg-violet-700">Lanjut ke Promes ➜</button></div>
+            <div class="mt-8 pt-4 border-t flex justify-between sticky-actions"><button onclick="goBackToStep2()" class="text-slate-500 font-bold text-sm hover:text-slate-800">← Kembali</button><button onclick="goStep4()" class="bg-violet-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-violet-700 shadow-md transition transform active:scale-95">Lanjut ke Promes ➜</button></div>
         </div>
 
         <div id="wizard-step-4" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 w-full">
@@ -279,7 +284,7 @@
                     <tbody class="divide-y divide-slate-100 text-slate-700"></tbody>
                 </table>
             </div>
-            <div class="sticky-actions mt-6 flex flex-col md:flex-row gap-3"><button onclick="goBackToStep3()" class="w-full md:w-1/2 bg-white border border-slate-200 text-slate-700 py-3.5 rounded-xl font-extrabold hover:bg-slate-50 shadow-sm">← Kembali</button><button id="btn-save-promes" onclick="goStep5()" class="w-full md:w-1/2 bg-violet-600 text-white py-3.5 rounded-xl font-extrabold shadow-md hover:bg-violet-700">Simpan & Lanjut RPP ➜</button></div>
+            <div class="mt-8 pt-4 border-t flex justify-between sticky-actions"><button onclick="goBackToStep3()" class="text-slate-500 font-bold text-sm hover:text-slate-800">← Kembali</button><button id="btn-save-promes" onclick="goStep5()" class="bg-violet-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-violet-700 shadow-md transition transform active:scale-95">Simpan &amp; Lanjut RPP ➜</button></div>
         </div>
 
         <div id="wizard-step-5" class="hidden-section bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-7xl mx-auto">
@@ -327,6 +332,9 @@
                     </div>
                 </div>
             </div>
+
+            <div id="ai-slot-step5" class="mt-4"></div>
+
 
             <div class="flex flex-col lg:flex-row gap-8">
 
@@ -395,6 +403,9 @@
       <div id="kurikulum-structured-area"></div>
     </div>
 
+<div id="ai-slot-step6" class="mt-4"></div>
+
+
 <div class="sticky-actions mt-4 flex flex-col md:flex-row gap-2 md:justify-end">
       <button onclick="openAIBridge('kurikulum_bundle')" class="btn-secondary w-full md:w-auto px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center gap-2">
         <span>🤖</span> Generate Lampiran
@@ -436,29 +447,94 @@
         </div>
     </div>
 
-    <div id="bridge-modal" class="modal-overlay">
-        <div class="modal-box relative p-0 overflow-hidden">
-            <div class="bg-slate-50 border-b p-4 flex justify-between items-center">
-                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">🤖 AI Bridge <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-normal">Copy-Paste Mode</span></h3>
-                <button onclick="closeBridgeModal()" class="text-slate-400 hover:text-red-500 text-2xl font-bold">&times;</button>
+    
+    <!-- AI Inline Panel (replaces all generator modals) -->
+    <div id="ai-inline-panel" class="hidden-section bg-white rounded-2xl shadow-sm border border-slate-200 max-w-5xl mx-auto mt-6 overflow-hidden">
+        <div class="bg-slate-50 border-b p-4 flex justify-between items-center">
+            <div class="font-bold text-slate-800 flex items-center gap-2">
+                🤖 <span>Generator (Inline)</span>
+                <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold border border-green-200">Copy-Paste Mode</span>
             </div>
-            <div class="p-6">
-                <div class="mb-6"><div class="flex justify-between mb-2"><label class="text-xs font-bold text-violet-700 uppercase">Langkah 1: Copy Perintah Ini</label><button onclick="copyToClipboard('prompt-area')" class="text-xs text-violet-600 font-bold hover:underline">Salin Teks</button></div><textarea id="prompt-area" class="w-full p-3 border rounded-lg text-xs font-mono h-24 bg-violet-50 text-slate-700 focus:ring-violet-500" readonly></textarea></div>
-                <div class="mb-6 flex gap-3"><button onclick="autoCopyAndOpen('https://chatgpt.com/')" class="flex-1 bg-green-100 text-green-700 text-center py-3 rounded-lg font-bold text-sm hover:bg-green-200 border border-green-200 transition">Buka ChatGPT ↗️</button><button onclick="autoCopyAndOpen('https://gemini.google.com/app')" class="flex-1 bg-blue-100 text-blue-700 text-center py-3 rounded-lg font-bold text-sm hover:bg-blue-200 border border-blue-200 transition">Buka Gemini ↗️</button></div>
-                <div class="mb-4"><label class="text-xs font-bold text-violet-700 uppercase mb-2 block">Langkah 3: Paste Jawaban AI Di Sini</label><textarea id="ai-response-area" class="w-full p-3 border rounded-lg text-xs h-32 placeholder-slate-400 focus:ring-violet-500" placeholder="Paste seluruh jawaban dari AI di sini..."></textarea></div>
-                <div class="flex justify-end gap-3 border-t pt-4 mt-4"><button onclick="closeBridgeModal()" class="px-5 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg font-bold text-sm">Batal</button><button onclick="processAIResponse()" class="px-6 py-2.5 bg-violet-600 text-white rounded-lg font-bold text-sm hover:bg-violet-700 shadow-md flex items-center gap-2"><span>✨</span> Proses Jawaban</button></div>
+            <button onclick="closeBridgeModal()" class="text-slate-500 hover:text-red-600 text-sm font-extrabold px-3 py-1 rounded-lg hover:bg-red-50">Tutup ✕</button>
+        </div>
+
+        <div id="ai-inline-bridge" class="p-5">
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-xs font-bold text-violet-700 uppercase">Langkah 1: Copy Perintah Ini</label>
+                    <button onclick="copyToClipboard('prompt-area')" class="text-xs text-violet-600 font-bold hover:underline">Salin Teks</button>
+                </div>
+                <textarea id="prompt-area" class="w-full p-3 border rounded-xl text-xs font-mono h-28 bg-violet-50 text-slate-700 focus:ring-violet-500" readonly></textarea>
+            </div>
+
+            <div class="mb-4 flex flex-col sm:flex-row gap-3">
+                <button onclick="autoCopyAndOpen('https://chatgpt.com/')" class="flex-1 bg-green-100 text-green-700 text-center py-2.5 rounded-xl font-bold text-sm hover:bg-green-200 border border-green-200 transition">Buka ChatGPT ↗️</button>
+                <button onclick="autoCopyAndOpen('https://gemini.google.com/app')" class="flex-1 bg-blue-100 text-blue-700 text-center py-2.5 rounded-xl font-bold text-sm hover:bg-blue-200 border border-blue-200 transition">Buka Gemini ↗️</button>
+            </div>
+
+            <div class="mb-3">
+                <label class="text-xs font-bold text-violet-700 uppercase mb-2 block">Langkah 3: Paste Jawaban AI Di Sini</label>
+                <textarea id="ai-response-area" class="w-full p-3 border rounded-xl text-xs h-36 placeholder-slate-400 focus:ring-violet-500" placeholder="Paste seluruh jawaban dari AI di sini..."></textarea>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-end gap-3 border-t pt-4 mt-4">
+                <button onclick="closeBridgeModal()" class="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200">Batal</button>
+                <button onclick="processAIResponse()" class="px-6 py-2.5 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95">
+                    <span>✨</span> Proses Jawaban
+                </button>
             </div>
         </div>
-    </div>
 
-    <div id="preview-subbab-modal" class="modal-overlay">
-        <div class="modal-box relative p-6 max-w-2xl">
-            <div class="flex justify-between items-center mb-4">
+        <div id="ai-inline-status" class="hidden-section px-5 py-4 border-t bg-emerald-50 text-emerald-700 text-sm font-bold"></div>
+
+        <div id="ai-inline-bab-preview" class="hidden-section p-5 border-t">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-lg text-slate-800">Konfirmasi BAB</h3>
+                <button onclick="closeBabPreviewModal()" class="text-slate-500 hover:text-red-600 text-sm font-extrabold px-3 py-1 rounded-lg hover:bg-red-50">Tutup ✕</button>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">Silakan cek dan edit daftar BAB sebelum disimpan ke database. Kamu bisa tambah/hapus baris.</p>
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
+                <div class="text-xs text-slate-500">
+                    <span class="font-bold">Kurikulum:</span> <span id="bab-preview-kurikulum">-</span>
+                    <span class="mx-2">•</span>
+                    <span class="font-bold">Kelas/Jenjang:</span> <span id="bab-preview-jenjang">-</span>
+                </div>
+                <button onclick="addBabRow()" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 w-fit">+ Tambah Baris</button>
+            </div>
+
+            <div class="border rounded-xl overflow-hidden mb-4 bg-slate-50 max-h-[420px] overflow-y-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-200 text-slate-600 text-xs uppercase font-bold">
+                        <tr>
+                            <th class="p-2 w-20">Kode</th>
+                            <th class="p-2">Judul BAB</th>
+                            <th class="p-2 w-16 text-center">JP</th>
+                            <th class="p-2 w-10 text-center"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="bab-preview-tbody" class="divide-y divide-slate-200"></tbody>
+                </table>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <div class="text-xs text-slate-500">
+                    <span class="font-bold">Total JP BAB:</span> <span id="bab-preview-totaljp">0</span> •
+                    <span class="font-bold">Target JP:</span> <span id="bab-preview-targetjp">0</span>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button onclick="closeBabPreviewModal()" class="px-5 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold text-sm hover:bg-slate-200">Batal</button>
+                    <button onclick="savePreviewedBabs()" class="px-5 py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700">Simpan BAB ke Database</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="ai-inline-subbab-preview" class="hidden-section p-5 border-t">
+            <div class="flex justify-between items-center mb-3">
                 <h3 class="font-bold text-lg text-slate-800">Konfirmasi Sub-Bab</h3>
-                <button onclick="closePreviewModal()" class="text-slate-400 hover:text-red-500 text-2xl">&times;</button>
+                <button onclick="closePreviewModal()" class="text-slate-500 hover:text-red-600 text-sm font-extrabold px-3 py-1 rounded-lg hover:bg-red-50">Tutup ✕</button>
             </div>
             <p class="text-sm text-slate-500 mb-4">Silakan cek dan edit daftar sub-bab sebelum disimpan ke database.</p>
-            <div class="border rounded-xl overflow-hidden mb-4 bg-slate-50 max-h-[400px] overflow-y-auto">
+            <div class="border rounded-xl overflow-hidden mb-4 bg-slate-50 max-h-[420px] overflow-y-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="bg-slate-200 text-slate-600 text-xs uppercase font-bold">
                         <tr>
@@ -474,140 +550,11 @@
                 <button onclick="closePreviewModal()" class="px-5 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold text-sm hover:bg-slate-200">Batal</button>
                 <button onclick="savePreviewedSubbabs()" class="px-5 py-2 bg-violet-600 text-white rounded-lg font-bold text-sm hover:bg-violet-700">Simpan ke Database</button>
             </div>
-        
-    </div>
-    </div>
-
-    <div id="preview-bab-modal" class="modal-overlay">
-        <div class="modal-box relative p-6 max-w-2xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-lg text-slate-800">Konfirmasi BAB</h3>
-                <button onclick="closeBabPreviewModal()" class="text-slate-400 hover:text-red-500 text-2xl">&times;</button>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Silakan cek dan edit daftar BAB sebelum disimpan ke database. Kamu bisa tambah/hapus baris.</p>
-            <div class="flex justify-between items-center mb-3">
-                <div class="text-xs text-slate-500">
-                    <span class="font-bold">Kurikulum:</span> <span id="bab-preview-kurikulum">-</span>
-                    <span class="mx-2">•</span>
-                    <span class="font-bold">Kelas/Jenjang:</span> <span id="bab-preview-jenjang">-</span>
-                </div>
-                <button onclick="addBabRow()" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200">+ Tambah Baris</button>
-            </div>
-            <div class="border rounded-xl overflow-hidden mb-4 bg-slate-50 max-h-[420px] overflow-y-auto">
-                <table class="w-full text-sm text-left">
-                    <thead class="bg-slate-200 text-slate-600 text-xs uppercase font-bold">
-                        <tr>
-                            <th class="p-2 w-20">Kode</th>
-                            <th class="p-2">Judul BAB</th>
-                            <th class="p-2 w-16 text-center">JP</th>
-                            <th class="p-2 w-10 text-center"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="bab-preview-tbody" class="divide-y divide-slate-200"></tbody>
-                </table>
-            </div>
-            <div class="flex justify-between items-center">
-                <div class="text-xs text-slate-500">
-                    <span class="font-bold">Total JP BAB:</span> <span id="bab-preview-totaljp">0</span> •
-                    <span class="font-bold">Target JP:</span> <span id="bab-preview-targetjp">0</span>
-                </div>
-                <div class="flex justify-end gap-3">
-                    <button onclick="closeBabPreviewModal()" class="px-5 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold text-sm hover:bg-slate-200">Batal</button>
-                    <button onclick="savePreviewedBabs()" class="px-5 py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700">Simpan BAB ke Database</button>
-                </div>
-            </div>
         </div>
     </div>
 
-<div id="print-area" style="display: none;">
-        <div class="print-page pt-10" style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:95vh;"><h1>BUKU KERJA GURU</h1><h2>BUKU 1 : PERENCANAAN</h2><br><br><div style="border:3px double black; padding:40px; margin:20px 0; width:60%; text-align:center;"><h2>MATA PELAJARAN : <span class="p-mapel"></span></h2><h2>KELAS : <span class="p-kelas"></span></h2><h2>TAHUN : <span class="p-tahun"></span></h2></div><br><br><p>Disusun Oleh:</p><p class="p-guru" style="font-weight:bold; text-decoration:underline; font-size:14pt;"></p><br><br><h2 class="p-sekolah"></h2></div>
-        
-        <div class="page-break pt-10"><h2 style="text-decoration:underline;">LEMBAR PENGESAHAN</h2><br><p style="text-align:justify; line-height:2;">Administrasi mata pelajaran <b><span class="p-mapel"></span></b> Kelas <b><span class="p-kelas"></span></b> Tahun <b><span class="p-tahun"></span></b> telah diperiksa dan disetujui.</p><div class="ttd-wrapper"><div class="ttd-box">Mengetahui,<br>Kepala Madrasah<br><br><br><br><b class="p-kepsek" style="text-decoration:underline;"></b></div><div class="ttd-box ttd-right"><span id="print-tgl-sah">............, ....................</span><br>Guru Mata Pelajaran<br><br><br><br><b class="p-guru" style="text-decoration:underline;"></b></div></div></div>
-        
-        
 
-<div class="page-break doc-separator">
-    <div class="doc-sep-inner">
-        <h2 class="doc-sep-small">Lampiran Dokumen</h2>
-        <h1 class="doc-sep-title">STANDAR KOMPETENSI LULUSAN (SKL)</h1>
-        <div class="doc-sep-meta">
-            <div><b>Mapel:</b> <span class="p-mapel"></span></div>
-            <div><b>Kelas:</b> <span class="p-kelas"></span></div>
-            <div><b>Tahun:</b> <span class="p-tahun"></span></div>
-        </div>
-    </div>
-</div>
-
-<div class="page-break keep-with-next"><h3>STANDAR KOMPETENSI LULUSAN (SKL)</h3>
-    <div id="print-skl" style="white-space:pre-wrap; line-height:1.6;"></div>
-</div>
-
-
-<div class="page-break doc-separator">
-    <div class="doc-sep-inner">
-        <h2 class="doc-sep-small">Lampiran Dokumen</h2>
-        <h1 class="doc-sep-title">LAMPIRAN KURIKULUM</h1>
-        <div class="doc-sep-meta">
-            <div><b>Mapel:</b> <span class="p-mapel"></span></div>
-            <div><b>Kelas:</b> <span class="p-kelas"></span></div>
-            <div><b>Tahun:</b> <span class="p-tahun"></span></div>
-        </div>
-    </div>
-</div>
-
-<div class="page-break keep-with-next"><h3 id="print-kompetensi-title">LAMPIRAN KURIKULUM</h3>
-    <div id="print-kompetensi" style="white-space:pre-wrap; line-height:1.6;"></div>
-</div>
-
-
-<div class="page-break doc-separator">
-    <div class="doc-sep-inner">
-        <h2 class="doc-sep-small">Dokumen</h2>
-        <h1 class="doc-sep-title">PROGRAM TAHUNAN</h1>
-        <div class="doc-sep-meta">
-            <div><b>Mapel:</b> <span class="p-mapel"></span></div>
-            <div><b>Kelas:</b> <span class="p-kelas"></span></div>
-            <div><b>Tahun:</b> <span class="p-tahun"></span></div>
-        </div>
-    </div>
-</div>
-
-<div class="page-break keep-with-next"><h3>PROGRAM TAHUNAN</h3><table class="official-table"><thead><tr><th style="width:10%">KODE</th><th>MATERI POKOK</th><th style="width:10%">JP</th></tr></thead><tbody id="print-tbody-prota"></tbody></table></div>
-        
-        
-<div class="page-break doc-separator">
-    <div class="doc-sep-inner">
-        <h2 class="doc-sep-small">Dokumen</h2>
-        <h1 class="doc-sep-title">PROGRAM SEMESTER</h1>
-        <div class="doc-sep-meta">
-            <div><b>Mapel:</b> <span class="p-mapel"></span></div>
-            <div><b>Kelas:</b> <span class="p-kelas"></span></div>
-            <div><b>Tahun:</b> <span class="p-tahun"></span></div>
-        </div>
-    </div>
-</div>
-
-<div class="page-break landscape-section keep-with-next"><h3>PROGRAM SEMESTER (SMT 1)</h3><div id="print-promes-smt1"></div></div>
-        <div class="page-break landscape-section keep-with-next"><h3>PROGRAM SEMESTER (SMT 2)</h3><div id="print-promes-smt2"></div></div>
-        
-        
-<div class="page-break doc-separator">
-    <div class="doc-sep-inner">
-        <h2 class="doc-sep-small">Dokumen</h2>
-        <h1 class="doc-sep-title">RENCANA PELAKSANAAN PEMBELAJARAN</h1>
-        <div class="doc-sep-meta">
-            <div><b>Mapel:</b> <span class="p-mapel"></span></div>
-            <div><b>Kelas:</b> <span class="p-kelas"></span></div>
-            <div><b>Tahun:</b> <span class="p-tahun"></span></div>
-        </div>
-    </div>
-</div>
-
-<div id="print-container-rpp"></div>
-    </div>
-
-    <script src="supabase.js"></script>
-    <script>
+<script>
         // --- HELPERS ---
         const getEl = (id) => document.getElementById(id);
 
@@ -656,7 +603,7 @@
         
         const MIN_HARI_EFEKTIF_PER_MINGGU = 3; 
         const HARI_NAMES = ['A','S','S','R','K','J','S'];
-        let calendarData=[], protaData=[], promesData=[], calendarWeeksStatus={}; 
+        let calendarData=[], protaData=[], promesData=[], calendarWeeksStatus={}, effectiveWeeksCount=0; 
         let currentMapelId=null, currentSemester='Ganjil', currentTahunLabel=0, totalJPTersedia=0;
         let currentKurikulum='Merdeka';
         let activeRppProtaId=null, currentBridgeContext=null;
@@ -760,7 +707,7 @@
 
             // Update judul Step 3 dan Step 5 agar istilah konsisten
             const step3Title = document.querySelector('#wizard-step-3 h2');
-            if(step3Title) step3Title.innerText = (kur === 'K13') ? 'Step 3: Program Tahunan + K13' : 'Step 3: Program Tahunan + Merdeka';
+            if(step3Title) step3Title.innerText = 'Step 3: Program Tahunan';
 
             const step5Title = document.querySelector('#wizard-step-5 h2');
             if(step5Title) step5Title.innerText = (kur === 'K13') ? 'Step 5: Generator RPP (K13)' : 'Step 5: Generator Modul Ajar (Merdeka)';
@@ -894,7 +841,34 @@
             }); calcStep2Summary();
         }
         function toggleWeek(mIdx,y,w){ const targets=calendarData.filter(d=>d.monthIdx===mIdx&&d.year===y&&d.weekInMonth===w); if(!targets.length)return; const newVal=targets.some(d=>d.status==='Efektif')?'Tidak Efektif':'Efektif'; targets.forEach(d=>d.status=newVal); renderDailyCalendarUI(); }
-        function calcStep2Summary(){ calendarWeeksStatus={}; let total=0, efektif=0; const weeks={}; calendarData.forEach(d=>{ const k=`${d.year}-W${Math.ceil((((new Date(d.date)-new Date(d.year,0,1))/86400000)+new Date(d.year,0,1).getDay()+1)/7)}`; if(!weeks[k]) weeks[k]=0; if(d.status==='Efektif') weeks[k]++; }); Object.values(weeks).forEach(cnt=>{ total++; if(cnt>=MIN_HARI_EFEKTIF_PER_MINGGU) efektif++; }); getEl('sum-total').innerText=total; getEl('sum-libur').innerText=total-efektif; getEl('sum-efektif').innerText=efektif; monthsFull.forEach(m=>{ const mData=calendarData.filter(d=>d.monthIdx===m.idx); if(!mData.length) return; const maxW=Math.max(...mData.map(d=>d.weekInMonth)); for(let w=1; w<=maxW; w++){ const daysInWeek=mData.filter(d=>d.weekInMonth===w); const efCount=daysInWeek.filter(d=>d.status==='Efektif').length; calendarWeeksStatus[`${m.idx+1}-${w}`]=(efCount>=MIN_HARI_EFEKTIF_PER_MINGGU)?'Efektif':'Libur'; } }); }
+        function calcStep2Summary(){
+    // Ringkasan berbasis HARI (bukan minggu), supaya angka masuk akal (±365 per tahun ajaran).
+    const totalDays = calendarData.length;
+    const efektifDays = calendarData.filter(d=>d.status==='Efektif').length;
+    const liburDays = totalDays - efektifDays;
+
+    if(getEl('sum-total')) getEl('sum-total').innerText = totalDays;
+    if(getEl('sum-libur')) getEl('sum-libur').innerText = liburDays;
+    if(getEl('sum-efektif')) getEl('sum-efektif').innerText = efektifDays;
+
+    // Tetap bangun peta status MINGGU untuk Step 4 (Promes) menggunakan aturan minimal hari efektif per minggu.
+    calendarWeeksStatus = {};
+    monthsFull.forEach(m=>{
+        const mData = calendarData.filter(d=>d.monthIdx===m.idx);
+        if(!mData.length) return;
+        const maxW = Math.max(...mData.map(d=>d.weekInMonth));
+        for(let w=1; w<=maxW; w++){
+            const daysInWeek = mData.filter(d=>d.weekInMonth===w);
+            const efCount = daysInWeek.filter(d=>d.status==='Efektif').length;
+            calendarWeeksStatus[`${m.idx+1}-${w}`] = (efCount>=MIN_HARI_EFEKTIF_PER_MINGGU) ? 'Efektif' : 'Libur';
+        }
+    });
+
+    // Hitung total minggu efektif untuk target JP (Step 3) & promes (Step 4)
+    effectiveWeeksCount = Object.values(calendarWeeksStatus).filter(v=>v==='Efektif').length;
+}
+
+
         
         async function saveStep2(loading){
             const btn=getEl('btn-next-step2');
@@ -918,11 +892,22 @@
         async function saveStep3(loading){ return true; } 
 
         async function initStep3Logic(){ 
-            const ef=parseInt(getEl('sum-efektif').innerText)||0; const bb=parseInt(getEl('input-jp-beban').value)||4; totalJPTersedia=ef*bb; 
-            if(getEl('disp-minggu-efektif')) getEl('disp-minggu-efektif').innerText=ef; if(getEl('disp-beban-jp')) getEl('disp-beban-jp').innerText=bb; if(getEl('disp-total-jp')) getEl('disp-total-jp').innerText=totalJPTersedia; 
-            await loadProtaDB(); updateSisaJP(); 
-        }
-        async function loadProtaDB(){ 
+    // Target JP dihitung dari MINGGU efektif (bukan hari efektif)
+    const efWeeks = (typeof effectiveWeeksCount === 'number' && effectiveWeeksCount>0)
+        ? effectiveWeeksCount
+        : Object.values(calendarWeeksStatus||{}).filter(v=>v==='Efektif').length;
+
+    const bb = parseInt(getEl('input-jp-beban').value) || 4; // JP per pekan
+    totalJPTersedia = efWeeks * bb;
+
+    if(getEl('disp-minggu-efektif')) getEl('disp-minggu-efektif').innerText = efWeeks;
+    if(getEl('disp-beban-jp')) getEl('disp-beban-jp').innerText = bb;
+    if(getEl('disp-total-jp')) getEl('disp-total-jp').innerText = totalJPTersedia;
+
+    await loadProtaDB();
+    updateSisaJP();
+}
+async function loadProtaDB(){ 
             protaData=[]; const {data}=await window.db.from('prota').select('*').eq('id_mapel_kelas',currentMapelId).order('kode_materi',{ascending:true}); if(data) protaData=data; 
             protaData.sort((a,b) => a.kode_materi.localeCompare(b.kode_materi, undefined, {numeric: true, sensitivity: 'base'})); renderProtaTable(); 
         }
@@ -977,7 +962,7 @@
         }
         
         async function openAIBridge(type) {
-            currentBridgeContext = type; getEl('bridge-modal').classList.add('active');
+            currentBridgeContext = type;
             let promptText = "";
             if (type === 'subbab') {
                 try{ await ensureBabSaved(); }catch(e){ alert(e.message||e); closeBridgeModal(); return; }
@@ -1017,8 +1002,13 @@ Sangat Penting: Berikan jawaban HANYA dalam format JSON Murni (tanpa markdown) b
                 const kelas = getEl('input-kelas').value || 'Kelas';
                 const kur = getEl('select-kurikulum')?.value || currentKurikulum || 'Kurikulum';
 
-                promptText = `Sebagai guru ${mapel} (${kelas}, ${kur}), pecah SETIAP BAB berikut menjadi SUB-BAB. 
-Setiap sub-bab harus punya: kode, judul, minggu_ke (perkiraan), jp. Total jp sub-bab per BAB harus sama dengan jp BAB.
+                promptText = `Sebagai guru ${mapel} (${kelas}, ${kur}), pecah SETIAP BAB berikut menjadi SUB-BAB (unit belajar yang realistis, bukan remah-remah).
+Aturan wajib:
+- Setiap sub-bab harus punya: kode, judul, jp. (minggu_ke boleh diisi perkiraan, opsional).
+- Total jp sub-bab per BAB HARUS sama dengan jp BAB (tidak boleh lebih/kurang).
+- Granularitas sehat: tiap sub-bab MIN 2 JP dan MAX 6 JP.
+- Jumlah sub-bab per BAB usahakan 2–6. Jika materi sedikit, buat sub-bab lebih "gemuk" (4–6 JP), jangan menambah sub-bab kecil 1 JP.
+- Jika ada sisa kecil (1–4 JP), gabungkan ke sub-bab terdekat (jangan buat sub-bab baru 1 JP).
 
 Daftar BAB (JSON):
 ${JSON.stringify(babs, null, 2)}
@@ -1031,15 +1021,9 @@ Sangat Penting: Jawab HANYA dalam JSON Murni (tanpa markdown) berupa ARRAY denga
     "judul":"Judul BAB 1",
     "alokasi_jp":12,
     "subbab":[
-      {"kode":"1.1","judul":"...","minggu_ke":1,"jp":2},
-      {"kode":"1.2","judul":"...","minggu_ke":2,"jp":4}
+      {"kode":"1.1","judul":"...","jp":2},
+      {"kode":"1.2","judul":"...","jp":4}
     ]
-  },
-  {
-    "bab":"2",
-    "judul":"Judul BAB 2",
-    "alokasi_jp":10,
-    "subbab":[ ... ]
   }
 ]`;
 } else if (type === 'bab') {
@@ -1051,14 +1035,20 @@ Sangat Penting: Jawab HANYA dalam JSON Murni (tanpa markdown) berupa ARRAY denga
                 const targetJP = parseInt(getEl('disp-total-jp')?.innerText || '0') || 0;
 
                 promptText = `Buat daftar BAB (topik besar) untuk ${mapel} (${kelas}, jenjang ${jenjang}) di ${sekolah} dengan kurikulum ${kur}.
-Total alokasi waktu semester ini adalah ${targetJP} JP.
+Semester: ${currentSemester || 'Semester ini'}.
+
+Total alokasi waktu yang TERSEDIA untuk materi semester ini adalah ${targetJP} JP (ini adalah batas keras: jangan melebihi).
 
 Syarat keluaran:
 1) Jawaban HARUS JSON murni (tanpa markdown, tanpa penjelasan).
 2) Format berupa ARRAY objek: [{"kode":"1","judul":"...","jp":12},{"kode":"2","judul":"...","jp":10}]
 3) Kode BAB berupa angka berurutan mulai 1.
-4) Total jp jika dijumlahkan harus mendekati ${targetJP} (boleh selisih max 1 JP jika perlu penyesuaian).
-5) Buat BAB yang wajar untuk 1 semester (misal 6–12 BAB), judul ringkas dan sesuai level siswa.`;
+4) Total jp jika dijumlahkan HARUS = ${targetJP}. (Jika perlu buffer evaluasi, masukkan ke BAB terakhir dengan judul "Evaluasi/Remedial/Projek" dan tetap dihitung dalam total.)
+5) Jumlah BAB fleksibel dan harus wajar untuk 1 semester:
+   - Umumnya 4–10 BAB.
+   - Jika mapel memang lazim hanya 4 BAB per tahun, maka untuk 1 semester boleh 2–4 BAB besar saja.
+6) Hindari BAB terlalu kecil: usahakan tiap BAB minimal 6 JP. Jika ada sisa kecil (1–4 JP), gabungkan ke BAB terdekat atau buat 1 BAB "Penguatan & Evaluasi".
+7) Judul ringkas, esensial, sesuai level siswa. Jangan membuat BAB terlalu remah.`;
 
 } else if (type === 'kurikulum_bundle') {
                 const sekolah = getEl('input-sekolah').value || 'Sekolah';
@@ -1259,9 +1249,61 @@ Jangan sertakan teks apa pun di luar JSON.`;
             }
 
             getEl('prompt-area').value = promptText; getEl('ai-response-area').value = "";
+            showInlineGenerator(type);
         }
 
-        // AUTO-COPY FUNCTION
+        
+        // INLINE GENERATOR (no modal)
+        function resolveAISlot(type){
+            // Step mapping by context
+            if(type === 'bab' || type === 'subbab' || type === 'subbab_all') return getEl('ai-slot-step3');
+            if(type === 'rpp_all' || type === 'rpp_full') return getEl('ai-slot-step5');
+            if(type === 'kurikulum_bundle') return getEl('ai-slot-step6');
+            // fallback: current visible step
+            return document.querySelector('.wizard-container > div:not(.hidden-section)') || getEl('ai-slot-step3');
+        }
+
+        function showInlineGenerator(type){
+            const panel = getEl('ai-inline-panel');
+            if(!panel) return;
+
+            const slot = resolveAISlot(type);
+            if(slot && panel.parentElement !== slot){
+                slot.appendChild(panel);
+            }
+
+            // reset UI
+            getEl('ai-inline-status')?.classList.add('hidden-section');
+            getEl('ai-inline-bab-preview')?.classList.add('hidden-section');
+            getEl('ai-inline-subbab-preview')?.classList.add('hidden-section');
+            getEl('ai-inline-bridge')?.classList.remove('hidden-section');
+
+            panel.classList.remove('hidden-section');
+
+            // focus response area for faster flow
+            setTimeout(()=>{ try{ getEl('ai-response-area')?.focus(); }catch(e){} }, 30);
+        }
+
+        function showInlineStatus(msg){
+            const el = getEl('ai-inline-status');
+            if(!el) return;
+            el.innerText = msg;
+            el.classList.remove('hidden-section');
+        }
+
+        function showInlineBabPreview(){
+            getEl('ai-inline-bab-preview')?.classList.remove('hidden-section');
+            // keep bridge visible; just scroll a bit
+            setTimeout(()=>{ try{ getEl('ai-inline-bab-preview')?.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){} }, 50);
+        }
+
+        function showInlineSubbabPreview(){
+            getEl('ai-inline-subbab-preview')?.classList.remove('hidden-section');
+            setTimeout(()=>{ try{ getEl('ai-inline-subbab-preview')?.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){} }, 50);
+        }
+
+
+// AUTO-COPY FUNCTION
         function autoCopyAndOpen(url) {
             const promptText = getEl('prompt-area').value;
             if (promptText) {
@@ -1312,9 +1354,8 @@ Jangan sertakan teks apa pun di luar JSON.`;
 
 
         // --- SUBBAB PREVIEW MODAL HELPERS ---
-        function closePreviewModal(){
-            getEl('preview-subbab-modal')?.classList.remove('active');
-            pendingSubbabMode = 'single';
+        function closePreviewModal() {
+            getEl('ai-inline-subbab-preview')?.classList.add('hidden-section');
         }
 
         function renderSubbabPreview(){
@@ -1367,8 +1408,8 @@ if(pendingSubbabMode === 'all'){
         }
 
         
-        function closeBabPreviewModal(){
-            getEl('preview-bab-modal')?.classList.remove('active');
+        function closeBabPreviewModal() {
+            getEl('ai-inline-bab-preview')?.classList.add('hidden-section');
         }
 
         function addBabRow(){
@@ -1497,16 +1538,18 @@ if(pendingSubbabMode === 'all'){
 
                 closeBabPreviewModal();
                 await loadProtaDB();
-
-                // auto pilih bab pertama biar user tinggal generate sub-bab
+                // Auto-select BAB pertama (opsional). Jika input manual sudah dihapus, bagian ini akan dilewati.
                 const first = rows.sort((a,b)=>String(a.kode_materi).localeCompare(String(b.kode_materi), undefined, {numeric:true}))[0];
                 if(first){
-                    getEl('input-kd-code').value = first.kode_materi;
-                    getEl('input-kd-text').value = first.topik_materi;
-                    getEl('input-kd-jp').value = first.alokasi_jp;
+                    const elCode = getEl('input-kd-code');
+                    const elText = getEl('input-kd-text');
+                    const elJp   = getEl('input-kd-jp');
+                    if(elCode) elCode.value = first.kode_materi;
+                    if(elText) elText.value = first.topik_materi;
+                    if(elJp)   elJp.value   = first.alokasi_jp;
                 }
 
-                alert('✅ BAB berhasil disimpan. Selanjutnya pilih BAB lalu Generate Sub-Bab.');
+                alert('✅ BAB berhasil disimpan. Selanjutnya Generate Semua Sub-BAB.');
             }catch(err){
                 console.error(err);
                 alert('❌ Gagal menyimpan BAB: ' + (err?.message || err));
@@ -1643,8 +1686,8 @@ async function processAIResponse() {
 
                     if (!pendingBabData.length) throw new Error("Data BAB kosong / tidak valid.");
                     renderBabPreview();
-                    closeBridgeModal();
-                    getEl('preview-bab-modal')?.classList.add('active');
+                    showInlineBabPreview();
+                    showInlineStatus('✅ BAB siap dikonfirmasi. Edit jika perlu, lalu simpan.');
                     return;
                 }
 
@@ -1676,8 +1719,8 @@ async function processAIResponse() {
                     pendingSubbabData = flat;
 
                     renderSubbabPreview();
-                    closeBridgeModal();
-                    getEl('preview-subbab-modal')?.classList.add('active');
+                    showInlineSubbabPreview();
+                    showInlineStatus('✅ SUB-BAB siap dikonfirmasi. Edit jika perlu, lalu simpan.');
                     return;
                 }
 
@@ -1693,8 +1736,8 @@ async function processAIResponse() {
                         minggu_ke: (item?.minggu_ke ?? null)
                     }));
                     renderSubbabPreview();
-                    closeBridgeModal();
-                    getEl('preview-subbab-modal')?.classList.add('active');
+                    showInlineSubbabPreview();
+                    showInlineStatus('✅ SUB-BAB siap dikonfirmasi. Edit jika perlu, lalu simpan.');
                     return;
                 }
 
@@ -1702,14 +1745,15 @@ async function processAIResponse() {
                 if (ctx === 'kurikulum_bundle') {
                     try {
                         showKurikulumHumanEditor(json);
-                        closeBridgeModal();
-                        alert("✅ Hasil generator lampiran kurikulum sudah masuk. Silakan edit lewat tabel, lalu klik 'Simpan & Cetak'.");
+                        showInlineStatus("✅ Lampiran kurikulum sudah masuk. Silakan edit lewat tabel, lalu klik 'Simpan & Cetak'.");
+                        // boleh tutup panel jika sudah selesai
+                        // closeBridgeModal();
                     } catch (e) {
                         console.warn(e);
                         const editor = getEl('kurikulum-json-editor');
                         if (editor) { editor.value = JSON.stringify(json, null, 2); editor.disabled = false; }
-                        closeBridgeModal();
-                        alert("✅ Hasil generator masuk. Jika editor tabel gagal, coba generate ulang atau cek format data.");
+                        showInlineStatus("✅ Hasil generator masuk. Jika editor tabel gagal, coba generate ulang atau cek format data.");
+                        // closeBridgeModal();
                     }
                     return;
                 }
@@ -1742,6 +1786,7 @@ async function processAIResponse() {
                     const { error } = await window.db.from('rpp').upsert(payload, { onConflict: 'id_prota' });
                     if (error) throw error;
 
+                    showInlineStatus('✅ RPP tersimpan.');
                     closeBridgeModal();
                     if (skipped.length) {
                         alert(`✅ RPP tersimpan (${payload.length} item). ⚠️ Ada kode tidak ditemukan di Prota: ${skipped.slice(0, 8).join(', ')}${skipped.length > 8 ? '...' : ''}`);
@@ -2035,7 +2080,15 @@ async function applyKurikulumBundle(bundle){
 	}
 
 
-function closeBridgeModal() { getEl('bridge-modal').classList.remove('active'); }
+function closeBridgeModal() {
+            // hide inline panel (and reset state)
+            const panel = getEl('ai-inline-panel');
+            if(panel) panel.classList.add('hidden-section');
+            try{ getEl('ai-response-area').value = ''; }catch(e){}
+            getEl('ai-inline-status')?.classList.add('hidden-section');
+            getEl('ai-inline-bab-preview')?.classList.add('hidden-section');
+            getEl('ai-inline-subbab-preview')?.classList.add('hidden-section');
+        }
         function clearProtaInputs() { getEl('input-kd-code').value=''; getEl('input-kd-text').value=''; getEl('input-kd-jp').value=''; }
         function renderProtaTable() {
   const tb = getEl('prota-list-body');
@@ -2073,7 +2126,7 @@ function closeBridgeModal() { getEl('bridge-modal').classList.remove('active'); 
             <div class="flex items-center gap-2 shrink-0">
               <span class="text-slate-500">${meta.alokasi_jp ? (meta.alokasi_jp + ' JP') : ''}</span>
               <button onclick="pickBab('${pref}')" class="px-2 py-1 bg-white border rounded-lg text-[10px] font-bold text-slate-700 hover:bg-slate-50">Pilih</button>
-              <!-- per-BAB generate sub-bab dihapus: gunakan "Generate Sub-Bab Semua BAB" di atas -->
+              <!-- per-BAB generate sub-bab dihapus: gunakan "Generate Semua Sub-BAB" di atas -->
             </div>
           </div>
         </td>
@@ -2085,7 +2138,7 @@ function closeBridgeModal() { getEl('bridge-modal').classList.remove('active'); 
       tb.innerHTML += `
         <tr>
           <td colspan="4" class="p-3 text-xs text-slate-500 border-b">
-            Belum ada sub-bab untuk BAB ${pref}. Klik <span class="font-bold">Generate Sub-Bab Semua BAB</span> di atas untuk membuatnya.
+            Belum ada sub-bab untuk BAB ${pref}. Klik <span class="font-bold">Generate Semua Sub-BAB</span> di atas untuk membuatnya.
           </td>
         </tr>
       `;
@@ -2122,27 +2175,84 @@ groups[pref].sort((a,b)=>String(a.kode_materi).localeCompare(String(b.kode_mater
         
         function autoDistributePromes() {
             const bebanJP = parseInt(getEl('input-jp-beban').value) || 4;
-            let currentWeekIndex = 0; let allWeeks = [];
-            monthsFull.forEach(m => { 
-                const mData = calendarData.filter(d => d.monthIdx === m.idx); 
-                const maxW = mData.length ? Math.max(...mData.map(d => d.weekInMonth)) : 0; 
-                for(let w=1; w<=maxW; w++) { 
-                    const status = calendarWeeksStatus[`${m.idx+1}-${w}`] || 'Libur'; 
-                    allWeeks.push({ month: m.idx+1, week: w, status: status }); 
-                } 
+
+            // Build all weeks (always 6 slots per month) based on user calendar status only
+            let currentWeekIndex = 0;
+            let allWeeks = [];
+            monthsFull.forEach(m => {
+                for(let w=1; w<=6; w++){
+                    const status = calendarWeeksStatus[`${m.idx+1}-${w}`] || 'Libur';
+                    allWeeks.push({ month: m.idx+1, week: w, status });
+                }
             });
-            promesData = []; 
-            (protaData || []).filter(p => String(p.kode_materi || '').includes('.')).forEach(p => { 
-                let sisaJP = p.alokasi_jp; 
-                while(sisaJP > 0 && currentWeekIndex < allWeeks.length) { 
-                    const week = allWeeks[currentWeekIndex]; 
-                    if(week.status === 'Efektif') { 
-                        const allocate = Math.min(sisaJP, bebanJP); 
-                        promesData.push({ id_prota: p.id, bulan: week.month, minggu_ke: week.week, jp_minggu: allocate }); 
-                        sisaJP -= allocate; currentWeekIndex++; 
-                    } else { currentWeekIndex++; } 
-                } 
+
+            const subbabRows = (protaData || []).filter(p => String(p.kode_materi || '').includes('.'));
+            const totalNeed = subbabRows.reduce((a,p)=>a+(parseInt(p.alokasi_jp)||0),0);
+            const totalCap  = allWeeks.filter(w=>w.status==='Efektif').length * bebanJP;
+
+            promesData = [];
+
+            // Packing allocator: satu minggu efektif bisa diisi beberapa sub-bab sampai bebanJP terpenuhi.
+            let weekIndex = 0;
+            let currentWeek = null;
+            let remainingCap = 0;
+
+            function moveToNextEffectiveWeek(){
+                while(weekIndex < allWeeks.length){
+                    const w = allWeeks[weekIndex];
+                    if(w.status === 'Efektif'){
+                        currentWeek = w;
+                        remainingCap = bebanJP;
+                        return true;
+                    }
+                    weekIndex++;
+                }
+                currentWeek = null;
+                remainingCap = 0;
+                return false;
+            }
+
+            // mulai dari minggu efektif pertama
+            moveToNextEffectiveWeek();
+
+            subbabRows.forEach(p => {
+                let sisaJP = parseInt(p.alokasi_jp) || 0;
+
+                while(sisaJP > 0){
+                    if(!currentWeek){
+                        if(!moveToNextEffectiveWeek()) break; // sudah mentok akhir tahun
+                    }
+
+                    const allocate = Math.min(sisaJP, remainingCap);
+                    if(allocate > 0){
+                        promesData.push({
+                            id_prota: p.id,
+                            bulan: currentWeek.month,
+                            minggu_ke: currentWeek.week,
+                            jp_minggu: allocate
+                        });
+                        sisaJP -= allocate;
+                        remainingCap -= allocate;
+                    }
+
+                    // kalau minggu sudah penuh, lanjut ke minggu berikutnya
+                    if(remainingCap <= 0){
+                        weekIndex++;
+                        currentWeek = null;
+                        remainingCap = 0;
+                    }
+                }
+
+                if(sisaJP > 0){
+                    console.warn('Promes: JP belum teralokasi untuk', p.kode_materi, 'sisa', sisaJP, 'weekIndex', weekIndex, 'allWeeks', allWeeks.length);
+                }
             });
+
+if(totalCap >= totalNeed){
+                console.info('Promes: kapasitas minggu efektif cukup (cap=', totalCap, ', need=', totalNeed, '). Jika masih ada yang merah, biasanya ada minggu efektif yang belum diset menjadi Efektif.');
+            } else {
+                console.info('Promes: kapasitas minggu efektif TIDAK cukup (cap=', totalCap, ', need=', totalNeed, '). Tambah minggu Efektif atau turunkan beban JP/minggu.');
+            }
         }
 
 
