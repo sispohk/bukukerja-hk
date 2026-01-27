@@ -8,7 +8,8 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script src="./supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
         /* UI GLOBAL */
@@ -176,7 +177,8 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kelas</label>
                         <input type="text" id="input-kelas" class="w-full p-3 border rounded-xl" placeholder="X / XI / XII" required>
@@ -185,26 +187,32 @@
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">JP / Minggu</label>
                         <input type="number" id="input-jp-beban" class="w-full p-3 border rounded-xl text-center font-bold text-violet-600" value="4" required>
                     </div>
-                    <div>
+                </div>
+
+                <div class="mt-2">
+                    <button type="button" id="btn-step1-advanced-toggle" aria-expanded="false" aria-controls="step1-advanced"
+                        class="w-full md:w-auto px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center gap-2 transition active:scale-95">
+                        <span>⚙️</span><span id="lbl-step1-advanced-toggle">Tampilkan opsi lanjutan</span>
+                    </button>
+                </div>
+
+                <div id="step1-advanced" class="hidden-section mt-3">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tgl Pengesahan</label>
                         <input type="date" id="input-tgl-sah" class="w-full p-3 border rounded-xl text-center font-medium bg-white">
                     </div>
-
-                
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
+                        <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kepala Madrasah / Sekolah</label>
                         <input type="text" id="input-kepsek" class="w-full p-3 border rounded-xl" placeholder="Nama & Gelar">
                     </div>
-                    <div>
+                        <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Guru Mata Pelajaran</label>
                         <input type="text" id="input-guru" class="w-full p-3 border rounded-xl" placeholder="Nama & Gelar">
                     </div>
+                    </div>
                 </div>
-
-                <button type="submit" class="w-full bg-violet-600 text-white p-4 rounded-xl font-bold hover:bg-violet-700 mt-6 shadow-lg transition transform active:scale-95">Simpan & Lanjut ➜</button>
+<button type="submit" class="w-full bg-violet-600 text-white p-4 rounded-xl font-bold hover:bg-violet-700 mt-6 shadow-lg transition transform active:scale-95">Simpan & Lanjut ➜</button>
             </form>
         </div>
 
@@ -372,7 +380,55 @@
         </div>
 
         <div id="wizard-step-6" class="hidden-section bg-white p-10 rounded-2xl shadow-xl border border-slate-100 max-w-4xl mx-auto text-center">
+            <div class="flex justify-between items-center mb-6 border-b pb-4"><h2 class="text-xl font-bold text-slate-800">Step 6: Lampiran</h2></div>
             <h2 class="text-3xl font-bold text-slate-800 mb-6">Dokumen Siap!</h2>
+
+
+<div id="review-panel" class="bg-white p-6 rounded-2xl border border-slate-200 text-left mb-8 shadow-sm">
+  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
+    <div>
+      <h3 class="text-sm font-extrabold text-slate-800">Review</h3>
+      <p class="text-xs text-slate-500 mt-1">Ringkasan cepat sebelum cetak.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="p-3 rounded-xl bg-slate-50 border">
+      <div class="text-[10px] uppercase text-slate-400 font-bold">Mapel</div>
+      <div id="rev-mapel" class="font-extrabold text-slate-800 mt-1">—</div>
+    </div>
+    <div class="p-3 rounded-xl bg-slate-50 border">
+      <div class="text-[10px] uppercase text-slate-400 font-bold">Kelas</div>
+      <div id="rev-kelas" class="font-extrabold text-slate-800 mt-1">—</div>
+    </div>
+    <div class="p-3 rounded-xl bg-slate-50 border">
+      <div class="text-[10px] uppercase text-slate-400 font-bold">JP/Minggu</div>
+      <div id="rev-jp" class="font-extrabold text-slate-800 mt-1">—</div>
+    </div>
+    <div class="p-3 rounded-xl bg-slate-50 border">
+      <div class="text-[10px] uppercase text-slate-400 font-bold">Kurikulum</div>
+      <div id="rev-kurikulum" class="font-extrabold text-slate-800 mt-1">—</div>
+    </div>
+
+    <div class="p-3 rounded-xl bg-slate-50 border">
+      <div class="text-[10px] uppercase text-slate-400 font-bold">Jumlah BAB</div>
+      <div id="rev-bab" class="font-extrabold text-slate-800 mt-1">0</div>
+    </div>
+    <div class="p-3 rounded-xl bg-slate-50 border">
+      <div class="text-[10px] uppercase text-slate-400 font-bold">Jumlah Sub-BAB</div>
+      <div id="rev-subbab" class="font-extrabold text-slate-800 mt-1">0</div>
+    </div>
+    <div class="p-3 rounded-xl bg-slate-50 border">
+      <div class="text-[10px] uppercase text-slate-400 font-bold">Promes</div>
+      <div id="rev-promes" class="font-extrabold text-slate-800 mt-1">0 baris</div>
+    </div>
+    <div class="p-3 rounded-xl bg-slate-50 border">
+      <div class="text-[10px] uppercase text-slate-400 font-bold">RPP</div>
+      <div id="rev-rpp" class="font-extrabold text-slate-800 mt-1">—</div>
+    </div>
+  </div>
+</div>
+
 
 
 <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 text-left mb-8 shadow-sm">
@@ -381,7 +437,11 @@
             <h3 class="text-sm font-extrabold text-slate-800">Lampiran Kurikulum (SKL + Kurikulum)</h3>
             <p class="text-xs text-slate-500 mt-1">Aturan: <b>generator-only</b>. Setelah hasil muncul, kamu boleh edit hasilnya lewat tabel (lebih mudah).</p>
         </div>
-        <div class="hidden-section" id="kurikulum-actions-top"></div>
+        <div class="flex flex-wrap gap-2 md:justify-end">
+          <button onclick="openAIBridge('kurikulum_bundle')" class="btn-secondary w-full md:w-auto px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center gap-2">
+            <span>🤖</span> Generate Lampiran
+          </button>
+        </div>
     </div>
 
     <div id="kurikulum-progress" class="hidden-section mt-3 mb-4">
@@ -406,19 +466,14 @@
 <div id="ai-slot-step6" class="mt-4"></div>
 
 
-<div class="sticky-actions mt-4 flex flex-col md:flex-row gap-2 md:justify-end">
-      <button onclick="openAIBridge('kurikulum_bundle')" class="btn-secondary w-full md:w-auto px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center gap-2">
-        <span>🤖</span> Generate Lampiran
-      </button>
-      <button onclick="saveLampiranAndPrint()" class="btn-primary w-full md:w-auto px-4 py-2 rounded-xl text-sm font-extrabold bg-emerald-600 text-white hover:bg-emerald-700 shadow-md flex items-center justify-center gap-2">
-        <span>🖨️</span> Simpan & Cetak
-      </button>
-    </div>
 </div>
 
 <button onclick="printFullDocument()" id="btn-print-only" class="hidden-section bg-violet-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-violet-700 shadow-xl flex items-center justify-center gap-3 mx-auto transition transform hover:-translate-y-1"><span>🖨️</span> Download PDF (Tanpa Simpan)</button>
 
-            <div class="mt-8 pt-6 border-t"><button onclick="goBackToStep5()" class="text-slate-400 hover:text-violet-600 text-sm font-semibold transition">Kembali Edit RPP</button></div>
+            <div class="mt-8 pt-4 border-t flex justify-between sticky-actions">
+              <button onclick="goBackToStep5()" class="text-slate-500 font-bold text-sm hover:text-slate-800">← Kembali</button>
+              <button onclick="saveLampiranAndPrint()" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 shadow-md flex items-center justify-center gap-2"><span>🖨️</span> Simpan & Cetak</button>
+            </div>
         </div>
     </div>
 
@@ -558,6 +613,26 @@
         // --- HELPERS ---
         const getEl = (id) => document.getElementById(id);
 
+        // UI helpers (progressive disclosure)
+        function toggleSection(sectionId, buttonId, labelId, openLabel='Sembunyikan opsi lanjutan', closedLabel='Tampilkan opsi lanjutan'){
+            const section = getEl(sectionId);
+            const btn = getEl(buttonId);
+            const lbl = labelId ? getEl(labelId) : null;
+            if(!section || !btn) return;
+
+            const isHidden = section.classList.contains('hidden-section');
+            if(isHidden){
+                section.classList.remove('hidden-section');
+                btn.setAttribute('aria-expanded','true');
+                if(lbl) lbl.textContent = openLabel;
+            }else{
+                section.classList.add('hidden-section');
+                btn.setAttribute('aria-expanded','false');
+                if(lbl) lbl.textContent = closedLabel;
+            }
+        }
+
+
         // Busy overlay helpers (block all interactions during DB operations)
         function setBusy(on, {title='Memproses...', desc='Mohon tunggu, sedang mengirim data ke database.'}={}){
             const ov = getEl('busy-overlay');
@@ -606,7 +681,7 @@
         let calendarData=[], protaData=[], promesData=[], calendarWeeksStatus={}, effectiveWeeksCount=0; 
         let currentMapelId=null, currentSemester='Ganjil', currentTahunLabel=0, totalJPTersedia=0;
         let currentKurikulum='Merdeka';
-        let activeRppProtaId=null, currentBridgeContext=null;
+        let activeRppProtaId=null, rppDraftCount=null, currentBridgeContext=null;
         let selectedRppBabPrefix = null;
         let pendingSubbabData = [];
         let pendingSubbabMode = 'single';
@@ -753,10 +828,27 @@
         els.logout.addEventListener('click', async()=>{await window.db.auth.signOut(); showLogin();});
 
         // --- NAVIGATION ---
-        async function goStep3(){ await saveStep2(true); hideAllSteps(); els.step3.classList.remove('hidden-section'); await initStep3Logic(); }
-        async function goStep4(){ await saveStep3(false); hideAllSteps(); els.step4.classList.remove('hidden-section'); await initStep4Logic(); }
-        async function goStep5(){ await saveStep4(true); hideAllSteps(); els.step5.classList.remove('hidden-section'); await initStep5Logic(); }
-        async function goStep6(){ hideAllSteps(); els.step6.classList.remove('hidden-section'); }
+        function goStep1(){
+            hideAllSteps();
+            els.step1.classList.remove('hidden-section');
+            window.scrollTo({top:0, behavior:'smooth'});
+        }
+        async function goStep2(){
+            hideAllSteps();
+            els.step2.classList.remove('hidden-section');
+            try{
+                await loadCalendarFromDB() || populateCalendarData();
+            }catch(e){
+                console.warn(e);
+                populateCalendarData();
+            }
+            renderDailyCalendarUI();
+            window.scrollTo({top:0, behavior:'smooth'});
+        }
+        async function goStep3(){ await saveStep2(true); hideAllSteps(); els.step3.classList.remove('hidden-section'); await initStep3Logic(); window.scrollTo({top:0, behavior:'smooth'}); }
+        async function goStep4(){ await saveStep3(false); hideAllSteps(); els.step4.classList.remove('hidden-section'); await initStep4Logic(); window.scrollTo({top:0, behavior:'smooth'}); }
+        async function goStep5(){ await saveStep4(true); hideAllSteps(); els.step5.classList.remove('hidden-section'); await initStep5Logic(); window.scrollTo({top:0, behavior:'smooth'}); }
+        async function goStep6(){ hideAllSteps(); els.step6.classList.remove('hidden-section'); await refreshRppDraftCount(); updateReviewPanel(); window.scrollTo({top:0, behavior:'smooth'}); }
 
         async function saveAndGoStep6(){
             // Simpan draft RPP aktif (kalau ada), lalu lanjut Step 6
@@ -778,7 +870,87 @@
 
         // --- STEP 1 ---
         getEl('setup-form').addEventListener('submit', async(e)=>{e.preventDefault(); await saveStep1();});
+        getEl('btn-step1-advanced-toggle')?.addEventListener('click', ()=>toggleSection('step1-advanced','btn-step1-advanced-toggle','lbl-step1-advanced-toggle'));
+
+        function updateReviewPanel(){
+            try{
+                const mapel = getEl('input-mapel')?.value || '—';
+                const kelas = getEl('input-kelas')?.value || '—';
+                const jp = getEl('input-jp-beban')?.value || '—';
+                const kur = getEl('select-kurikulum')?.value || '—';
+
+                const babCount = (protaData || []).filter(r => r && r.kode_materi && !String(r.kode_materi).includes('.')).length;
+                const subbabCount = (protaData || []).filter(r => r && r.kode_materi && String(r.kode_materi).includes('.')).length;
+                const promesCount = (promesData || []).length;
+
+                let rppLabel = '—';
+
+                // RPP: tampilkan jumlah draft yang tersimpan (bukan hanya yang sedang dibuka)
+                if(typeof rppDraftCount === 'number'){
+                    rppLabel = (rppDraftCount > 0) ? (rppDraftCount + ' draft') : '—';
+                }else{
+                    rppLabel = (activeRppProtaId ? 'Ada draft (terakhir diedit)' : '—');
+                }
+
+                getEl('rev-mapel') && (getEl('rev-mapel').textContent = mapel);
+                getEl('rev-kelas') && (getEl('rev-kelas').textContent = kelas);
+                getEl('rev-jp') && (getEl('rev-jp').textContent = jp);
+                getEl('rev-kurikulum') && (getEl('rev-kurikulum').textContent = kur);
+                getEl('rev-bab') && (getEl('rev-bab').textContent = String(babCount));
+                getEl('rev-subbab') && (getEl('rev-subbab').textContent = String(subbabCount));
+                getEl('rev-promes') && (getEl('rev-promes').textContent = String(promesCount) + ' baris');
+                getEl('rev-rpp') && (getEl('rev-rpp').textContent = rppLabel);
+            }catch(e){
+                console.warn('updateReviewPanel failed', e);
+            }
+        }
+
         
+        // Hitung jumlah draft RPP yang tersimpan untuk semua Sub-BAB (agar panel Review tidak menampilkan "—" padahal sudah ada data)
+        async function refreshRppDraftCount(){
+            try{
+                rppDraftCount = null;
+                if(!currentMapelId) return;
+
+                const subIds = (protaData || [])
+                    .filter(p => p && p.id && String(p.kode_materi || '').includes('.'))
+                    .map(p => p.id);
+
+                if(!subIds.length){
+                    rppDraftCount = 0;
+                    return;
+                }
+
+                // Coba cara hemat bandwidth (head + count) jika didukung
+                try{
+                    const {count, error} = await window.db
+                        .from('rpp')
+                        .select('id_prota', { count: 'exact', head: true })
+                        .in('id_prota', subIds);
+
+                    if(error) throw error;
+                    if(typeof count === 'number'){
+                        rppDraftCount = count;
+                        return;
+                    }
+                }catch(_e){
+                    // fallback ke select biasa
+                }
+
+                const {data, error} = await window.db
+                    .from('rpp')
+                    .select('id_prota')
+                    .in('id_prota', subIds);
+
+                if(error) throw error;
+                rppDraftCount = (data || []).length;
+            }catch(e){
+                console.warn('refreshRppDraftCount failed', e);
+                rppDraftCount = null;
+            }
+        }
+
+
         async function loadTahunAjaran(){
             let {data}=await window.db.from('tahun_ajaran').select('*').eq('is_active',true); 
             els.selTahun.innerHTML = '<option value="2024/2025" data-tahun="2024" data-semester="Ganjil">2024/2025</option><option value="2025/2026" data-tahun="2025" data-semester="Ganjil">2025/2026</option><option value="2026/2027" data-tahun="2026" data-semester="Ganjil">2026/2027</option>';
@@ -795,14 +967,41 @@
 
             const payload={user_id:user.id, id_tahun_ajaran:els.selTahun.value, nama_mapel:getEl('input-mapel').value, kelas:getEl('input-kelas').value, beban_jp_minggu:parseInt(getEl('input-jp-beban').value), jenis_kurikulum:(getEl('select-kurikulum')?.value || 'Merdeka')};
             currentKurikulum = payload.jenis_kurikulum; applyKurikulumUI(); 
-            
-            const {data,error}=await window.db.from('mapel_kelas').insert([payload]).select(); 
-            if(!error){ 
-                currentMapelId=data[0].id; 
-                // REMOVED LOCALSTORAGE SAVE
-                if(!els.step2.classList.contains('hidden-section')) return; else {hideAllSteps(); els.step2.classList.remove('hidden-section'); await loadCalendarFromDB() || populateCalendarData(); renderDailyCalendarUI();} 
-            } else {
-                alert("Gagal simpan identitas: " + error.message);
+
+            // Reuse konteks mapel_kelas jika identitas inti tidak berubah.
+            // Tujuannya: data Step 3-6 (Prota/Promes/RPP/Lampiran) tetap muncul karena id_mapel_kelas tidak berganti.
+            // (Tidak mengubah skema DB; hanya menghindari insert baru yang bikin data terlihat "hilang".)
+            try{
+                const { data: existRows, error: selErr } = await window.db
+                    .from('mapel_kelas')
+                    .select('id, beban_jp_minggu')
+                    .eq('user_id', user.id)
+                    .eq('id_tahun_ajaran', payload.id_tahun_ajaran)
+                    .eq('nama_mapel', payload.nama_mapel)
+                    .eq('kelas', payload.kelas)
+                    .eq('jenis_kurikulum', payload.jenis_kurikulum)
+                    .limit(1);
+                if(selErr) throw selErr;
+
+                if(existRows && existRows.length){
+                    currentMapelId = existRows[0].id;
+                    // Update beban_jp_minggu jika berubah (aman; tidak mengganti konteks ID)
+                    if(parseInt(existRows[0].beban_jp_minggu) !== parseInt(payload.beban_jp_minggu)){
+                        await window.db.from('mapel_kelas').update({beban_jp_minggu: payload.beban_jp_minggu}).eq('id', currentMapelId);
+                    }
+                } else {
+                    const {data, error} = await window.db.from('mapel_kelas').insert([payload]).select();
+                    if(error) throw error;
+                    currentMapelId = data[0].id;
+                }
+
+                if(!els.step2.classList.contains('hidden-section')) return;
+                hideAllSteps();
+                els.step2.classList.remove('hidden-section');
+                await loadCalendarFromDB() || populateCalendarData();
+                renderDailyCalendarUI();
+            }catch(e){
+                alert("Gagal simpan identitas: " + (e?.message || e));
             }
         }
 
@@ -1284,6 +1483,14 @@ Jangan sertakan teks apa pun di luar JSON.`;
             setTimeout(()=>{ try{ getEl('ai-response-area')?.focus(); }catch(e){} }, 30);
         }
 
+        // Hide/show only the "menu generate" (bridge) without closing the whole panel
+        function hideInlineBridge(){
+            getEl('ai-inline-bridge')?.classList.add('hidden-section');
+        }
+        function showInlineBridge(){
+            getEl('ai-inline-bridge')?.classList.remove('hidden-section');
+        }
+
         function showInlineStatus(msg){
             const el = getEl('ai-inline-status');
             if(!el) return;
@@ -1661,6 +1868,10 @@ async function processAIResponse() {
             const raw = getEl('ai-response-area')?.value;
             if (!raw) return alert("Paste dulu jawaban AI-nya!");
 
+            // Sesuai permintaan: begitu tombol "Proses Jawaban" diklik, menu generate langsung ditutup.
+            // Yang ditutup adalah area bridge (copy/paste), bukan panel preview-nya.
+            hideInlineBridge();
+
             try {
                 const jsonStr = extractJSON(raw);
                 let json;
@@ -1670,6 +1881,8 @@ async function processAIResponse() {
                     console.error("JSON parse gagal:", parseErr);
                     console.error("Potongan JSON (awal 800 char):", (jsonStr || '').slice(0, 800));
                     alert("⚠️ Jawaban AI bukan JSON valid. Pastikan output berupa JSON murni (pakai tanda kutip ganda, tanpa koma trailing, dan tidak ada teks lain di dalam blok). Detail: " + (parseErr?.message || parseErr));
+                    // jika gagal, tampilkan lagi menu generate agar user bisa memperbaiki paste
+                    showInlineBridge();
                     return;
                 }
 
@@ -1802,10 +2015,13 @@ async function processAIResponse() {
                 }
 
                 alert("Konteks AI tidak dikenali: " + ctx);
+                showInlineBridge();
 
             } catch (err) {
                 console.warn(err);
                 alert("Gagal memproses jawaban AI: " + (err?.message || err));
+                // Jika gagal, buka lagi menu generate supaya user bisa memperbaiki paste/format.
+                showInlineBridge();
             }
         }
 
@@ -3002,5 +3218,53 @@ try{
 }
         }
     </script>
+
+<!-- Hidden print template (required by printFullDocument) -->
+<div id="print-area" style="display:none">
+  <div class="page-break pt-10">
+    <h2 style="text-align:center; margin-bottom:10px;">BUKU KERJA GURU</h2>
+    <table style="width:100%; border:none; margin-bottom:14px;">
+      <tr><td style="width:22%; border:none; font-weight:bold;">Satuan Pendidikan</td><td style="border:none;">: <span class="p-sekolah"></span></td></tr>
+      <tr><td style="border:none; font-weight:bold;">Mata Pelajaran</td><td style="border:none;">: <span class="p-mapel"></span></td></tr>
+      <tr><td style="border:none; font-weight:bold;">Kelas</td><td style="border:none;">: <span class="p-kelas"></span></td></tr>
+      <tr><td style="border:none; font-weight:bold;">Tahun Ajaran</td><td style="border:none;">: <span class="p-tahun"></span></td></tr>
+      <tr><td style="border:none; font-weight:bold;">Guru</td><td style="border:none;">: <span class="p-guru"></span></td></tr>
+    </table>
+  </div>
+
+  <div class="page-break pt-10">
+    <h3 style="text-align:center; margin-bottom:14px; text-decoration:underline;">PROGRAM TAHUNAN (PROTA)</h3>
+    <table class="official-table">
+      <thead>
+        <tr><th style="width:15%">KODE</th><th>Materi</th><th style="width:15%">JP</th></tr>
+      </thead>
+      <tbody id="print-tbody-prota"></tbody>
+    </table>
+  </div>
+
+  <div class="page-break pt-10">
+    <h3 style="text-align:center; margin-bottom:14px; text-decoration:underline;">PROGRAM SEMESTER (PROMES) - SEMESTER 1</h3>
+    <div id="print-promes-smt1"></div>
+  </div>
+
+  <div class="page-break pt-10">
+    <h3 style="text-align:center; margin-bottom:14px; text-decoration:underline;">PROGRAM SEMESTER (PROMES) - SEMESTER 2</h3>
+    <div id="print-promes-smt2"></div>
+  </div>
+
+  <div class="page-break pt-10">
+    <h3 style="text-align:center; margin-bottom:14px; text-decoration:underline;">STANDAR KOMPETENSI LULUSAN (SKL)</h3>
+    <div id="print-skl" style="white-space:pre-wrap;"></div>
+
+    <h3 id="print-kompetensi-title" style="text-align:center; margin:24px 0 14px; text-decoration:underline;"></h3>
+    <div id="print-kompetensi"></div>
+  </div>
+
+  <div id="print-container-rpp"></div>
+
+  <!-- placeholder date/sign -->
+  <div id="print-tgl-sah" style="display:none"></div>
+</div>
+
 </body>
 </html>
