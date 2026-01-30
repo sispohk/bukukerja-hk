@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Langkah 8: Lampiran</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="sidebar.js"></script>
+</head>
+<body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
+
+    <div id="sidebar-container" class="flex-none h-full"></div>
+
+    <div class="flex-1 flex flex-col relative">
+        <header class="bg-white border-b px-6 py-4 shadow-sm z-10">
+            <h1 class="text-xl font-bold text-slate-900">8. Lampiran Dokumen Guru</h1>
+            <p class="text-xs text-slate-500">Kode Etik, Ikrar, dan Tata Tertib.</p>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-8 pb-24 space-y-8">
+            <div class="bg-white p-6 rounded-xl border shadow-sm">
+                <h3 class="font-bold text-blue-800 mb-2 border-b pb-2">A. Kode Etik Guru</h3>
+                <textarea id="kode_etik" class="w-full h-48 border p-3 rounded text-sm leading-relaxed text-justify focus:ring-2 ring-blue-200 outline-none">
+1. Guru berbakti membimbing anak didik seutuhnya untuk membentuk manusia pembangunan yang ber-Pancasila.
+2. Guru memiliki dan melaksanakan kejujuran profesional.
+3. Guru berusaha memperoleh informasi tentang anak didik sebagai bahan melakukan bimbingan dan pembinaan.
+4. Guru menciptakan suasana sekolah sebaik-baiknya yang menunjang berhasilnya proses belajar-mengajar.
+5. Guru memelihara hubungan baik dengan orang tua murid dan masyarakat sekitarnya untuk membina peran serta dan rasa tanggung jawab bersama terhadap pendidikan.
+                </textarea>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border shadow-sm">
+                <h3 class="font-bold text-blue-800 mb-2 border-b pb-2">B. Ikrar Guru Indonesia</h3>
+                <textarea id="ikrar" class="w-full h-48 border p-3 rounded text-sm leading-relaxed text-justify focus:ring-2 ring-blue-200 outline-none">
+1. Kami Guru Indonesia, adalah insan pendidik Bangsa yang beriman dan bertaqwa kepada Tuhan Yang Maha Esa.
+2. Kami Guru Indonesia, adalah pengemban dan pelaksana cita-cita Proklamasi Kemerdekaan Republik Indonesia, pembela dan pengamal Pancasila serta Undang-Undang Dasar 1945.
+3. Kami Guru Indonesia, bertekad bulat mewujudkan tujuan Nasional dalam mencerdaskan kehidupan Bangsa.
+                </textarea>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border shadow-sm">
+                <h3 class="font-bold text-blue-800 mb-2 border-b pb-2">C. Tata Tertib Guru</h3>
+                <textarea id="tata_tertib" class="w-full h-48 border p-3 rounded text-sm leading-relaxed text-justify focus:ring-2 ring-blue-200 outline-none">
+1. Berkewajiban datang di sekolah 15 menit sebelum pelajaran dimulai.
+2. Wajib menandatangani daftar hadir.
+3. Wajib mengikuti upacara bendera setiap hari Senin dan hari besar nasional.
+4. Memberikan teladan yang baik bagi siswa dalam berpakaian, bertutur kata, dan berperilaku.
+                </textarea>
+            </div>
+        </main>
+
+        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between z-20 shadow-lg">
+            <a href="step7_rpp.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
+            <button onclick="save()" class="bg-green-600 text-white px-8 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition transform active:scale-95">
+                Simpan & Cetak (Step 9) →
+            </button>
+        </footer>
+    </div>
+
+    <script>
+        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+        let user;
+
+        async function init() {
+            const { data: { session } } = await db.auth.getSession();
+            if(!session) return location.href = 'index.html'; user = session.user;
+
+            const { data } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'lampiran_buku_kerja').maybeSingle();
+            if(data && data.content_data) {
+                document.getElementById('kode_etik').value = data.content_data.kode_etik || '';
+                document.getElementById('ikrar').value = data.content_data.ikrar || '';
+                document.getElementById('tata_tertib').value = data.content_data.tata_tertib || '';
+            }
+        } init();
+
+        async function save() {
+            const payload = { kode_etik: document.getElementById('kode_etik').value, ikrar: document.getElementById('ikrar').value, tata_tertib: document.getElementById('tata_tertib').value };
+            const { data: prof } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
+
+            const { error } = await db.from('work_drafts').upsert({
+                user_id: user.id, doc_type: 'lampiran_buku_kerja',
+                subject_name: prof?.mata_pelajaran || 'Umum', grade_level: prof?.fase_kelas || 'Umum', curriculum_type: prof?.jenis_kurikulum || 'Merdeka',
+                content_data: payload, status: 'confirmed'
+            }, { onConflict: 'user_id, doc_type' });
+
+            if(error) alert("Error: " + error.message); else window.location.href = 'step9_cetak.html';
+        }
+    </script>
+</body>
+</html>

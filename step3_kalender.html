@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Langkah 3: Kalender Akademik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="sidebar.js"></script>
+    <style>
+        .day-box { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; border: 1px solid #e2e8f0; }
+        .day-effective { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .day-holiday { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+        .day-sunday { background: #fca5a5; color: white; cursor: not-allowed; }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
+
+    <div id="sidebar-container" class="flex-none h-full"></div>
+
+    <div class="flex-1 flex flex-col relative">
+        <header class="bg-white border-b px-6 py-4 shadow-sm flex justify-between items-center z-10">
+            <div>
+                <h1 class="text-xl font-bold text-slate-900">3. Kalender Akademik</h1>
+                <p class="text-xs text-slate-500">Klik tanggal untuk menandai libur.</p>
+            </div>
+            <div class="flex gap-4 items-center">
+                <div class="text-right bg-green-50 px-3 py-1 rounded border border-green-200">
+                    <p class="text-[10px] uppercase font-bold text-slate-500">Hari Efektif</p>
+                    <p class="text-xl font-bold text-green-700" id="statHE">0</p>
+                </div>
+                <button onclick="saveAndNext()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition transform active:scale-95">
+                    Lanjut ke Alokasi JP →
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-6 pb-24">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="calendarGrid"></div>
+        </main>
+        
+        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between z-20 shadow-lg">
+            <a href="step2_analisis.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
+        </footer>
+    </div>
+
+    <script>
+        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+        let user, profile={}, calData={}, fullDraft={};
+        const MONTHS = ["Juli", "Agustus", "September", "Oktober", "November", "Desember", "Januari", "Februari", "Maret", "April", "Mei", "Juni"];
+        let START_YEAR = new Date().getFullYear();
+
+        async function init() {
+            const { data: { session } } = await db.auth.getSession();
+            if(!session) return location.href = 'index.html'; user = session.user;
+
+            const { data: prof } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
+            profile = prof || { mata_pelajaran: 'Umum', fase_kelas: 'Umum', jenis_kurikulum: 'Merdeka' };
+            if(profile.tahun_ajaran) START_YEAR = parseInt(profile.tahun_ajaran.split('/')[0]) || START_YEAR;
+
+            const { data: draft } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'promes_data').maybeSingle();
+            if(draft) { fullDraft = draft.content_data || {}; calData = fullDraft.calendar || {}; }
+
+            renderCalendar(); calcStats();
+        } init();
+
+        function renderCalendar() {
+            const el = document.getElementById('calendarGrid'); el.innerHTML = '';
+            MONTHS.forEach((mName, i) => {
+                const year = i < 6 ? START_YEAR : START_YEAR + 1;
+                const mIdx = i < 6 ? i + 6 : i - 6;
+                const days = new Date(year, mIdx+1, 0).getDate();
+                const startDay = new Date(year, mIdx, 1).getDay();
+                let h = `<div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm"><div class="font-bold text-center border-b pb-2 mb-2 text-slate-700">${mName} ${year}</div><div class="grid grid-cols-7 gap-1 text-center text-[9px] font-bold text-slate-400"><div>A</div><div>S</div><div>S</div><div>R</div><div>K</div><div>J</div><div>S</div>`;
+                for(let k=0;k<startDay;k++) h+=`<div></div>`;
+                for(let d=1; d<=days; d++) {
+                    const k = `${year}-${mIdx}-${d}`; const isSun = new Date(year, mIdx, d).getDay() === 0;
+                    const isHol = calData[k];
+                    let cls = isSun ? 'day-sunday' : (isHol ? 'day-holiday' : 'day-effective');
+                    h += `<div class="day-box ${cls}" onclick="${isSun?'':'toggle(\''+k+'\')'}">${d}</div>`;
+                }
+                el.innerHTML += h + `</div></div>`;
+            });
+        }
+
+        function toggle(k) { if(calData[k]) delete calData[k]; else calData[k]=true; renderCalendar(); calcStats(); }
+        
+        function calcStats() {
+            let he = 0;
+            MONTHS.forEach((_, i) => {
+                const year = i < 6 ? START_YEAR : START_YEAR+1; const mIdx = i < 6 ? i+6 : i-6;
+                const days = new Date(year, mIdx+1, 0).getDate();
+                for(let d=1; d<=days; d++) {
+                    const k = `${year}-${mIdx}-${d}`;
+                    if(new Date(year, mIdx, d).getDay()!==0 && !calData[k]) he++;
+                }
+            });
+            document.getElementById('statHE').innerText = he;
+        }
+
+        async function saveAndNext() {
+            fullDraft.calendar = calData;
+            const payload = {
+                user_id: user.id, doc_type: 'promes_data',
+                subject_name: profile.mata_pelajaran, grade_level: profile.fase_kelas, curriculum_type: profile.jenis_kurikulum,
+                content_data: fullDraft, status: 'confirmed'
+            };
+            const { error } = await db.from('work_drafts').upsert(payload, { onConflict: 'user_id, doc_type' });
+            if(error) alert("Error: " + error.message); else window.location.href = 'step4_alokasi.html';
+        }
+    </script>
+</body>
+</html>

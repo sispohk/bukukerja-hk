@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Langkah 7: Generator Modul Ajar (RPP)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="config.js"></script>
+    <script src="sidebar.js"></script>
+    <style>
+        .page-break { page-break-after: always; border-bottom: 2px dashed #ccc; margin: 40px 0; display: block; }
+        .rpp-content h3 { font-size: 13pt; font-weight: bold; margin-top: 20px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; }
+        .rpp-content p { margin-bottom: 10px; text-align: justify; line-height: 1.6; } 
+        .diferensiasi-box { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 10px; font-style: italic; margin-top: 10px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
+    
+    <div id="sidebar-container" class="flex-none h-full"></div>
+
+    <div class="flex-1 flex flex-col relative">
+        <header class="bg-white border-b px-6 py-4 shadow-sm flex gap-4 items-center justify-between z-10">
+            <div class="flex items-center gap-4 flex-1">
+                <h1 class="text-xl font-bold text-slate-900">7. Generator RPP</h1>
+                <select id="model" class="border rounded p-2 text-sm bg-slate-50 flex-1 max-w-md cursor-pointer hover:bg-slate-100 font-medium text-slate-700">
+                    <optgroup label="🔥 Populer & Berbasis Masalah">
+                        <option>Problem Based Learning (PBL)</option>
+                        <option>Project Based Learning (PjBL)</option>
+                        <option>Case Based Learning (CBL)</option>
+                        <option>Challenge Based Learning</option>
+                    </optgroup>
+                    <optgroup label="🚀 Pendekatan Modern (Abad 21)">
+                        <option>Deep Learning (Pembelajaran Mendalam)</option>
+                        <option>Teaching at the Right Level (TaRL/Diferensiasi)</option>
+                        <option>STEAM Approach</option>
+                        <option>Blended Learning (Hybrid)</option>
+                        <option>Flipped Classroom</option>
+                        <option>Social Emotional Learning (SEL)</option>
+                        <option>Gamifikasi</option>
+                    </optgroup>
+                    <optgroup label="🧠 Penemuan & Inkuiri">
+                        <option>Discovery Learning</option>
+                        <option>Inquiry Learning (Terbimbing)</option>
+                        <option>Inquiry Learning (Open)</option>
+                        <option>Contextual Teaching & Learning (CTL)</option>
+                    </optgroup>
+                    <optgroup label="🤝 Kooperatif">
+                        <option>Cooperative Learning (Jigsaw)</option>
+                        <option>Cooperative Learning (STAD)</option>
+                        <option>Peer Tutoring (Tutor Sebaya)</option>
+                        <option>Think-Pair-Share (TPS)</option>
+                    </optgroup>
+                </select>
+            </div>
+            <button onclick="batch()" id="btnGen" class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold text-sm shadow hover:bg-indigo-700 transition">
+                ✨ Generate & Simpan
+            </button>
+        </header>
+
+        <div class="flex flex-1 overflow-hidden">
+            <aside class="w-80 bg-white border-r overflow-y-auto p-4 flex flex-col">
+                <div class="flex justify-between items-center mb-3 pb-2 border-b">
+                    <span class="text-xs font-bold text-slate-500 uppercase">Pilih Materi</span>
+                    <label class="flex items-center gap-1 text-xs text-blue-600 cursor-pointer font-bold select-none">
+                        <input type="checkbox" onchange="toggleAll(this)"> Pilih Semua
+                    </label>
+                </div>
+                <div id="list" class="space-y-1 flex-1"></div>
+            </aside>
+
+            <main class="flex-1 overflow-y-auto p-8 bg-gray-100" id="previewArea">
+                <div id="print" class="bg-white p-12 rounded shadow min-h-[800px] prose prose-sm max-w-none rpp-content">
+                    <div class="flex flex-col items-center justify-center h-64 text-slate-300">
+                        <p class="text-lg">Pilih materi di kiri, lalu klik <b>Generate & Simpan</b>.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between z-20 shadow-lg">
+            <a href="step6_promes.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
+            <a href="step8_lampiran.html" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition">
+                Lanjut ke Lampiran (Step 8) →
+            </a>
+        </footer>
+    </div>
+
+    <script>
+        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+        let user, profile={}, mats=[], generatedRPP = "";
+
+        async function init(){
+            const {data:{session}} = await db.auth.getSession(); 
+            if(!session) return location.href='index.html'; user=session.user;
+            
+            const {data:p} = await db.from('profiles').select('*').eq('id',user.id).maybeSingle(); 
+            profile=p||{ mata_pelajaran:'Umum', fase_kelas:'Umum', jenis_kurikulum:'Merdeka' };
+            
+            const {data:m} = await db.from('work_drafts').select('*').eq('user_id',user.id).eq('doc_type','master_cp_atp').maybeSingle();
+            if(m && m.content_data) mats = m.content_data;
+            renderList();
+        } init();
+
+        function renderList() {
+            const l = document.getElementById('list'); l.innerHTML = '';
+            mats.forEach((x, i) => {
+                l.innerHTML += `<label class="flex gap-3 text-sm p-3 border rounded hover:bg-slate-50 cursor-pointer items-start"><input type="checkbox" class="chk mt-1" value="${i}"> <div><div class="font-bold text-slate-700">${x.elemen || 'Tanpa Judul'}</div><div class="text-xs text-slate-500 line-clamp-2">${x.deskripsi || ''}</div></div></label>`;
+            });
+        }
+        function toggleAll(src) { document.querySelectorAll('.chk').forEach(c => c.checked = src.checked); }
+
+        async function batch(){
+            const chk = document.querySelectorAll('.chk:checked'); 
+            if(chk.length === 0) return alert("Pilih minimal 1 materi!");
+            
+            const btn = document.getElementById('btnGen'); 
+            btn.disabled = true; btn.innerHTML = `⏳ Memproses...`;
+            
+            let htmlAccumulator = "";
+            const model = document.getElementById('model').value;
+
+            for(const c of chk){
+                const m = mats[c.value];
+                document.getElementById('print').innerHTML = `<div class="text-center text-blue-600 mt-20"><p>Sedang membuat RPP: <b>${m.elemen}</b>...</p></div>`;
+
+                try {
+                    const extra = m.detail_tp ? `\nDATA ANALISIS: \n- Tujuan: ${m.detail_tp} \n- Indikator: ${m.detail_kktp}` : "";
+                    const prompt = `PERAN: Guru. TUGAS: Buat RPP HTML Body. MAPEL:${profile.mata_pelajaran}, KELAS:${profile.fase_kelas}, TOPIK:"${m.elemen}", MODEL:${model}. ${extra}. ISI: Tujuan, Pemahaman Bermakna, Langkah Pembelajaran (Pendahuluan, Inti+Diferensiasi, Penutup), Asesmen. NO MARKDOWN.`;
+
+                    const res = await fetch('https://api.dify.ai/v1/workflows/run', {
+                        method: 'POST',
+                        headers: {'Authorization':`Bearer ${CONFIG.DIFY_API_KEY_RPP}`, 'Content-Type':'application/json'},
+                        body: JSON.stringify({ inputs: { topik: prompt, kelas: profile.fase_kelas || "Umum", alokasi_waktu: "2 JP" }, response_mode: "blocking", user: user.id })
+                    });
+                    
+                    const json = await res.json();
+                    
+                    // FIX API ERROR: Check if text exists safely
+                    let txt = "";
+                    if(json.data && json.data.outputs && json.data.outputs.text) {
+                        txt = json.data.outputs.text;
+                    } else if (json.data && json.data.answer) {
+                        txt = json.data.answer;
+                    } else {
+                        txt = "<p style='color:red'>Gagal mendapatkan respon dari AI.</p>";
+                    }
+
+                    // Safe Cleaning
+                    txt = txt.replace(/<think>[\s\S]*?<\/think>/gi,"").replace(/```html/g,"").replace(/```/g,"");
+                    
+                    htmlAccumulator += `<div class="rpp-section mt-8"><div style="background:#f8fafc; padding:10px; border-left:5px solid #2563eb;"><h2 style="margin:0; font-size:14pt; color:#1e40af;">TOPIK: ${m.elemen}</h2><p style="margin:0; font-size:10pt;">Model: ${model}</p></div>${txt}</div><div class="page-break"></div>`;
+
+                } catch(e) { console.error(e); }
+            }
+            
+            generatedRPP = htmlAccumulator;
+            document.getElementById('print').innerHTML = generatedRPP;
+            
+            await saveRPPToDB();
+            
+            btn.disabled = false; btn.innerHTML = "✨ Generate & Simpan";
+            alert("Berhasil! RPP telah disimpan ke Step 9.");
+        }
+
+        async function saveRPPToDB() {
+            if(!generatedRPP) return;
+            // FIX ERROR 400: Pastikan semua field terisi
+            const payload = {
+                user_id: user.id,
+                doc_type: 'rpp_result',
+                subject_name: profile.mata_pelajaran || 'Umum',
+                grade_level: profile.fase_kelas || 'Umum',
+                curriculum_type: profile.jenis_kurikulum || 'Merdeka',
+                content_data: { html: generatedRPP },
+                status: 'confirmed'
+            };
+            
+            const { error } = await db.from('work_drafts').upsert(payload, { onConflict: 'user_id, doc_type' });
+            if(error) console.error("Gagal Simpan DB:", error.message);
+        }
+    </script>
+</body>
+</html>

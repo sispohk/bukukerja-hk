@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Langkah 4: Alokasi JP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="sidebar.js"></script>
+</head>
+<body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
+
+    <div id="sidebar-container" class="flex-none h-full"></div>
+
+    <div class="flex-1 flex flex-col relative">
+        <header class="bg-white border-b px-6 py-4 shadow-sm flex justify-between items-center z-10">
+            <div>
+                <h1 class="text-xl font-bold text-slate-900">4. Alokasi Jam Pelajaran</h1>
+                <p class="text-xs text-slate-500">Tentukan JP per minggu dan bagi ke materi.</p>
+            </div>
+            <div class="flex items-center gap-4 bg-blue-50 px-4 py-2 rounded border border-blue-200">
+                <div>
+                    <label class="text-[10px] font-bold uppercase text-blue-800 block">JP / Minggu</label>
+                    <input type="number" id="jpWeek" value="4" class="w-16 border border-blue-300 rounded px-1 text-center font-bold text-blue-700" onchange="renderTable()">
+                </div>
+                <div class="pl-4 border-l border-blue-200">
+                    <p class="text-[10px] uppercase font-bold text-slate-500">Kapasitas</p>
+                    <p class="text-xl font-bold text-slate-800"><span id="totalCapJP">0</span> JP</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-6 pb-24">
+            <div class="max-w-5xl mx-auto bg-white rounded-xl shadow border border-gray-200 p-6">
+                <div class="mb-4 flex justify-end">
+                    <button onclick="autoDistribute()" class="text-indigo-600 bg-indigo-50 border border-indigo-200 px-4 py-2 rounded font-bold hover:bg-indigo-100 text-xs flex items-center gap-2">
+                        ⚡ Bagi Rata Otomatis
+                    </button>
+                </div>
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-700 uppercase font-bold text-xs border-b">
+                        <tr>
+                            <th class="p-3 w-10">No</th>
+                            <th class="p-3">Materi Pokok</th>
+                            <th class="p-3 w-32 text-center">Alokasi (JP)</th>
+                            <th class="p-3 w-32 text-center">Est. Minggu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jpTableBody"></tbody>
+                    <tfoot class="bg-slate-50 font-bold border-t">
+                        <tr><td colspan="2" class="p-3 text-right">Total Terpakai:</td><td class="p-3 text-center" id="sumUsedJP">0</td><td></td></tr>
+                    </tfoot>
+                </table>
+            </div>
+        </main>
+
+        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between z-20 shadow-lg">
+            <a href="step3_kalender.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
+            <button onclick="saveAndNext()" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition transform active:scale-95">
+                Simpan & Lanjut (Prota) →
+            </button>
+        </footer>
+    </div>
+
+    <script>
+        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+        let user, profile={}, fullDraft={}, calData={}, mats=[], totalHE=0;
+        const MONTHS = ["Juli", "Agustus", "September", "Oktober", "November", "Desember", "Januari", "Februari", "Maret", "April", "Mei", "Juni"];
+        let START_YEAR = new Date().getFullYear();
+
+        async function init() {
+            const { data: { session } } = await db.auth.getSession();
+            if(!session) return location.href = 'index.html'; user = session.user;
+
+            const { data: prof } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
+            profile = prof || { mata_pelajaran: 'Umum', fase_kelas: 'Umum', jenis_kurikulum: 'Merdeka' };
+            if(profile.tahun_ajaran) START_YEAR = parseInt(profile.tahun_ajaran.split('/')[0]) || START_YEAR;
+
+            const { data: draft } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'promes_data').maybeSingle();
+            if(draft && draft.content_data) {
+                fullDraft = draft.content_data; calData = fullDraft.calendar || {};
+                if(fullDraft.jp_per_week) document.getElementById('jpWeek').value = fullDraft.jp_per_week;
+            } else { alert("Isi kalender dulu!"); return location.href = 'step3_kalender.html'; }
+
+            const { data: m } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle();
+            if(m && m.content_data) {
+                let saved = fullDraft.materials || [];
+                mats = m.content_data.map((x,i) => {
+                    let f = saved.find(s => s.topic === (x.elemen || x.col1));
+                    return { topic: x.elemen || x.col1, jp: f ? f.jp : 0 };
+                });
+            }
+            calcHE(); renderTable();
+        } init();
+
+        function calcHE() {
+            let c=0; MONTHS.forEach((_, i) => {
+                const year = i < 6 ? START_YEAR : START_YEAR+1; const mIdx = i < 6 ? i+6 : i-6;
+                const days = new Date(year, mIdx+1, 0).getDate();
+                for(let d=1; d<=days; d++) {
+                    const k = `${year}-${mIdx}-${d}`;
+                    if(new Date(year, mIdx, d).getDay()!==0 && !calData[k]) c++;
+                }
+            });
+            totalHE = c;
+        }
+
+        function renderTable() {
+            const tb = document.getElementById('jpTableBody'); tb.innerHTML = '';
+            const jpWeek = parseInt(document.getElementById('jpWeek').value) || 4;
+            const totalCap = Math.floor(totalHE * (jpWeek / 5));
+            document.getElementById('totalCapJP').innerText = totalCap;
+
+            const stepInput = (jpWeek % 2 === 0) ? 2 : 1; let used = 0;
+
+            mats.forEach((m, i) => {
+                used += m.jp;
+                const meet = Math.ceil(m.jp / jpWeek);
+                tb.innerHTML += `<tr class="border-b hover:bg-slate-50"><td class="p-3 text-slate-500">${i+1}</td><td class="p-3 font-medium">${m.topic}</td><td class="p-3 text-center"><input type="number" class="w-16 border rounded text-center font-bold" value="${m.jp}" step="${stepInput}" onchange="mats[${i}].jp=parseInt(this.value)||0;renderTable()"> JP</td><td class="p-3 text-center text-xs text-gray-500">~ ${meet} Mg</td></tr>`;
+            });
+            
+            const sumEl = document.getElementById('sumUsedJP');
+            sumEl.innerText = used;
+            if(used > totalCap) sumEl.classList.add('text-red-600'); else sumEl.classList.remove('text-red-600');
+        }
+
+        function autoDistribute() {
+            const jpWeek = parseInt(document.getElementById('jpWeek').value) || 4;
+            const totalCap = Math.floor(totalHE * (jpWeek / 5));
+            if(mats.length > 0) {
+                let base = Math.floor(totalCap / mats.length);
+                if(jpWeek % 2 === 0 && base % 2 !== 0) base--;
+                let rem = totalCap - (base * mats.length);
+                mats.forEach(m => m.jp = base);
+                let i=0; const chunk = (jpWeek % 2 === 0) ? 2 : 1;
+                while(rem >= chunk) { mats[i].jp += chunk; rem -= chunk; i=(i+1)%mats.length; }
+            }
+            renderTable();
+        }
+
+        async function saveAndNext() {
+            fullDraft.materials = mats; fullDraft.jp_per_week = document.getElementById('jpWeek').value;
+            const payload = {
+                user_id: user.id, doc_type: 'promes_data',
+                subject_name: profile.mata_pelajaran, grade_level: profile.fase_kelas, curriculum_type: profile.jenis_kurikulum,
+                content_data: fullDraft, status: 'confirmed'
+            };
+            const { error } = await db.from('work_drafts').upsert(payload, { onConflict: 'user_id, doc_type' });
+            if(error) alert("Error: " + error.message); else window.location.href = 'step5_prota.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Langkah 1: Profil Guru</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="sidebar.js"></script>
+</head>
+<body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
+
+    <div id="sidebar-container" class="flex-none h-full"></div>
+
+    <div class="flex-1 flex flex-col relative">
+        <header class="bg-white border-b px-6 py-4 shadow-sm z-10">
+            <h1 class="text-xl font-bold text-slate-900">1. Profil Guru & Sekolah</h1>
+            <p class="text-xs text-slate-500">Data ini akan digunakan sebagai kop dokumen.</p>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-8 pb-24">
+            <div class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><label class="block text-sm font-bold mb-2 text-slate-700">Nama Lengkap</label><input type="text" id="nama" class="w-full border p-3 rounded-lg focus:ring-2 ring-blue-500 outline-none" placeholder="Contoh: Budi, S.Pd."></div>
+                <div><label class="block text-sm font-bold mb-2 text-slate-700">Sekolah</label><input type="text" id="sekolah" class="w-full border p-3 rounded-lg focus:ring-2 ring-blue-500 outline-none" placeholder="Contoh: SMA Negeri 1"></div>
+                <div><label class="block text-sm font-bold mb-2 text-slate-700">Mata Pelajaran</label><input type="text" id="mapel" class="w-full border p-3 rounded-lg focus:ring-2 ring-blue-500 outline-none" placeholder="Contoh: Matematika"></div>
+                <div><label class="block text-sm font-bold mb-2 text-slate-700">Fase / Kelas</label><input type="text" id="kelas" class="w-full border p-3 rounded-lg focus:ring-2 ring-blue-500 outline-none" placeholder="Contoh: Fase E (Kelas 10)"></div>
+                <div>
+                    <label class="block text-sm font-bold mb-2 text-slate-700">Kurikulum</label>
+                    <select id="kurikulum" class="w-full border p-3 rounded-lg focus:ring-2 ring-blue-500 outline-none">
+                        <option value="Merdeka">Kurikulum Merdeka</option>
+                        <option value="K13">Kurikulum 2013</option>
+                    </select>
+                </div>
+                <div><label class="block text-sm font-bold mb-2 text-slate-700">Tahun Ajaran</label><input type="text" id="tahun" class="w-full border p-3 rounded-lg focus:ring-2 ring-blue-500 outline-none" placeholder="Contoh: 2025/2026"></div>
+            </div>
+        </main>
+
+        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-end z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+            <button onclick="save()" id="btnSave" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 shadow-lg transition transform active:scale-95">
+                Simpan & Lanjut (Analisis) →
+            </button>
+        </footer>
+    </div>
+
+    <script>
+        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+        let user;
+
+        async function init() {
+            const { data: { session } } = await db.auth.getSession();
+            if(!session) return location.href='index.html'; 
+            user=session.user;
+            
+            const { data } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
+            if(data) {
+                document.getElementById('nama').value = data.nama_lengkap || '';
+                document.getElementById('sekolah').value = data.sekolah || '';
+                document.getElementById('mapel').value = data.mata_pelajaran || '';
+                document.getElementById('kelas').value = data.fase_kelas || '';
+                document.getElementById('kurikulum').value = data.jenis_kurikulum || 'Merdeka';
+                document.getElementById('tahun').value = data.tahun_ajaran || '';
+            }
+        }
+        init();
+
+        async function save() {
+            const btn = document.getElementById('btnSave'); 
+            btn.innerText = 'Menyimpan...'; btn.disabled = true;
+
+            const payload = {
+                id: user.id,
+                nama_lengkap: document.getElementById('nama').value,
+                sekolah: document.getElementById('sekolah').value,
+                mata_pelajaran: document.getElementById('mapel').value,
+                fase_kelas: document.getElementById('kelas').value,
+                jenis_kurikulum: document.getElementById('kurikulum').value,
+                tahun_ajaran: document.getElementById('tahun').value,
+                updated_at: new Date()
+            };
+
+            const { error } = await db.from('profiles').upsert(payload);
+            
+            if(error) {
+                alert("Gagal: " + error.message);
+                btn.innerText = 'Simpan & Lanjut'; btn.disabled = false;
+            } else {
+                window.location.href = 'step2_analisis.html';
+            }
+        }
+    </script>
+</body>
+</html>

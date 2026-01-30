@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Cetak Dokumen Lengkap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="config.js"></script>
+    <script src="sidebar.js"></script>
+    <style>
+        /* SETTING KERTAS A4 */
+        @page { size: A4; margin: 10mm 15mm 10mm 20mm; /* Atas Kanan Bawah Kiri */ }
+        body { background: #525659; font-family: 'Times New Roman', Times, serif; }
+        
+        /* TAMPILAN KERTAS DI LAYAR */
+        .paper { 
+            background: white; width: 210mm; min-height: 297mm; 
+            margin: 20px auto; padding: 20mm 20mm 20mm 25mm; /* Margin jilid kiri lebih besar */
+            box-shadow: 0 0 15px rgba(0,0,0,0.3); position: relative; overflow: hidden;
+        }
+
+        /* --- COVER STYLES --- */
+        .cover-border { border: 3px double black; padding: 10mm; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; }
+        .cover-title { font-size: 24pt; font-weight: bold; font-family: Arial, sans-serif; margin-bottom: 10px; }
+        .cover-sub { font-size: 16pt; font-weight: bold; margin-bottom: 40px; }
+        .cover-logo { width: 120px; height: 120px; margin: 20px auto; opacity: 0.5; background: url('https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png') no-repeat center/contain; }
+        .cover-identitas { width: 100%; text-align: center; margin: 20px 0; font-size: 14pt; }
+        .cover-identitas td { padding: 5px; border: none; text-align: left; }
+        .cover-footer { font-size: 14pt; font-weight: bold; text-transform: uppercase; }
+
+        /* --- CONTENT STYLES --- */
+        h1.bab-title { font-size: 14pt; font-weight: bold; text-transform: uppercase; text-align: center; border-bottom: 2px solid black; padding-bottom: 5px; margin-bottom: 20px; margin-top: 0; }
+        h2 { font-size: 12pt; font-weight: bold; margin-top: 15px; margin-bottom: 5px; }
+        p, li, td { font-size: 11pt; line-height: 1.5; color: black; }
+        
+        /* TABLE STYLES */
+        table.data-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        table.data-table th, table.data-table td { border: 1px solid black; padding: 4px 6px; vertical-align: middle; }
+        table.data-table th { background-color: #e5e7eb !important; text-align: center; font-weight: bold; -webkit-print-color-adjust: exact; }
+        
+        /* PAGE BREAK UTILITY */
+        .page-break { page-break-before: always; display: block; }
+        .no-break { page-break-inside: avoid; }
+
+        /* RPP OFFICIAL STYLE */
+        .rpp-container { border: 1px solid black; padding: 2px; }
+        .rpp-header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .rpp-header-table td { border: none; padding: 2px; font-size: 11pt; }
+        .rpp-title { text-align: center; font-weight: bold; text-decoration: underline; font-size: 12pt; margin: 10px 0; text-transform: uppercase; }
+        .rpp-sign-table { width: 100%; margin-top: 40px; border: none; }
+        .rpp-sign-table td { border: none; text-align: center; vertical-align: top; padding-bottom: 60px; width: 50%; }
+
+        /* PROMES BLACK BLOCK FIX */
+        .bg-black-block { background-color: black !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+        /* ROTATE LANDSCAPE CONTENT IN PORTRAIT PAGE (FOR PDF) */
+        .landscape-wrapper {
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            width: 250mm; /* Lebih panjang dari lebar A4 */
+            position: absolute;
+            top: 50%; left: 50%;
+            margin-left: -125mm; /* Setengah width */
+            margin-top: -100mm;
+            text-align: center;
+        }
+
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .paper { box-shadow: none; margin: 0; width: 100%; height: auto; border: none; padding: 0; page-break-after: always; }
+            #sidebar-container { display: none; }
+            
+            /* FORCE COLORS */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+    </style>
+</head>
+<body class="flex">
+
+    <div id="sidebar-container" class="no-print h-screen sticky top-0"></div>
+
+    <div class="flex-1 min-w-0">
+        
+        <div class="no-print sticky top-0 left-0 w-full bg-white border-b p-4 flex justify-between items-center z-50 shadow-sm">
+            <div>
+                <h1 class="text-lg font-bold text-slate-800">Preview & Cetak Dokumen</h1>
+                <p class="text-xs text-slate-500">Pastikan semua data sudah terisi sebelum mencetak.</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="window.print()" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-blue-700 shadow flex items-center gap-2">
+                    🖨️ Cetak (Browser)
+                </button>
+                <button onclick="downloadPDF()" class="bg-red-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-red-700 shadow flex items-center gap-2">
+                    📄 Download PDF
+                </button>
+            </div>
+        </div>
+
+        <div class="pt-10 pb-20 bg-gray-600" id="documentArea">
+
+            <div class="paper">
+                <div class="cover-border">
+                    <div class="mt-10">
+                        <div class="cover-title">BUKU KERJA GURU 1</div>
+                        <div class="cover-sub">PERENCANAAN PEMBELAJARAN</div>
+                        <div class="cover-logo"></div>
+                    </div>
+                    
+                    <table class="cover-identitas" style="width: 80%; margin: 0 auto;">
+                        <tr><td width="40%"><strong>Mata Pelajaran</strong></td><td width="5%">:</td><td><span class="ph-mapel">...</span></td></tr>
+                        <tr><td><strong>Kelas / Fase</strong></td><td>:</td><td><span class="ph-kelas">...</span></td></tr>
+                        <tr><td><strong>Tahun Ajaran</strong></td><td>:</td><td><span class="ph-tahun">...</span></td></tr>
+                        <tr><td><strong>Guru Pengampu</strong></td><td>:</td><td><span class="ph-nama">...</span></td></tr>
+                    </table>
+
+                    <div class="cover-footer mb-10">
+                        <p class="ph-sekolah">NAMA SEKOLAH</p>
+                        <p class="text-sm font-normal mt-2">Indonesia, 2026</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="paper">
+                <h1 class="bab-title" id="judulAnalisis">A. Analisis Capaian Pembelajaran & ATP</h1>
+                <table class="data-table text-xs">
+                    <thead>
+                        <tr><th width="5%">No</th><th width="20%">Elemen / Materi</th><th width="35%">Capaian Pembelajaran (CP/KD)</th><th width="40%">Tujuan (TP/IPK) & KKTP</th></tr>
+                    </thead>
+                    <tbody id="tblCP"></tbody>
+                </table>
+            </div>
+
+            <div class="paper">
+                <h1 class="bab-title">B. Modul Ajar / RPP</h1>
+                
+                <div id="rppOutput">
+                    <div class="border-2 border-dashed p-10 text-center text-gray-400">
+                        Data RPP belum digenerate di Langkah 7.
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="paper page-break">
+                <div class="cover-border">
+                    <div class="mt-10">
+                        <div class="cover-title">BUKU KERJA GURU 2</div>
+                        <div class="cover-sub">ADMINISTRASI GURU</div>
+                        <div class="cover-logo"></div>
+                    </div>
+                    
+                    <div class="text-center font-bold text-lg">
+                        <p>KODE ETIK GURU</p>
+                        <p>IKRAR GURU INDONESIA</p>
+                        <p>TATA TERTIB GURU</p>
+                        <p>KALENDER PENDIDIKAN</p>
+                        <p>ALOKASI WAKTU</p>
+                        <p>PROGRAM TAHUNAN</p>
+                        <p>PROGRAM SEMESTER</p>
+                    </div>
+
+                    <div class="cover-footer mb-10">
+                        <p class="ph-sekolah">...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="paper">
+                <h1 class="bab-title">C. Kode Etik Guru</h1>
+                <div id="printKodeEtik" class="mb-10 text-justify whitespace-pre-wrap"></div>
+            </div>
+
+            <div class="paper">
+                <h1 class="bab-title">D. Ikrar Guru Indonesia</h1>
+                <div id="printIkrar" class="mb-10 text-justify whitespace-pre-wrap"></div>
+            </div>
+
+            <div class="paper">
+                <h1 class="bab-title">E. Tata Tertib Guru</h1>
+                <div id="printTataTertib" class="mb-10 text-justify whitespace-pre-wrap"></div>
+            </div>
+
+            <div class="paper">
+                <h1 class="bab-title">F. Kalender Pendidikan</h1>
+                <div class="mb-6">
+                    <p>Total Hari Efektif: <strong id="printHE">...</strong> Hari</p>
+                    <div id="printKalender" class="grid grid-cols-4 gap-4 mt-4 text-[9px]"></div>
+                </div>
+
+                <div class="page-break"></div>
+
+                <h1 class="bab-title mt-10">G. Rincian Alokasi Waktu</h1>
+                <p>Alokasi Waktu Mata Pelajaran <span class="ph-mapel font-bold"></span> Kelas <span class="ph-kelas font-bold"></span></p>
+                <p class="mb-4">Jatah Jam Pelajaran (JP) per Minggu: <strong id="printJPW">...</strong> JP</p>
+                
+                <table class="data-table text-center text-xs">
+                    <thead><tr><th>No</th><th>Bulan</th><th>Jml Pekan</th><th>Pekan Efektif</th><th>Tidak Efektif</th><th>Keterangan</th></tr></thead>
+                    <tbody id="tblRincianPekan"></tbody>
+                    <tfoot class="font-bold bg-gray-100" id="tblRincianTotal"></tfoot>
+                </table>
+            </div>
+
+            <div class="paper">
+                <h1 class="bab-title">H. Program Tahunan (Prota)</h1>
+                <table class="data-table text-xs">
+                    <thead><tr><th width="10%">SMT</th><th width="10%">No</th><th>Materi Pokok</th><th width="15%">Alokasi Waktu</th></tr></thead>
+                    <tbody id="tblProta"></tbody>
+                </table>
+            </div>
+
+            <div class="paper">
+                <div class="landscape-wrapper">
+                    <h1 class="bab-title">I. Program Semester (Promes)</h1>
+                    <table class="data-table text-[8px]" id="tblPromes">
+                        </table>
+                    <p class="text-xs text-left italic mt-2">*Blok Hitam menandakan pelaksanaan pembelajaran.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+        let user;
+        const MONTHS = ["Juli","Agustus","September","Oktober","November","Desember","Januari","Februari","Maret","April","Mei","Juni"];
+
+        async function init() {
+            const { data: { session } } = await db.auth.getSession();
+            if(!session) return location.href = 'index.html'; user = session.user;
+
+            // Load All Data
+            const [p, cp, promes, lamp, rpp] = await Promise.all([
+                db.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+                db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle(),
+                db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'promes_data').maybeSingle(),
+                db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'lampiran_buku_kerja').maybeSingle(),
+                db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'rpp_result').maybeSingle()
+            ]);
+
+            renderDoc(p.data, cp.data, promes.data, lamp.data, rpp.data);
+        } init();
+
+        function renderDoc(prof, cp, promes, lamp, rpp) {
+            const p = prof || {};
+            // 1. FILL PLACEHOLDERS
+            document.querySelectorAll('.ph-mapel').forEach(e => e.innerText = p.mata_pelajaran || '...');
+            document.querySelectorAll('.ph-kelas').forEach(e => e.innerText = p.fase_kelas || '...');
+            document.querySelectorAll('.ph-nama').forEach(e => e.innerText = p.nama_lengkap || '...');
+            document.querySelectorAll('.ph-sekolah').forEach(e => e.innerText = p.sekolah || '...');
+            document.querySelectorAll('.ph-tahun').forEach(e => e.innerText = p.tahun_ajaran || '...');
+
+            if(p.jenis_kurikulum === 'K13') document.getElementById('judulAnalisis').innerText = "A. Analisis KI/KD & Indikator";
+
+            // 2. CP / ATP TABLE
+            if(cp && cp.content_data) {
+                let h = "";
+                cp.content_data.forEach((d, i) => {
+                    h += `<tr><td align="center">${i+1}</td><td>${d.elemen}</td><td>${d.deskripsi}</td><td><strong>Tujuan:</strong> ${d.detail_tp}<br><br><strong>KKTP:</strong> ${d.detail_kktp}</td></tr>`;
+                });
+                document.getElementById('tblCP').innerHTML = h;
+            }
+
+            // 3. RPP (RE-FORMATTED TO OFFICIAL STYLE)
+            if(rpp && rpp.content_data && rpp.content_data.html) {
+                const rawHTML = rpp.content_data.html;
+                // Kita bungkus HTML AI dengan Kop dan Tanda Tangan
+                // Asumsi: rawHTML berisi beberapa <div class="rpp-section">
+                
+                // Regex sederhana untuk mengambil judul topik dari HTML jika ada
+                // Tapi untuk amannya, kita bungkus seluruh output dalam satu container RPP Resmi
+                
+                const officialRPP = `
+                    <div class="rpp-official">
+                        <div class="rpp-title">MODUL AJAR / RENCANA PELAKSANAAN PEMBELAJARAN</div>
+                        <table class="rpp-header-table">
+                            <tr><td width="20%">Satuan Pendidikan</td><td width="2%">:</td><td>${p.sekolah}</td></tr>
+                            <tr><td>Mata Pelajaran</td><td>:</td><td>${p.mata_pelajaran}</td></tr>
+                            <tr><td>Kelas / Fase</td><td>:</td><td>${p.fase_kelas}</td></tr>
+                            <tr><td>Tahun Ajaran</td><td>:</td><td>${p.tahun_ajaran}</td></tr>
+                        </table>
+                        
+                        <hr style="border: 1px solid black; margin-bottom: 20px;">
+                        
+                        <div class="rpp-content-body text-justify">
+                            ${rawHTML}
+                        </div>
+
+                        <table class="rpp-sign-table no-break">
+                            <tr>
+                                <td>
+                                    Mengetahui,<br>Kepala Sekolah<br><br><br><br>
+                                    <strong>( ..................................... )</strong><br>
+                                    NIP. ...........................
+                                </td>
+                                <td>
+                                    .................., .................... 20....<br>Guru Mata Pelajaran<br><br><br><br>
+                                    <strong>${p.nama_lengkap}</strong><br>
+                                    NIP. ...........................
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                `;
+                document.getElementById('rppOutput').innerHTML = officialRPP;
+            }
+
+            // 4. LAMPIRAN
+            if(lamp && lamp.content_data) {
+                document.getElementById('printKodeEtik').innerText = lamp.content_data.kode_etik;
+                document.getElementById('printIkrar').innerText = lamp.content_data.ikrar;
+                document.getElementById('printTataTertib').innerText = lamp.content_data.tata_tertib;
+            }
+
+            // 5. KALENDER & ALOKASI
+            if(promes && promes.content_data) {
+                const pd = promes.content_data;
+                const cal = pd.calendar || {};
+                let startYear = parseInt((p.tahun_ajaran||"").split('/')[0]) || new Date().getFullYear();
+                
+                // Mini Calendar
+                let heCount = 0;
+                document.getElementById('printKalender').innerHTML = "";
+                MONTHS.forEach((m, i) => {
+                    const year = i<6 ? startYear : startYear+1; const mIdx = i<6 ? i+6 : i-6;
+                    const days = new Date(year, mIdx+1, 0).getDate();
+                    let html = `<div class="border border-slate-400 p-1"><div class="font-bold text-center bg-gray-200">${m}</div><div class="grid grid-cols-7 text-center">`;
+                    for(let d=1; d<=days; d++) {
+                        const k = `${year}-${mIdx}-${d}`;
+                        const isHol = cal[k]; const isSun = new Date(year, mIdx, d).getDay()===0;
+                        if(!isHol && !isSun) heCount++;
+                        html += `<span style="color:${isSun?'red':(isHol?'red':'black')}">${d}</span>`;
+                    }
+                    document.getElementById('printKalender').innerHTML += html + `</div></div>`;
+                });
+                document.getElementById('printHE').innerText = heCount;
+
+                // Rincian Pekan
+                let totP=0, totE=0, totNE=0;
+                let rincianHTML = "";
+                MONTHS.forEach((m, i) => {
+                    const year = i<6 ? startYear : startYear+1; const mIdx = i<6 ? i+6 : i-6;
+                    const days = new Date(year, mIdx+1, 0).getDate();
+                    let pTotal = Math.ceil(days/7);
+                    let pEff = 0;
+                    for(let w=1; w<=pTotal; w++) {
+                        let d = (w-1)*7+2; if(d>days)d=days;
+                        if(!cal[`${year}-${mIdx}-${d}`]) pEff++;
+                    }
+                    let pNon = pTotal - pEff;
+                    totP+=pTotal; totE+=pEff; totNE+=pNon;
+                    
+                    rincianHTML += `<tr><td>${i+1}</td><td align="left">${m}</td><td>${pTotal}</td><td>${pEff}</td><td>${pNon}</td><td></td></tr>`;
+                    if(i===5) rincianHTML += `<tr class="bg-gray-100 font-bold"><td colspan="2">Jumlah Smt 1</td><td>${totP}</td><td>${totE}</td><td>${totNE}</td><td></td></tr>`;
+                });
+                document.getElementById('tblRincianPekan').innerHTML = rincianHTML;
+                document.getElementById('tblRincianTotal').innerHTML = `<tr><td colspan="2">TOTAL SETAHUN</td><td>${totP}</td><td>${totE}</td><td>${totNE}</td><td></td></tr>`;
+                document.getElementById('printJPW').innerText = pd.jp_per_week || 4;
+
+                // Prota
+                let acc=0; const capSmt1 = Math.floor(heCount/2 * (pd.jp_per_week/5));
+                (pd.materials||[]).forEach((m, i) => {
+                    acc+=m.jp;
+                    document.getElementById('tblProta').innerHTML += `<tr><td align="center">${acc<=capSmt1?'1 (Ganjil)':'2 (Genap)'}</td><td align="center">${i+1}</td><td>${m.topic}</td><td align="center">${m.jp} JP</td></tr>`;
+                });
+
+                // Promes (Landscape Logic)
+                let h1=`<tr><th rowspan="2" width="20%">Materi Pokok</th><th rowspan="2" width="5%">JP</th>`;
+                let h2=`<tr>`; let wMap=[];
+                MONTHS.forEach((m)=>{ h1+=`<th colspan="5">${m}</th>`; for(let w=1;w<=5;w++) h2+=`<th>${w}</th>`; });
+                
+                // Re-calculate Matrix for Print
+                let mGrid={}; let wLoad=new Array(60).fill(0); let jpW=parseInt(pd.jp_per_week)||4;
+                // Build Week Map again
+                MONTHS.forEach((m,i)=>{
+                    const y=i<6?startYear:startYear+1; const idx=i<6?i+6:i-6; const ds=new Date(y,idx+1,0).getDate();
+                    for(let w=1;w<=5;w++){
+                        let sd=(w-1)*7+3; if(sd>ds)sd=ds; wMap.push(!cal[`${y}-${idx}-${sd}`]);
+                    }
+                });
+
+                (pd.materials||[]).forEach((m,r)=>{
+                    let s=m.jp; let c=0;
+                    while(s>0 && c<60){
+                        if(!wMap[c] || wLoad[c]>=jpW){ c++; continue; }
+                        let take=Math.min(s, jpW-wLoad[c]);
+                        mGrid[`${r}-${c}`]=take; wLoad[c]+=take; s-=take;
+                    }
+                });
+
+                let bHtml="";
+                (pd.materials||[]).forEach((m,r)=>{
+                    bHtml+=`<tr><td>${m.topic}</td><td align="center">${m.jp}</td>`;
+                    for(let w=0;w<60;w++){
+                        let val = mGrid[`${r}-${w}`];
+                        // Black Block Logic
+                        bHtml += `<td class="${val ? 'bg-black-block' : ''}"></td>`;
+                    }
+                    bHtml+=`</tr>`;
+                });
+                document.getElementById('tblPromes').innerHTML = `<thead>${h1}</tr>${h2}</tr></thead><tbody>${bHtml}</tbody>`;
+            }
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('documentArea');
+            const opt = {
+                margin: 0,
+                filename: 'Dokumen_Administrasi_Guru.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 1.5, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>

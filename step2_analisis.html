@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Langkah 2: Analisis Materi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="sidebar.js"></script>
+    <style>
+        th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { vertical-align: top; }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
+
+    <div id="sidebar-container" class="flex-none h-full"></div>
+
+    <div class="flex-1 flex flex-col relative">
+        <header class="bg-white border-b px-6 py-4 shadow-sm flex justify-between items-center z-10">
+            <div>
+                <h1 class="text-xl font-bold text-slate-900">2. Analisis Materi (Manual Gemini)</h1>
+                <p class="text-xs text-slate-500">Analisis CP/KD untuk menentukan TP/IPK dan KKTP.</p>
+            </div>
+            <div class="text-xs font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded uppercase" id="badgeKurikulum">...</div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-6 pb-24 space-y-6">
+            
+            <div class="bg-white p-6 rounded-xl border border-blue-200 shadow-sm">
+                <h3 class="font-bold text-blue-800 mb-2">Langkah 1: Gunakan Gemini AI</h3>
+                <p class="text-sm text-slate-600 mb-4">Klik tombol di bawah untuk menyalin Prompt. Buka Gemini, tempel prompt, lalu upload PDF CP/KD Anda.</p>
+                <button onclick="openGemini()" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition transform hover:scale-105 flex items-center gap-2">
+                    📋 Copy Prompt & Buka Gemini ↗
+                </button>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-orange-200 shadow-sm">
+                <h3 class="font-bold text-orange-800 mb-2">Langkah 2: Tempel Hasil JSON</h3>
+                <p class="text-sm text-slate-600 mb-2">Salin jawaban dari Gemini (dari <code>[</code> sampai <code>]</code>), tempel di sini.</p>
+                <textarea id="jsonInput" class="w-full h-32 border border-slate-300 rounded-lg p-3 text-xs font-mono focus:ring-2 focus:ring-orange-500 outline-none" placeholder='[{"col1": "...", "col2": "..."}]'></textarea>
+                <button onclick="processJSON()" class="mt-3 bg-orange-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-orange-700 transition">
+                    ⬇️ Konversi ke Tabel
+                </button>
+            </div>
+
+            <div id="resultArea" class="bg-white rounded-lg border shadow-sm hidden overflow-hidden">
+                <div class="bg-slate-50 p-3 border-b flex justify-between items-center">
+                    <h3 class="font-bold text-slate-700 text-sm">Hasil Analisis</h3>
+                    <button onclick="addRow()" class="text-xs bg-white border px-3 py-1 rounded hover:bg-slate-50 text-blue-600 font-bold">+ Baris</button>
+                </div>
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-700 border-b">
+                        <tr>
+                            <th class="p-3 w-1/6" id="th1">Elemen / Topik</th>
+                            <th class="p-3 w-1/4" id="th2">CP / KD (Asli)</th>
+                            <th class="p-3 w-1/4" id="th3">TP / ATP / IPK</th>
+                            <th class="p-3 w-1/6" id="th4">KKTP / KKM</th>
+                            <th class="p-3 w-10 text-center">Hapus</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </main>
+
+        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between z-20 shadow-lg">
+            <a href="step1_profil.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
+            <button onclick="save()" id="btnSave" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition opacity-50 cursor-not-allowed" disabled>
+                Simpan & Lanjut (Kalender) →
+            </button>
+        </footer>
+    </div>
+
+    <script>
+        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+        let user, dataList=[], profile={};
+
+        async function init(){ 
+            const {data:{session}} = await db.auth.getSession(); 
+            if(!session) return location.href='index.html'; user=session.user;
+            const {data} = await db.from('profiles').select('*').eq('id', user.id).maybeSingle(); 
+            profile = data || { jenis_kurikulum: 'Merdeka', mata_pelajaran: 'Umum', fase_kelas: 'Umum' };
+            setupUI();
+        } init();
+
+        function setupUI() {
+            const isMerdeka = profile.jenis_kurikulum === 'Merdeka';
+            document.getElementById('badgeKurikulum').innerText = isMerdeka ? "Kurikulum Merdeka" : "Kurikulum 2013";
+            document.getElementById('th1').innerText = isMerdeka ? "Elemen / Topik" : "Materi Pokok";
+            document.getElementById('th2').innerText = isMerdeka ? "Capaian Pembelajaran (CP)" : "Kompetensi Dasar (KD)";
+            document.getElementById('th3').innerText = isMerdeka ? "Tujuan (TP/ATP)" : "Indikator (IPK)";
+            document.getElementById('th4').innerText = isMerdeka ? "KKTP" : "KKM";
+        }
+
+        function openGemini() {
+            const isMerdeka = profile.jenis_kurikulum === 'Merdeka';
+            const instruksi = isMerdeka ? 
+                `Analisis Kurikulum Merdeka. 1. Cari Elemen. 2. Salin CP. 3. Rumuskan TP. 4. Tentukan KKTP.` :
+                `Analisis K13. 1. Tentukan Materi Pokok. 2. Salin KD 3.x/4.x. 3. Rumuskan IPK. 4. Tentukan KKM.`;
+
+            const prompt = `PERAN: Ahli Kurikulum. KONTEKS: ${profile.mata_pelajaran}, ${profile.fase_kelas}.
+TUGAS: ${instruksi} dari dokumen yang saya upload.
+OUTPUT WAJIB: Hanya JSON Array valid. Jangan pakai Markdown.
+Format: [{"col1":"...","col2":"...","col3":"...","col4":"..."}]`;
+
+            navigator.clipboard.writeText(prompt).then(() => {
+                alert("Prompt tersalin! Paste di Gemini.");
+                window.open('https://gemini.google.com/app', '_blank');
+            });
+        }
+
+        function processJSON() {
+            try {
+                let raw = document.getElementById('jsonInput').value.trim();
+                const start = raw.indexOf('['); const end = raw.lastIndexOf(']');
+                if(start === -1) throw new Error("Format Array [...] tidak ditemukan");
+                dataList = JSON.parse(raw.substring(start, end+1));
+                render();
+                document.getElementById('jsonInput').value = "";
+                document.getElementById('btnSave').disabled = false;
+                document.getElementById('btnSave').classList.remove('opacity-50', 'cursor-not-allowed');
+            } catch(e) { alert("Gagal: " + e.message); }
+        }
+
+        function render() {
+            document.getElementById('resultArea').classList.remove('hidden');
+            const b = document.getElementById('tableBody'); b.innerHTML = '';
+            dataList.forEach((d,i) => {
+                b.innerHTML += `<tr class="hover:bg-slate-50 group">
+                    <td contenteditable class="p-3 font-bold border-r border-dashed" onblur="dataList[${i}].col1=this.innerText">${d.col1||''}</td>
+                    <td contenteditable class="p-3 text-xs border-r border-dashed" onblur="dataList[${i}].col2=this.innerText">${d.col2||''}</td>
+                    <td contenteditable class="p-3 text-xs text-blue-700 bg-blue-50/30 border-r border-dashed" onblur="dataList[${i}].col3=this.innerText">${d.col3||''}</td>
+                    <td contenteditable class="p-3 text-xs text-center font-mono" onblur="dataList[${i}].col4=this.innerText">${d.col4||''}</td>
+                    <td class="p-3 text-center"><button class="text-red-500 font-bold" onclick="dataList.splice(${i},1);render()">✕</button></td>
+                </tr>`;
+            });
+        }
+        function addRow(){ dataList.push({col1:"...", col2:"...", col3:"...", col4:"..."}); render(); }
+
+        async function save(){
+            const btn=document.getElementById('btnSave'); btn.innerText="Menyimpan...";
+            const content = dataList.map(d => ({ elemen:d.col1, deskripsi:d.col2, detail_tp:d.col3, detail_kktp:d.col4 }));
+            const payload = {
+                user_id: user.id, doc_type: 'master_cp_atp', 
+                subject_name: profile.mata_pelajaran, grade_level: profile.fase_kelas, curriculum_type: profile.jenis_kurikulum,
+                content_data: content, status: 'confirmed'
+            };
+            const {error} = await db.from('work_drafts').upsert(payload, {onConflict:'user_id,doc_type'});
+            if(error) alert(error.message); else location.href='step3_kalender.html';
+        }
+    </script>
+</body>
+</html>

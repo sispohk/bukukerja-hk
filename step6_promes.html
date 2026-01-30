@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Langkah 6: Promes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="sidebar.js"></script>
+    <style>
+        .sticky-col { position: sticky; left: 0; background: white; z-index: 10; border-right: 2px solid #cbd5e1; }
+        .bg-kbm { background-color: #3b82f6; color: white; font-weight: bold; }
+        .bg-libur-matrix { background-color: #fee2e2; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, #fecaca 5px, #fecaca 10px); }
+        .matrix-table th, .matrix-table td { border: 1px solid #cbd5e1; font-size: 11px; text-align: center; height: 32px; padding: 4px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
+
+    <div id="sidebar-container" class="flex-none h-full"></div>
+
+    <div class="flex-1 flex flex-col relative min-w-0">
+        <header class="bg-white border-b px-6 py-4 shadow-sm z-20 shrink-0">
+            <h1 class="text-xl font-bold text-slate-900">6. Program Semester (Matrix)</h1>
+            <p class="text-xs text-slate-500">Distribusi JP ke dalam Kalender Pekanan.</p>
+        </header>
+
+        <main class="flex-1 overflow-auto bg-slate-50 p-4">
+            <div class="bg-white rounded shadow border border-gray-200 inline-block min-w-full">
+                <table class="matrix-table border-collapse" style="min-width: 2500px;">
+                    <thead class="bg-slate-100 text-slate-700 sticky top-0 z-20 shadow-sm" id="promesHead"></thead>
+                    <tbody id="promesBody" class="text-slate-600"></tbody>
+                </table>
+            </div>
+        </main>
+
+        <footer class="bg-white border-t p-4 z-20 shrink-0 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+            <a href="step5_prota.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
+            <button onclick="finish()" class="bg-green-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-700 shadow-lg flex items-center gap-2 transition transform active:scale-95">
+                ✅ Selesai & Buat RPP (Step 7) →
+            </button>
+        </footer>
+    </div>
+
+    <script>
+        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+        let user, calendarData={}, materials=[], jpWeek=4;
+        const MONTHS = ["Juli", "Agustus", "September", "Oktober", "November", "Desember", "Januari", "Februari", "Maret", "April", "Mei", "Juni"];
+        let START_YEAR = new Date().getFullYear();
+
+        async function init() {
+            const { data: { session } } = await db.auth.getSession();
+            if(!session) return location.href='index.html'; user=session.user;
+
+            const { data: p } = await db.from('profiles').select('tahun_ajaran').eq('id', user.id).maybeSingle();
+            if(p && p.tahun_ajaran) START_YEAR = parseInt(p.tahun_ajaran.split('/')[0]) || START_YEAR;
+
+            const { data: d } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'promes_data').maybeSingle();
+            if(d && d.content_data) {
+                calendarData = d.content_data.calendar || {};
+                materials = d.content_data.materials || [];
+                jpWeek = parseInt(d.content_data.jp_per_week) || 4;
+                renderPromes();
+            } else { alert("Data kosong."); location.href='step3_kalender.html'; }
+        } init();
+
+        function renderPromes() {
+            const head = document.getElementById('promesHead');
+            const body = document.getElementById('promesBody');
+            
+            let h1 = `<tr><th rowspan="2" class="sticky-col bg-slate-50 border p-2" style="min-width: 350px; left: 0;">Materi Pokok</th><th rowspan="2" class="sticky-col bg-slate-50 border w-16" style="left: 350px;">JP</th>`;
+            let h2 = `<tr>`;
+            let weekMap = []; 
+
+            MONTHS.forEach((mName, i) => {
+                h1 += `<th colspan="5" class="border font-bold ${i<6?'bg-blue-50':'bg-yellow-50'}">${mName}</th>`;
+                const year = i < 6 ? START_YEAR : START_YEAR+1; const mIdx = i < 6 ? i+6 : i-6;
+                const days = new Date(year, mIdx+1, 0).getDate();
+                for(let w=1; w<=5; w++) {
+                    let sd = (w-1)*7 + 3; if(sd > days) sd = days;
+                    const k = `${year}-${mIdx}-${sd}`;
+                    const isHol = calendarData[k] === 'holiday'; weekMap.push(!isHol);
+                    h2 += `<th class="border w-8 ${isHol?'bg-red-100 text-red-400':'bg-white'}">${w}</th>`;
+                }
+            });
+            head.innerHTML = h1 + `</tr>` + h2 + `</tr>`;
+
+            let matrixMap = {}; let weekLoads = new Array(60).fill(0); let globalCursor = 0;
+
+            materials.forEach((m, rowIdx) => {
+                let sisaJP = m.jp;
+                while(sisaJP > 0 && globalCursor < 60) {
+                    if (!weekMap[globalCursor]) { globalCursor++; continue; }
+                    if (weekLoads[globalCursor] >= jpWeek) { globalCursor++; continue; }
+                    let space = jpWeek - weekLoads[globalCursor];
+                    let take = Math.min(sisaJP, space);
+                    matrixMap[`${rowIdx}-${globalCursor}`] = take;
+                    weekLoads[globalCursor] += take;
+                    sisaJP -= take;
+                }
+            });
+
+            let bHtml = '';
+            materials.forEach((m, rowIdx) => {
+                let cells = '';
+                for(let w=0; w<60; w++) {
+                    const isEff = weekMap[w];
+                    let val = matrixMap[`${rowIdx}-${w}`];
+                    let cls = isEff ? (val ? 'bg-kbm' : '') : 'bg-libur-matrix';
+                    cells += `<td class="${cls}">${val || ''}</td>`;
+                }
+                bHtml += `<tr class="hover:bg-slate-50 transition"><td class="sticky-col p-2 text-left border font-medium text-slate-700" style="min-width: 350px; left: 0;">${m.topic}</td><td class="sticky-col border font-bold text-center bg-slate-50" style="left: 350px;">${m.jp}</td>${cells}</tr>`;
+            });
+            body.innerHTML = bHtml;
+        }
+
+        function finish() { if(confirm("Lanjut ke RPP?")) window.location.href = 'step7_rpp.html'; }
+    </script>
+</body>
+</html>
