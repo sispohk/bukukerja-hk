@@ -2,10 +2,12 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';">
     <title>Cetak Dokumen Lengkap</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.11/purify.min.js"></script>
     <script src="config.js"></script>
     <script src="sidebar.js"></script>
     <style>
@@ -24,7 +26,7 @@
         .cover-border { border: 3px double black; padding: 10mm; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; }
         .cover-title { font-size: 24pt; font-weight: bold; font-family: Arial, sans-serif; margin-bottom: 10px; }
         .cover-sub { font-size: 16pt; font-weight: bold; margin-bottom: 40px; }
-        .cover-logo { width: 120px; height: 120px; margin: 20px auto; opacity: 0.5; background: url('https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png') no-repeat center/contain; }
+        .cover-logo { width: 120px; height: 120px; margin: 20px auto; opacity: 0.5; background: url('assets/logo_tutwuri.png') no-repeat center/contain; }
         .cover-identitas { width: 100%; text-align: center; margin: 20px 0; font-size: 14pt; }
         .cover-identitas td { padding: 5px; border: none; text-align: left; }
         .cover-footer { font-size: 14pt; font-weight: bold; text-transform: uppercase; }
@@ -243,6 +245,16 @@
             renderDoc(p.data, cp.data, promes.data, lamp.data, rpp.data);
         } init();
 
+
+        function escapeHTML(s){
+            return String(s ?? '')
+              .replace(/&/g,'&amp;')
+              .replace(/</g,'&lt;')
+              .replace(/>/g,'&gt;')
+              .replace(/"/g,'&quot;')
+              .replace(/'/g,'&#39;');
+        }
+
         function renderDoc(prof, cp, promes, lamp, rpp) {
             const p = prof || {};
             // 1. FILL PLACEHOLDERS
@@ -258,7 +270,7 @@
             if(cp && cp.content_data) {
                 let h = "";
                 cp.content_data.forEach((d, i) => {
-                    h += `<tr><td align="center">${i+1}</td><td>${d.elemen}</td><td>${d.deskripsi}</td><td><strong>Tujuan:</strong> ${d.detail_tp}<br><br><strong>KKTP:</strong> ${d.detail_kktp}</td></tr>`;
+                    h += `<tr><td align="center">${i+1}</td><td>${escapeHTML(d.elemen)}</td><td>${escapeHTML(d.deskripsi)}</td><td><strong>Tujuan:</strong> ${escapeHTML(d.detail_tp)}<br><br><strong>KKTP:</strong> ${escapeHTML(d.detail_kktp)}</td></tr>`;
                 });
                 document.getElementById('tblCP').innerHTML = h;
             }
@@ -304,7 +316,7 @@
                         </table>
                     </div>
                 `;
-                document.getElementById('rppOutput').innerHTML = officialRPP;
+                document.getElementById('rppOutput').innerHTML = DOMPurify.sanitize(officialRPP, { USE_PROFILES: { html: true } });
             }
 
             // 4. LAMPIRAN
@@ -363,7 +375,7 @@
                 let acc=0; const capSmt1 = Math.floor(heCount/2 * (pd.jp_per_week/5));
                 (pd.materials||[]).forEach((m, i) => {
                     acc+=m.jp;
-                    document.getElementById('tblProta').innerHTML += `<tr><td align="center">${acc<=capSmt1?'1 (Ganjil)':'2 (Genap)'}</td><td align="center">${i+1}</td><td>${m.topic}</td><td align="center">${m.jp} JP</td></tr>`;
+                    document.getElementById('tblProta').innerHTML += `<tr><td align="center">${acc<=capSmt1?'1 (Ganjil)':'2 (Genap)'}</td><td align="center">${i+1}</td><td>${escapeHTML(m.topic)}</td><td align="center">${m.jp} JP</td></tr>`;
                 });
 
                 // Promes (Landscape Logic)
@@ -392,7 +404,7 @@
 
                 let bHtml="";
                 (pd.materials||[]).forEach((m,r)=>{
-                    bHtml+=`<tr><td>${m.topic}</td><td align="center">${m.jp}</td>`;
+                    bHtml+=`<tr><td>${escapeHTML(m.topic)}</td><td align="center">${m.jp}</td>`;
                     for(let w=0;w<60;w++){
                         let val = mGrid[`${r}-${w}`];
                         // Black Block Logic

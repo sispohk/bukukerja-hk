@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';">
     <title>Langkah 4: Alokasi JP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -93,6 +94,16 @@
             calcHE(); renderTable();
         } init();
 
+        function escapeHTML(s){
+            return String(s ?? '')
+              .replace(/&/g,'&amp;')
+              .replace(/</g,'&lt;')
+              .replace(/>/g,'&gt;')
+              .replace(/"/g,'&quot;')
+              .replace(/'/g,'&#39;');
+        }
+
+
         function calcHE() {
             let c=0; MONTHS.forEach((_, i) => {
                 const year = i < 6 ? START_YEAR : START_YEAR+1; const mIdx = i < 6 ? i+6 : i-6;
@@ -116,7 +127,7 @@
             mats.forEach((m, i) => {
                 used += m.jp;
                 const meet = Math.ceil(m.jp / jpWeek);
-                tb.innerHTML += `<tr class="border-b hover:bg-slate-50"><td class="p-3 text-slate-500">${i+1}</td><td class="p-3 font-medium">${m.topic}</td><td class="p-3 text-center"><input type="number" class="w-16 border rounded text-center font-bold" value="${m.jp}" step="${stepInput}" onchange="mats[${i}].jp=parseInt(this.value)||0;renderTable()"> JP</td><td class="p-3 text-center text-xs text-gray-500">~ ${meet} Mg</td></tr>`;
+                tb.innerHTML += `<tr class="border-b hover:bg-slate-50"><td class="p-3 text-slate-500">${i+1}</td><td class="p-3 font-medium">${escapeHTML(m.topic)}</td><td class="p-3 text-center"><input type="number" class="w-16 border rounded text-center font-bold" value="${m.jp}" step="${stepInput}" onchange="mats[${i}].jp=parseInt(this.value)||0;renderTable()"> JP</td><td class="p-3 text-center text-xs text-gray-500">~ ${meet} Mg</td></tr>`;
             });
             
             const sumEl = document.getElementById('sumUsedJP');

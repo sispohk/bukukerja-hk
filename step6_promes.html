@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';">
     <title>Langkah 6: Promes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -63,6 +64,16 @@
             } else { alert("Data kosong."); location.href='step3_kalender.html'; }
         } init();
 
+        function escapeHTML(s){
+            return String(s ?? '')
+              .replace(/&/g,'&amp;')
+              .replace(/</g,'&lt;')
+              .replace(/>/g,'&gt;')
+              .replace(/"/g,'&quot;')
+              .replace(/'/g,'&#39;');
+        }
+
+
         function renderPromes() {
             const head = document.getElementById('promesHead');
             const body = document.getElementById('promesBody');
@@ -78,7 +89,7 @@
                 for(let w=1; w<=5; w++) {
                     let sd = (w-1)*7 + 3; if(sd > days) sd = days;
                     const k = `${year}-${mIdx}-${sd}`;
-                    const isHol = calendarData[k] === 'holiday'; weekMap.push(!isHol);
+                    const isHol = !!calendarData[k]; weekMap.push(!isHol);
                     h2 += `<th class="border w-8 ${isHol?'bg-red-100 text-red-400':'bg-white'}">${w}</th>`;
                 }
             });
@@ -108,7 +119,7 @@
                     let cls = isEff ? (val ? 'bg-kbm' : '') : 'bg-libur-matrix';
                     cells += `<td class="${cls}">${val || ''}</td>`;
                 }
-                bHtml += `<tr class="hover:bg-slate-50 transition"><td class="sticky-col p-2 text-left border font-medium text-slate-700" style="min-width: 350px; left: 0;">${m.topic}</td><td class="sticky-col border font-bold text-center bg-slate-50" style="left: 350px;">${m.jp}</td>${cells}</tr>`;
+                bHtml += `<tr class="hover:bg-slate-50 transition"><td class="sticky-col p-2 text-left border font-medium text-slate-700" style="min-width: 350px; left: 0;">${escapeHTML(m.topic)}</td><td class="sticky-col border font-bold text-center bg-slate-50" style="left: 350px;">${m.jp}</td>${cells}</tr>`;
             });
             body.innerHTML = bHtml;
         }

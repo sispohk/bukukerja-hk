@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';">
     <title>Langkah 5: Prota</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -21,6 +22,17 @@
         <main class="flex-1 overflow-y-auto p-8 pb-24">
             <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow border min-h-[500px]">
                 <h2 class="text-center font-bold text-xl mb-6 text-slate-800">PROGRAM TAHUNAN</h2>
+                <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between mb-4">
+                    <div class="text-xs text-slate-500">
+                        Tabel di bawah <b>bisa diedit</b> (materi & JP). Klik <b>Simpan</b> agar perubahan dipakai di Step 6–9.
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="btnSave" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-emerald-700 transition">💾 Simpan</button>
+                        <button id="btnReset" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-300 transition">↩ Reset</button>
+                    </div>
+                </div>
+
+                <div id="status" class="text-xs text-slate-500 mb-3"></div>
                 <div id="protaContent" class="text-center text-gray-500 italic">Memuat data...</div>
             </div>
         </main>
@@ -38,21 +50,66 @@
         let startYear=new Date().getFullYear(); 
         const MONTHS=["Juli","Agustus","September","Oktober","November","Desember","Januari","Februari","Maret","April","Mei","Juni"];
 
+        let sessionUser = null;
+        let draftRow = null;
+        let originalData = null;
+        let currentData = null;
+        let mats = [];
+
         async function init() {
             const { data: { session } } = await db.auth.getSession();
             if(!session) return location.href = 'index.html'; 
+            sessionUser = session.user;
             
             const { data: p } = await db.from('profiles').select('tahun_ajaran').eq('id', session.user.id).maybeSingle();
             if(p && p.tahun_ajaran) startYear = parseInt(p.tahun_ajaran.split('/')[0]) || startYear;
 
             const { data: d } = await db.from('work_drafts').select('*').eq('user_id', session.user.id).eq('doc_type', 'promes_data').maybeSingle();
-            if(d) render(d.content_data); else { alert("Data belum lengkap."); location.href = 'step3_kalender.html'; }
+            if(d) {
+                draftRow = d;
+                originalData = JSON.parse(JSON.stringify(d.content_data || {}));
+                currentData = JSON.parse(JSON.stringify(d.content_data || {}));
+                mats = Array.isArray(currentData.materials) ? JSON.parse(JSON.stringify(currentData.materials)) : [];
+                bindButtons();
+                render();
+            } else {
+                alert("Data belum lengkap.");
+                location.href = 'step3_kalender.html';
+            }
         } init();
 
-        function render(data) {
-            let cal = data.calendar || {};
-            let mats = data.materials || [];
-            let jp = parseInt(data.jp_per_week) || 4;
+        function setStatus(msg, tone='info') {
+            const el = document.getElementById('status');
+            const color = tone==='ok' ? 'text-emerald-700' : tone==='err' ? 'text-red-700' : 'text-slate-500';
+            el.className = `text-xs mb-3 ${color}`;
+            el.textContent = msg;
+        }
+
+        function bindButtons(){
+            document.getElementById('btnSave').onclick = saveChanges;
+            document.getElementById('btnReset').onclick = () => {
+                if(!originalData) return;
+                currentData = JSON.parse(JSON.stringify(originalData));
+                mats = Array.isArray(currentData.materials) ? JSON.parse(JSON.stringify(currentData.materials)) : [];
+                render();
+                setStatus('Perubahan dibatalkan. Kembali ke data awal.', 'info');
+            };
+        }
+
+        function escapeHTML(s){
+            return String(s ?? '')
+              .replace(/&/g,'&amp;')
+              .replace(/</g,'&lt;')
+              .replace(/>/g,'&gt;')
+              .replace(/"/g,'&quot;')
+              .replace(/'/g,'&#39;');
+        }
+
+
+        function render() {
+            const data = currentData || {};
+            const cal = data.calendar || {};
+            const jp = parseInt(data.jp_per_week) || 4;
 
             // Hitung Kapasitas Semester 1 (Juli - Des)
             let capSmt1 = 0;
@@ -66,16 +123,114 @@
             }
             let jpSmt1Cap = Math.floor(capSmt1 * (jp/5));
 
-            let html = `<table class="w-full border-collapse border text-sm text-left"><thead class="bg-gray-100 font-bold text-slate-700 text-center"><tr><th class="border p-3">SMT</th><th class="border p-3">No</th><th class="border p-3 text-left">Materi Pokok</th><th class="border p-3">Alokasi</th></tr></thead><tbody>`;
-            
+            const wrap = document.getElementById('protaContent');
+            wrap.innerHTML = '';
+
+            if(!mats.length){
+                wrap.className = 'text-center text-gray-500 italic';
+                wrap.textContent = 'Belum ada materi pada data promes.';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.className = 'w-full border-collapse border text-sm text-left';
+
+            const thead = document.createElement('thead');
+            thead.className = 'bg-gray-100 font-bold text-slate-700 text-center';
+            const hr = document.createElement('tr');
+            ['SMT','No','Materi Pokok','Alokasi (JP)'].forEach((t, idx) => {
+                const th = document.createElement('th');
+                th.className = 'border p-3' + (idx===2 ? ' text-left' : '');
+                th.textContent = t;
+                hr.appendChild(th);
+            });
+            thead.appendChild(hr);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+
             let acc = 0;
             mats.forEach((m, i) => {
-                acc += m.jp;
-                const smt = acc <= jpSmt1Cap ? "1 (Ganjil)" : "2 (Genap)";
-                const bg = smt.includes("1") ? "bg-white" : "bg-slate-50";
-                html += `<tr class="${bg}"><td class="border p-3 text-center font-bold text-slate-500">${smt}</td><td class="border p-3 text-center">${i+1}</td><td class="border p-3">${m.topic}</td><td class="border p-3 text-center font-bold text-blue-600">${m.jp} JP</td></tr>`;
+                const jpVal = Math.max(1, parseInt(m.jp) || 1);
+                acc += jpVal;
+                const smt = acc <= jpSmt1Cap ? '1 (Ganjil)' : '2 (Genap)';
+                const bg = smt.includes('1') ? 'bg-white' : 'bg-slate-50';
+
+                const tr = document.createElement('tr');
+                tr.className = bg;
+
+                const tdS = document.createElement('td');
+                tdS.className = 'border p-3 text-center font-bold text-slate-500';
+                tdS.textContent = smt;
+
+                const tdNo = document.createElement('td');
+                tdNo.className = 'border p-3 text-center';
+                tdNo.textContent = String(i+1);
+
+                const tdT = document.createElement('td');
+                tdT.className = 'border p-2';
+                const inpT = document.createElement('input');
+                inpT.type = 'text';
+                inpT.value = (m.topic ?? '').toString();
+                inpT.className = 'w-full border rounded px-3 py-2 text-sm bg-white';
+                inpT.oninput = (e) => {
+                    mats[i].topic = e.target.value;
+                    setStatus('Ada perubahan yang belum disimpan.', 'info');
+                };
+                tdT.appendChild(inpT);
+
+                const tdJ = document.createElement('td');
+                tdJ.className = 'border p-2 text-center';
+                const inpJ = document.createElement('input');
+                inpJ.type = 'number';
+                inpJ.min = '1';
+                inpJ.step = '1';
+                inpJ.value = String(jpVal);
+                inpJ.className = 'w-24 border rounded px-3 py-2 text-sm text-center bg-white';
+                inpJ.onchange = (e) => {
+                    const v = Math.max(1, parseInt(e.target.value) || 1);
+                    mats[i].jp = v;
+                    render();
+                    setStatus('Ada perubahan yang belum disimpan.', 'info');
+                };
+                tdJ.appendChild(inpJ);
+
+                tr.appendChild(tdS);
+                tr.appendChild(tdNo);
+                tr.appendChild(tdT);
+                tr.appendChild(tdJ);
+                tbody.appendChild(tr);
             });
-            document.getElementById('protaContent').innerHTML = html + `</tbody></table>`;
+
+            table.appendChild(tbody);
+            wrap.className = '';
+            wrap.appendChild(table);
+            setStatus('Siap. Edit materi/JP lalu klik Simpan.', 'info');
+        }
+
+        async function saveChanges(){
+            if(!draftRow || !sessionUser) return;
+            const btn = document.getElementById('btnSave');
+            btn.disabled = true;
+            btn.textContent = '⏳ Menyimpan...';
+            try{
+                currentData.materials = mats;
+                const { error } = await db.from('work_drafts')
+                    .update({ content_data: currentData })
+                    .eq('id', draftRow.id)
+                    .eq('user_id', sessionUser.id);
+                if(error) throw error;
+                // Refresh original snapshot
+                originalData = JSON.parse(JSON.stringify(currentData));
+                setStatus('Tersimpan ✅ Perubahan akan dipakai di Step 6–9.', 'ok');
+            } catch(e){
+                console.error(e);
+                setStatus('Gagal menyimpan. Cek console/log Supabase.', 'err');
+                alert('Gagal menyimpan perubahan. Silakan cek console.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 Simpan';
+            }
         }
     </script>
 </body>

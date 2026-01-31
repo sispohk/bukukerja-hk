@@ -1,154 +1,556 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <title>Langkah 2: Analisis Materi</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
-    <script src="sidebar.js"></script>
-    <style>
-        th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-        td { vertical-align: top; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';" />
+  <title>Langkah 2: Analisis Materi</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- PDF.js (extract text from PDF in browser) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script>
+
+  <!-- Mammoth (extract text from DOCX in browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.11.0/mammoth.browser.min.js"></script>
+
+  <!-- SheetJS (extract text from XLSX in browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script src="config.js"></script>
+  <script src="sidebar.js"></script>
+
+  <style>
+    th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { vertical-align: top; }
+  </style>
 </head>
+
 <body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
+  <div id="sidebar-container" class="flex-none h-full"></div>
 
-    <div id="sidebar-container" class="flex-none h-full"></div>
+  <div class="flex-1 flex flex-col relative">
+    <header class="bg-white border-b px-6 py-4 shadow-sm flex justify-between items-center z-10">
+      <div>
+        <h1 class="text-xl font-bold text-slate-900">2. Analisis Materi (Upload + AI)</h1>
+        <p class="text-xs text-slate-500">Upload CP atau KI-KD lalu hasil analisis langsung menjadi tabel editable.</p>
+      </div>
+      <div class="text-xs font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded uppercase" id="badgeKurikulum">...</div>
+    </header>
 
-    <div class="flex-1 flex flex-col relative">
-        <header class="bg-white border-b px-6 py-4 shadow-sm flex justify-between items-center z-10">
-            <div>
-                <h1 class="text-xl font-bold text-slate-900">2. Analisis Materi (Manual Gemini)</h1>
-                <p class="text-xs text-slate-500">Analisis CP/KD untuk menentukan TP/IPK dan KKTP.</p>
-            </div>
-            <div class="text-xs font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded uppercase" id="badgeKurikulum">...</div>
-        </header>
+    <main class="flex-1 overflow-y-auto p-6 pb-24 space-y-6">
+      <!-- Upload & Extract -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-end gap-4">
+          <div class="flex-1">
+            <label class="text-sm font-bold text-slate-800">Jenis Dokumen</label>
+            <select id="docMode" class="mt-1 w-full border border-slate-300 rounded-lg p-2 text-sm">
+              <option value="cp">CP (untuk Kurikulum Merdeka)</option>
+              <option value="kikd">KI-KD (untuk Kurikulum 2013)</option>
+            </select>
+            <p class="mt-1 text-xs text-slate-500">Pilih sesuai file yang Anda upload. Output tabel otomatis menyesuaikan.</p>
+          </div>
 
-        <main class="flex-1 overflow-y-auto p-6 pb-24 space-y-6">
-            
-            <div class="bg-white p-6 rounded-xl border border-blue-200 shadow-sm">
-                <h3 class="font-bold text-blue-800 mb-2">Langkah 1: Gunakan Gemini AI</h3>
-                <p class="text-sm text-slate-600 mb-4">Klik tombol di bawah untuk menyalin Prompt. Buka Gemini, tempel prompt, lalu upload PDF CP/KD Anda.</p>
-                <button onclick="openGemini()" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition transform hover:scale-105 flex items-center gap-2">
-                    📋 Copy Prompt & Buka Gemini ↗
-                </button>
-            </div>
+          <div class="flex-1">
+            <label class="text-sm font-bold text-slate-800">Upload File (PDF/DOCX/XLSX)</label>
+            <input id="fileInput" type="file" accept=".pdf,.docx,.xlsx" class="mt-1 w-full text-sm" />
+            <p class="mt-1 text-xs text-slate-500">Tips: file terlalu berat = ekstraksi lama. PDF hasil scan (gambar) biasanya tidak bisa diekstrak tanpa OCR.</p>
+          </div>
 
-            <div class="bg-white p-6 rounded-xl border border-orange-200 shadow-sm">
-                <h3 class="font-bold text-orange-800 mb-2">Langkah 2: Tempel Hasil JSON</h3>
-                <p class="text-sm text-slate-600 mb-2">Salin jawaban dari Gemini (dari <code>[</code> sampai <code>]</code>), tempel di sini.</p>
-                <textarea id="jsonInput" class="w-full h-32 border border-slate-300 rounded-lg p-3 text-xs font-mono focus:ring-2 focus:ring-orange-500 outline-none" placeholder='[{"col1": "...", "col2": "..."}]'></textarea>
-                <button onclick="processJSON()" class="mt-3 bg-orange-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-orange-700 transition">
-                    ⬇️ Konversi ke Tabel
-                </button>
-            </div>
-
-            <div id="resultArea" class="bg-white rounded-lg border shadow-sm hidden overflow-hidden">
-                <div class="bg-slate-50 p-3 border-b flex justify-between items-center">
-                    <h3 class="font-bold text-slate-700 text-sm">Hasil Analisis</h3>
-                    <button onclick="addRow()" class="text-xs bg-white border px-3 py-1 rounded hover:bg-slate-50 text-blue-600 font-bold">+ Baris</button>
-                </div>
-                <table class="w-full text-sm text-left">
-                    <thead class="bg-slate-100 text-slate-700 border-b">
-                        <tr>
-                            <th class="p-3 w-1/6" id="th1">Elemen / Topik</th>
-                            <th class="p-3 w-1/4" id="th2">CP / KD (Asli)</th>
-                            <th class="p-3 w-1/4" id="th3">TP / ATP / IPK</th>
-                            <th class="p-3 w-1/6" id="th4">KKTP / KKM</th>
-                            <th class="p-3 w-10 text-center">Hapus</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-gray-100"></tbody>
-                </table>
-            </div>
-        </main>
-
-        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between z-20 shadow-lg">
-            <a href="step1_profil.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
-            <button onclick="save()" id="btnSave" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition opacity-50 cursor-not-allowed" disabled>
-                Simpan & Lanjut (Kalender) →
+          <div class="flex gap-2">
+            <button id="btnExtract" onclick="extractNow()" class="bg-slate-800 text-white px-5 py-2 rounded-lg font-bold shadow hover:bg-slate-900 transition">
+              1) Ekstrak Teks
             </button>
-        </footer>
-    </div>
+            <button id="btnAnalyze" onclick="analyzeAI()" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition opacity-50 cursor-not-allowed" disabled>
+              2) Analisis AI
+            </button>
+          </div>
+        </div>
 
-    <script>
-        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
-        let user, dataList=[], profile={};
+        <div class="mt-4">
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-bold text-slate-800">Teks Hasil Ekstraksi</label>
+            <span id="extractInfo" class="text-xs text-slate-500"></span>
+          </div>
+          <textarea id="extractedText" class="mt-2 w-full h-44 border border-slate-300 rounded-lg p-3 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Hasil ekstraksi akan muncul di sini. Anda boleh mengedit sebelum dianalisis."></textarea>
+        </div>
 
-        async function init(){ 
-            const {data:{session}} = await db.auth.getSession(); 
-            if(!session) return location.href='index.html'; user=session.user;
-            const {data} = await db.from('profiles').select('*').eq('id', user.id).maybeSingle(); 
-            profile = data || { jenis_kurikulum: 'Merdeka', mata_pelajaran: 'Umum', fase_kelas: 'Umum' };
-            setupUI();
-        } init();
+        <div id="progressBox" class="mt-4 hidden">
+          <div class="flex items-center justify-between mb-2">
+            <span id="progressText" class="text-xs text-slate-600">...</span>
+            <span id="cooldownText" class="text-xs text-orange-700 font-bold"></span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div id="progressBar" class="bg-blue-600 h-2" style="width:0%"></div>
+          </div>
+        </div>
 
-        function setupUI() {
-            const isMerdeka = profile.jenis_kurikulum === 'Merdeka';
-            document.getElementById('badgeKurikulum').innerText = isMerdeka ? "Kurikulum Merdeka" : "Kurikulum 2013";
-            document.getElementById('th1').innerText = isMerdeka ? "Elemen / Topik" : "Materi Pokok";
-            document.getElementById('th2').innerText = isMerdeka ? "Capaian Pembelajaran (CP)" : "Kompetensi Dasar (KD)";
-            document.getElementById('th3').innerText = isMerdeka ? "Tujuan (TP/ATP)" : "Indikator (IPK)";
-            document.getElementById('th4').innerText = isMerdeka ? "KKTP" : "KKM";
+        <div class="mt-4 text-xs text-slate-500">
+          Provider AI: <b>Groq</b>. Pastikan <code>GROQ_API_KEY</code> sudah diisi di <code>config.js</code>.
+        </div>
+      </div>
+
+      <!-- Fallback: Raw JSON -->
+      <div class="bg-white p-6 rounded-xl border border-orange-200 shadow-sm">
+        <h3 class="font-bold text-orange-800 mb-2">(Opsional) Raw Output / Perbaikan JSON</h3>
+        <p class="text-sm text-slate-600 mb-2">Kalau AI mengembalikan JSON yang tidak rapi, raw output akan muncul di sini. Perbaiki manual lalu klik konversi.</p>
+        <textarea id="jsonInput" class="w-full h-32 border border-slate-300 rounded-lg p-3 text-xs font-mono focus:ring-2 focus:ring-orange-500 outline-none" placeholder='[{"col1":"...","col2":"...","col3":"...","col4":"..."}]'></textarea>
+        <button onclick="processJSON()" class="mt-3 bg-orange-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-orange-700 transition">
+          ⬇️ Konversi ke Tabel
+        </button>
+      </div>
+
+      <!-- Result table -->
+      <div id="resultArea" class="bg-white rounded-lg border shadow-sm hidden overflow-hidden">
+        <div class="bg-slate-50 p-3 border-b flex justify-between items-center">
+          <h3 class="font-bold text-slate-700 text-sm">Hasil Analisis (Editable)</h3>
+          <button onclick="addRow()" class="text-xs bg-white border px-3 py-1 rounded hover:bg-slate-50 text-blue-600 font-bold">+ Baris</button>
+        </div>
+        <table class="w-full text-sm text-left">
+          <thead class="bg-slate-100 text-slate-700 border-b">
+            <tr>
+              <th class="p-3 w-1/6" id="th1">Elemen / Topik</th>
+              <th class="p-3 w-1/4" id="th2">CP / KD (Asli)</th>
+              <th class="p-3 w-1/4" id="th3">TP / ATP / IPK</th>
+              <th class="p-3 w-1/6" id="th4">KKTP / KKM</th>
+              <th class="p-3 w-10 text-center">Hapus</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-gray-100"></tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between z-20 shadow-lg">
+      <a href="step1_profil.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
+      <button onclick="save()" id="btnSave" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition opacity-50 cursor-not-allowed" disabled>
+        Simpan & Lanjut (Kalender) →
+      </button>
+    </footer>
+  </div>
+
+  <script>
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+    let user, dataList = [], profile = {};
+
+    // PDF.js worker config
+    if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.worker.min.js';
+    }
+
+    async function init() {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) return location.href = 'index.html';
+      user = session.user;
+
+      const { data } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      profile = data || { jenis_kurikulum: 'Merdeka', mata_pelajaran: 'Umum', fase_kelas: 'Umum' };
+      setupUI();
+
+      // auto load draft if exists
+      const { data: draft } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle();
+      if (draft?.content_data?.length) {
+        // adapt existing content_data -> table view
+        dataList = (draft.content_data || []).map(x => ({
+          col1: x.elemen || '',
+          col2: x.deskripsi || '',
+          col3: x.detail_tp || '',
+          col4: x.detail_kktp || ''
+        }));
+        render();
+        enableSave();
+      }
+    }
+    init();
+
+    function setupUI() {
+      const kur = String(profile.jenis_kurikulum || '').toLowerCase();
+      const isMerdeka = kur.includes('merdeka');
+      document.getElementById('badgeKurikulum').innerText = isMerdeka ? 'Kurikulum Merdeka' : 'Kurikulum 2013';
+
+      // Default docMode based on kurikulum
+      document.getElementById('docMode').value = isMerdeka ? 'cp' : 'kikd';
+      applyTableHeaders();
+
+      document.getElementById('docMode').addEventListener('change', applyTableHeaders);
+    }
+
+    function applyTableHeaders() {
+      const mode = document.getElementById('docMode').value;
+      const isCP = mode === 'cp';
+      document.getElementById('th1').innerText = isCP ? 'Elemen / Topik' : 'Materi Pokok';
+      document.getElementById('th2').innerText = isCP ? 'Capaian Pembelajaran (CP)' : 'Kompetensi Dasar (KD)';
+      document.getElementById('th3').innerText = isCP ? 'Tujuan (TP/ATP)' : 'Indikator (IPK)';
+      document.getElementById('th4').innerText = isCP ? 'KKTP' : 'KKM';
+    }
+
+    function setProgress(show, text = '', pct = 0, cooldown = '') {
+      const box = document.getElementById('progressBox');
+      const t = document.getElementById('progressText');
+      const b = document.getElementById('progressBar');
+      const c = document.getElementById('cooldownText');
+      if (!show) {
+        box.classList.add('hidden');
+        return;
+      }
+      box.classList.remove('hidden');
+      t.innerText = text;
+      b.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+      c.innerText = cooldown || '';
+    }
+
+    function enableAnalyze() {
+      const btn = document.getElementById('btnAnalyze');
+      btn.disabled = false;
+      btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
+    function enableSave() {
+      const btn = document.getElementById('btnSave');
+      btn.disabled = false;
+      btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    async function extractNow() {
+      const file = document.getElementById('fileInput').files?.[0];
+      if (!file) return alert('Pilih file dulu (PDF/DOCX/XLSX).');
+
+      const btn = document.getElementById('btnExtract');
+      btn.disabled = true;
+      btn.innerText = '⏳ Mengekstrak...';
+
+      setProgress(true, 'Mengekstrak teks dari file...', 10);
+
+      try {
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
+        let text = '';
+
+        if (ext === 'pdf') text = await extractPdfText(file);
+        else if (ext === 'docx') text = await extractDocxText(file);
+        else if (ext === 'xlsx') text = await extractXlsxText(file);
+        else throw new Error('Format tidak didukung. Gunakan PDF/DOCX/XLSX.');
+
+        text = (text || '').trim();
+        document.getElementById('extractedText').value = text;
+        document.getElementById('extractInfo').innerText = text ? `✅ ${text.length.toLocaleString()} karakter` : '⚠️ kosong';
+
+        if (!text) {
+          alert('Ekstraksi berhasil tapi hasil kosong. Jika PDF scan (gambar), perlu OCR.');
+        } else {
+          enableAnalyze();
         }
 
-        function openGemini() {
-            const isMerdeka = profile.jenis_kurikulum === 'Merdeka';
-            const instruksi = isMerdeka ? 
-                `Analisis Kurikulum Merdeka. 1. Cari Elemen. 2. Salin CP. 3. Rumuskan TP. 4. Tentukan KKTP.` :
-                `Analisis K13. 1. Tentukan Materi Pokok. 2. Salin KD 3.x/4.x. 3. Rumuskan IPK. 4. Tentukan KKM.`;
+        setProgress(false);
+      } catch (e) {
+        console.error(e);
+        alert('Gagal ekstrak: ' + (e?.message || e));
+        setProgress(false);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '1) Ekstrak Teks';
+      }
+    }
 
-            const prompt = `PERAN: Ahli Kurikulum. KONTEKS: ${profile.mata_pelajaran}, ${profile.fase_kelas}.
-TUGAS: ${instruksi} dari dokumen yang saya upload.
-OUTPUT WAJIB: Hanya JSON Array valid. Jangan pakai Markdown.
-Format: [{"col1":"...","col2":"...","col3":"...","col4":"..."}]`;
+    async function extractPdfText(file) {
+      if (!window.pdfjsLib) throw new Error('PDF.js gagal dimuat.');
+      const ab = await file.arrayBuffer();
+      const loadingTask = window.pdfjsLib.getDocument({ data: ab });
+      const pdf = await loadingTask.promise;
 
-            navigator.clipboard.writeText(prompt).then(() => {
-                alert("Prompt tersalin! Paste di Gemini.");
-                window.open('https://gemini.google.com/app', '_blank');
-            });
+      let out = '';
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        setProgress(true, `Ekstraksi PDF halaman ${pageNum}/${pdf.numPages}...`, Math.round((pageNum / pdf.numPages) * 70));
+        const page = await pdf.getPage(pageNum);
+        const tc = await page.getTextContent();
+        const pageText = (tc.items || []).map(it => it.str).join(' ');
+        out += pageText + '\n\n';
+      }
+      setProgress(true, 'Ekstraksi PDF selesai.', 80);
+      return out;
+    }
+
+    async function extractDocxText(file) {
+      if (!window.mammoth) throw new Error('Mammoth gagal dimuat.');
+      const ab = await file.arrayBuffer();
+      setProgress(true, 'Ekstraksi DOCX...', 40);
+      const result = await window.mammoth.extractRawText({ arrayBuffer: ab });
+      setProgress(true, 'Ekstraksi DOCX selesai.', 80);
+      return result.value || '';
+    }
+
+    async function extractXlsxText(file) {
+      if (!window.XLSX) throw new Error('SheetJS (xlsx) gagal dimuat.');
+      const ab = await file.arrayBuffer();
+      setProgress(true, 'Membaca XLSX...', 30);
+      const wb = window.XLSX.read(ab, { type: 'array' });
+
+      let out = '';
+      const sheets = wb.SheetNames || [];
+      for (let i = 0; i < sheets.length; i++) {
+        const name = sheets[i];
+        setProgress(true, `Ekstraksi XLSX sheet ${i + 1}/${sheets.length}: ${name}`, Math.round(((i + 1) / sheets.length) * 70));
+        const ws = wb.Sheets[name];
+        const rows = window.XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        out += `# SHEET: ${name}\n`;
+        out += rows.map(r => r.join('\t')).join('\n');
+        out += '\n\n';
+      }
+
+      setProgress(true, 'Ekstraksi XLSX selesai.', 80);
+      return out;
+    }
+
+    function buildAnalisisPrompt(text) {
+      const mode = document.getElementById('docMode').value;
+      const isCP = mode === 'cp';
+
+      const kur = String(profile.jenis_kurikulum || '').toLowerCase();
+      const isK13 = kur.includes('2013') || kur.includes('k13');
+      const isMerdeka = kur.includes('merdeka');
+
+      const konteks = `MAPEL: ${profile.mata_pelajaran}; KELAS/FASE: ${profile.fase_kelas}; PROFIL KURIKULUM: ${profile.jenis_kurikulum}`;
+
+      // Instruksi output
+      const outputSpec = isCP
+        ? `Analisis dokumen CP. Tentukan Elemen/Topik, kutip CP yang relevan (ringkas), rumuskan TP/ATP, dan tentukan KKTP (angka atau rentang).`
+        : `Analisis dokumen KI-KD. Tentukan Materi Pokok, kutip KD 3.x/4.x yang relevan, rumuskan IPK, dan tentukan KKM (angka).`;
+
+      const warning = (isCP && isK13) ? 'CATATAN: Profil kurikulum terdeteksi K13, tapi mode dokumen dipilih CP. Tetap lakukan analisis berdasarkan file.'
+        : (!isCP && isMerdeka) ? 'CATATAN: Profil kurikulum terdeteksi Merdeka, tapi mode dokumen dipilih KI-KD. Tetap lakukan analisis berdasarkan file.'
+        : '';
+
+      return `PERAN: Ahli Kurikulum dan Guru Senior.\n` +
+        `KONTEKS: ${konteks}.\n` +
+        (warning ? `${warning}\n` : '') +
+        `TUGAS: ${outputSpec}\n` +
+        `BATASAN:\n- Output HARUS hanya JSON array valid (tanpa markdown, tanpa penjelasan).\n- Setiap item wajib punya key: col1, col2, col3, col4.\n- Maksimal 60 baris.\n\n` +
+        `FORMAT OUTPUT (WAJIB):\n[` +
+        `{ "col1":"...", "col2":"...", "col3":"...", "col4":"..." }` +
+        `]\n\n` +
+        `DOKUMEN (teks hasil ekstraksi):\n---\n${text}\n---`;
+    }
+
+    async function callGroqWithWait(prompt) {
+      if (!CONFIG.GROQ_API_KEY) throw new Error('GROQ_API_KEY kosong. Isi dulu di config.js');
+
+      const url = `${CONFIG.GROQ_BASE_URL || 'https://api.groq.com/openai/v1'}/chat/completions`;
+      const body = {
+        model: CONFIG.GROQ_MODEL || 'llama-3.3-70b-versatile',
+        temperature: Number(CONFIG.GROQ_TEMPERATURE ?? 0.3),
+        max_tokens: Number(CONFIG.GROQ_MAX_TOKENS ?? 2500),
+        messages: [
+          { role: 'system', content: 'Output hanya JSON array valid. Jangan pakai markdown.' },
+          { role: 'user', content: prompt }
+        ]
+      };
+
+      // optional pacing (kalau user baru saja memakai Step 7 juga)
+      if (CONFIG.GROQ_MIN_INTERVAL_MS) await sleep(Number(CONFIG.GROQ_MIN_INTERVAL_MS));
+
+      const maxRetries = Number(CONFIG.GROQ_MAX_RETRIES ?? 12);
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        setProgress(true, `Meminta analisis AI (percobaan ${attempt}/${maxRetries})...`, 90);
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${CONFIG.GROQ_API_KEY}`
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          const txt = json?.choices?.[0]?.message?.content ?? '';
+          return txt;
         }
 
-        function processJSON() {
-            try {
-                let raw = document.getElementById('jsonInput').value.trim();
-                const start = raw.indexOf('['); const end = raw.lastIndexOf(']');
-                if(start === -1) throw new Error("Format Array [...] tidak ditemukan");
-                dataList = JSON.parse(raw.substring(start, end+1));
-                render();
-                document.getElementById('jsonInput').value = "";
-                document.getElementById('btnSave').disabled = false;
-                document.getElementById('btnSave').classList.remove('opacity-50', 'cursor-not-allowed');
-            } catch(e) { alert("Gagal: " + e.message); }
+        const errText = await res.text();
+
+        if (res.status === 429) {
+          // Respect retry-after if provided; otherwise exponential backoff.
+          const ra = res.headers.get('retry-after');
+          let waitMs = ra ? Math.ceil(Number(ra) * 1000) : 0;
+
+          if (!waitMs) {
+            // try parse "try again in X" from message if any
+            const m = errText.match(/try again in\s*([0-9.]+)\s*s/i);
+            if (m) waitMs = Math.ceil(Number(m[1]) * 1000);
+          }
+
+          if (!waitMs) {
+            waitMs = Math.min(120000, 2000 * Math.pow(2, attempt - 1));
+          }
+
+          const seconds = Math.ceil(waitMs / 1000);
+          for (let s = seconds; s > 0; s--) {
+            setProgress(true, `Kena rate limit (429). Menunggu cooldown...`, 95, `⏳ ${s}s`);
+            await sleep(1000);
+          }
+          continue;
         }
 
-        function render() {
-            document.getElementById('resultArea').classList.remove('hidden');
-            const b = document.getElementById('tableBody'); b.innerHTML = '';
-            dataList.forEach((d,i) => {
-                b.innerHTML += `<tr class="hover:bg-slate-50 group">
-                    <td contenteditable class="p-3 font-bold border-r border-dashed" onblur="dataList[${i}].col1=this.innerText">${d.col1||''}</td>
-                    <td contenteditable class="p-3 text-xs border-r border-dashed" onblur="dataList[${i}].col2=this.innerText">${d.col2||''}</td>
-                    <td contenteditable class="p-3 text-xs text-blue-700 bg-blue-50/30 border-r border-dashed" onblur="dataList[${i}].col3=this.innerText">${d.col3||''}</td>
-                    <td contenteditable class="p-3 text-xs text-center font-mono" onblur="dataList[${i}].col4=this.innerText">${d.col4||''}</td>
-                    <td class="p-3 text-center"><button class="text-red-500 font-bold" onclick="dataList.splice(${i},1);render()">✕</button></td>
-                </tr>`;
-            });
-        }
-        function addRow(){ dataList.push({col1:"...", col2:"...", col3:"...", col4:"..."}); render(); }
+        throw new Error(`Groq error ${res.status}: ${errText}`);
+      }
 
-        async function save(){
-            const btn=document.getElementById('btnSave'); btn.innerText="Menyimpan...";
-            const content = dataList.map(d => ({ elemen:d.col1, deskripsi:d.col2, detail_tp:d.col3, detail_kktp:d.col4 }));
-            const payload = {
-                user_id: user.id, doc_type: 'master_cp_atp', 
-                subject_name: profile.mata_pelajaran, grade_level: profile.fase_kelas, curriculum_type: profile.jenis_kurikulum,
-                content_data: content, status: 'confirmed'
-            };
-            const {error} = await db.from('work_drafts').upsert(payload, {onConflict:'user_id,doc_type'});
-            if(error) alert(error.message); else location.href='step3_kalender.html';
+      throw new Error('Gagal: 429 berulang (melewati batas retry).');
+    }
+
+    async function analyzeAI() {
+      const text = (document.getElementById('extractedText').value || '').trim();
+      if (!text) return alert('Teks kosong. Ekstrak dulu atau paste teks hasil ekstraksi.');
+
+      const btn = document.getElementById('btnAnalyze');
+      btn.disabled = true;
+      btn.innerText = '⏳ Menganalisis...';
+
+      document.getElementById('jsonInput').value = '';
+
+      try {
+        setProgress(true, 'Membangun prompt analisis...', 85);
+        const prompt = buildAnalisisPrompt(text);
+
+        const raw = await callGroqWithWait(prompt);
+
+        // Try parse JSON array from raw
+        const start = raw.indexOf('[');
+        const end = raw.lastIndexOf(']');
+        if (start === -1 || end === -1) {
+          document.getElementById('jsonInput').value = raw;
+          throw new Error('AI tidak mengembalikan JSON Array. Raw output dimasukkan ke box orange.');
         }
-    </script>
+
+        const arr = JSON.parse(raw.substring(start, end + 1));
+        if (!Array.isArray(arr)) throw new Error('JSON bukan array.');
+
+        // Normalize
+        dataList = arr.map(x => ({
+          col1: x?.col1 ?? '',
+          col2: x?.col2 ?? '',
+          col3: x?.col3 ?? '',
+          col4: x?.col4 ?? ''
+        }));
+
+        render();
+        enableSave();
+        setProgress(false);
+      } catch (e) {
+        console.error(e);
+        setProgress(false);
+        alert('Gagal: ' + (e?.message || e));
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '2) Analisis AI';
+      }
+    }
+
+    function processJSON() {
+      try {
+        let raw = document.getElementById('jsonInput').value.trim();
+        const start = raw.indexOf('[');
+        const end = raw.lastIndexOf(']');
+        if (start === -1 || end === -1) throw new Error('Format Array [...] tidak ditemukan');
+        const arr = JSON.parse(raw.substring(start, end + 1));
+        if (!Array.isArray(arr)) throw new Error('JSON bukan array');
+
+        dataList = arr.map(x => ({
+          col1: x?.col1 ?? '',
+          col2: x?.col2 ?? '',
+          col3: x?.col3 ?? '',
+          col4: x?.col4 ?? ''
+        }));
+
+        render();
+        document.getElementById('jsonInput').value = '';
+        enableSave();
+      } catch (e) {
+        alert('Gagal: ' + e.message);
+      }
+    }
+
+    function render() {
+      document.getElementById('resultArea').classList.remove('hidden');
+      const b = document.getElementById('tableBody');
+      b.innerHTML = '';
+
+      dataList.forEach((d, i) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 group';
+
+        const td1 = document.createElement('td');
+        td1.className = 'p-3 font-bold border-r border-dashed';
+        td1.contentEditable = 'true';
+        td1.textContent = d.col1 || '';
+        td1.addEventListener('blur', () => dataList[i].col1 = td1.innerText);
+
+        const td2 = document.createElement('td');
+        td2.className = 'p-3 text-xs border-r border-dashed';
+        td2.contentEditable = 'true';
+        td2.textContent = d.col2 || '';
+        td2.addEventListener('blur', () => dataList[i].col2 = td2.innerText);
+
+        const td3 = document.createElement('td');
+        td3.className = 'p-3 text-xs text-blue-700 bg-blue-50/30 border-r border-dashed';
+        td3.contentEditable = 'true';
+        td3.textContent = d.col3 || '';
+        td3.addEventListener('blur', () => dataList[i].col3 = td3.innerText);
+
+        const td4 = document.createElement('td');
+        td4.className = 'p-3 text-xs text-center font-mono';
+        td4.contentEditable = 'true';
+        td4.textContent = d.col4 || '';
+        td4.addEventListener('blur', () => dataList[i].col4 = td4.innerText);
+
+        const td5 = document.createElement('td');
+        td5.className = 'p-3 text-center';
+        const del = document.createElement('button');
+        del.className = 'text-red-500 font-bold';
+        del.textContent = '✕';
+        del.addEventListener('click', () => { dataList.splice(i, 1); render(); });
+        td5.appendChild(del);
+
+        tr.append(td1, td2, td3, td4, td5);
+        b.appendChild(tr);
+      });
+    }
+
+    function addRow() {
+      dataList.push({ col1: '...', col2: '...', col3: '...', col4: '...' });
+      render();
+    }
+
+    async function save() {
+      const btn = document.getElementById('btnSave');
+      btn.innerText = 'Menyimpan...';
+
+      const content = dataList.map(d => ({
+        elemen: d.col1,
+        deskripsi: d.col2,
+        detail_tp: d.col3,
+        detail_kktp: d.col4
+      }));
+
+      const payload = {
+        user_id: user.id,
+        doc_type: 'master_cp_atp',
+        subject_name: profile.mata_pelajaran,
+        grade_level: profile.fase_kelas,
+        curriculum_type: profile.jenis_kurikulum,
+        content_data: content,
+        status: 'confirmed'
+      };
+
+      const { error } = await db.from('work_drafts').upsert(payload, { onConflict: 'user_id,doc_type' });
+      if (error) {
+        alert(error.message);
+        btn.innerText = 'Simpan & Lanjut (Kalender) →';
+      } else {
+        location.href = 'step3_kalender.html';
+      }
+    }
+  </script>
 </body>
 </html>

@@ -2,10 +2,12 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';">
     <title>Langkah 7: Generator Modul Ajar (RPP)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.11/purify.min.js"></script>
     <script src="config.js"></script>
     <script src="sidebar.js"></script>
     <style>
@@ -23,6 +25,9 @@
         <header class="bg-white border-b px-6 py-4 shadow-sm flex gap-4 items-center justify-between z-10">
             <div class="flex items-center gap-4 flex-1">
                 <h1 class="text-xl font-bold text-slate-900">7. Generator RPP</h1>
+                <span class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">
+                    AI: Groq • Model: <span id="modelName"></span>
+                </span>
                 <select id="model" class="border rounded p-2 text-sm bg-slate-50 flex-1 max-w-md cursor-pointer hover:bg-slate-100 font-medium text-slate-700">
                     <optgroup label="🔥 Populer & Berbasis Masalah">
                         <option>Problem Based Learning (PBL)</option>
@@ -57,6 +62,16 @@
                 ✨ Generate & Simpan
             </button>
         </header>
+
+        <div id="progressWrap" class="bg-white border-b px-6 py-2 hidden">
+            <div class="flex items-center gap-3">
+                <div id="progressText" class="text-xs font-bold text-slate-600 w-20">0/0</div>
+                <div class="flex-1 h-2 bg-slate-200 rounded overflow-hidden">
+                    <div id="progressBar" class="h-2 bg-indigo-600 rounded" style="width:0%"></div>
+                </div>
+                <div id="progressStatus" class="text-xs text-slate-500 w-72 truncate text-right"></div>
+            </div>
+        </div>
 
         <div class="flex flex-1 overflow-hidden">
             <aside class="w-80 bg-white border-r overflow-y-auto p-4 flex flex-col">
@@ -100,15 +115,192 @@
             const {data:m} = await db.from('work_drafts').select('*').eq('user_id',user.id).eq('doc_type','master_cp_atp').maybeSingle();
             if(m && m.content_data) mats = m.content_data;
             renderList();
+            // Step 7 memakai Groq langsung dari frontend (API OpenAI-compatible).
+            document.getElementById('modelName').textContent = (CONFIG.GROQ_MODEL || 'llama-3.3-70b-versatile');
         } init();
+
+        function escapeHTML(s){
+            return String(s ?? '')
+              .replace(/&/g,'&amp;')
+              .replace(/</g,'&lt;')
+              .replace(/>/g,'&gt;')
+              .replace(/"/g,'&quot;')
+              .replace(/'/g,'&#39;');
+        }
+
 
         function renderList() {
             const l = document.getElementById('list'); l.innerHTML = '';
             mats.forEach((x, i) => {
-                l.innerHTML += `<label class="flex gap-3 text-sm p-3 border rounded hover:bg-slate-50 cursor-pointer items-start"><input type="checkbox" class="chk mt-1" value="${i}"> <div><div class="font-bold text-slate-700">${x.elemen || 'Tanpa Judul'}</div><div class="text-xs text-slate-500 line-clamp-2">${x.deskripsi || ''}</div></div></label>`;
+                l.innerHTML += `<label class="flex gap-3 text-sm p-3 border rounded hover:bg-slate-50 cursor-pointer items-start"><input type="checkbox" class="chk mt-1" value="${i}"> <div><div class="font-bold text-slate-700">${escapeHTML(x.elemen || 'Tanpa Judul')}</div><div class="text-xs text-slate-500 line-clamp-2">${escapeHTML(x.deskripsi || '')}</div></div></label>`;
             });
         }
         function toggleAll(src) { document.querySelectorAll('.chk').forEach(c => c.checked = src.checked); }
+
+        function pickGroqText(json){
+            return String(json?.choices?.[0]?.message?.content ?? '').trim();
+        }
+
+        
+        function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+        let lastGroqCallAt = 0;
+
+        function calcSpacingMs(){
+            // MODE "GURU SABAR": lebih baik menunggu lama daripada error.
+            // Groq rate limit kombinasi RPM & TPM. Jadi kita bikin pacing konservatif.
+            const manual = Number(CONFIG.GROQ_MIN_INTERVAL_MS ?? 0);
+            if(manual && manual > 0) return Math.max(500, manual);
+            return 3500;
+        }
+
+        function showProgress(show){
+            const wrap = document.getElementById('progressWrap');
+            if(!wrap) return;
+            wrap.classList.toggle('hidden', !show);
+        }
+
+        function setProgress(done, total, status){
+            const t = document.getElementById('progressText');
+            const b = document.getElementById('progressBar');
+            const s = document.getElementById('progressStatus');
+            if(t) t.textContent = `${done}/${total}`;
+            if(b) b.style.width = total ? `${Math.round((done/total)*100)}%` : "0%";
+            if(s) s.textContent = status || '';
+        }
+
+        const currentProgress = { done: 0, total: 0 };
+
+        async function waitWithStatus(ms, statusPrefix){
+            const start = Date.now();
+            const total = ms;
+            while(true){
+                const elapsed = Date.now() - start;
+                const left = Math.max(0, total - elapsed);
+                const sec = (left/1000).toFixed(1);
+                setProgress(currentProgress.done, currentProgress.total, `${statusPrefix} ${sec}s…`);
+                if(left <= 0) break;
+                await sleep(Math.min(250, left));
+            }
+        }
+
+        async function enforceSpacing(){
+            const spacing = calcSpacingMs();
+            const now = Date.now();
+            const wait = Math.max(0, spacing - (now - lastGroqCallAt));
+            if(wait > 0){
+                await waitWithStatus(wait, 'Throttle');
+            }
+        }
+
+        function deriveRetryWaitMs(res, msg, attempt){
+            // 1) Retry-After header (seconds)
+            const ra = res.headers?.get?.('retry-after');
+            if(ra && !Number.isNaN(Number(ra))) return Math.ceil(Number(ra) * 1000) + 300;
+
+            // 2) Parse message: "Please retry in 27.6s."
+            const m = String(msg || '').match(/retry in\s+([0-9.]+)s/i);
+            if(m) return Math.ceil(Number(m[1]) * 1000) + 300;
+
+            // 3) Exponential backoff fallback
+            return Math.min(60000, 1500 * Math.pow(2, attempt - 1)) + 300;
+        }
+
+        async function callGroq(prompt){
+            // Groq API OpenAI-compatible: POST /chat/completions
+            const apiKey = String(CONFIG.GROQ_API_KEY || '').trim();
+            if(!apiKey) throw new Error('CONFIG.GROQ_API_KEY masih kosong. Isi di config.js (Groq API Key).');
+
+            const base = (CONFIG.GROQ_BASE_URL || 'https://api.groq.com/openai/v1').replace(/\/+$/,'');
+            const url = `${base}/chat/completions`;
+
+            const payload = {
+                model: (CONFIG.GROQ_MODEL || 'llama-3.3-70b-versatile').trim(),
+                temperature: Number(CONFIG.GROQ_TEMPERATURE ?? 0.4),
+                max_tokens: Number(CONFIG.GROQ_MAX_TOKENS ?? 2500),
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'Anda adalah guru profesional di Indonesia. Buat output RPP sebagai HTML BODY saja (tanpa <html>/<head>), TANPA Markdown. Gunakan bahasa Indonesia yang jelas dan praktis.'
+                    },
+                    { role: 'user', content: prompt }
+                ]
+            };
+
+            let attempt = 0;
+            const maxRetries = Number(CONFIG.GROQ_MAX_RETRIES ?? 12);
+            while(true){
+                attempt++;
+
+                await enforceSpacing();
+                lastGroqCallAt = Date.now();
+
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                // Groq mengembalikan 429 saat rate limit. Header retry-after hanya ada jika 429.
+                if(res.ok){
+                    const json = await res.json();
+                    const txt = pickGroqText(json);
+                    if(!txt) throw new Error('Groq tidak mengembalikan teks (choices kosong).');
+                    return txt;
+                }
+
+                let msg = '';
+                try {
+                    const j = await res.json();
+                    msg = j?.error?.message || JSON.stringify(j);
+                } catch(_){
+                    msg = await res.text();
+                }
+
+                if(res.status === 429){
+                    if(attempt > maxRetries) throw new Error(`Groq error 429 berulang: ${msg}`);
+
+                    // 1) retry-after (seconds)
+                    const ra = res.headers?.get?.('retry-after');
+                    let waitMs = (ra && !Number.isNaN(Number(ra))) ? Math.ceil(Number(ra) * 1000) : 0;
+
+                    // 2) parse message: "Please try again in 1.287s"
+                    if(!waitMs){
+                        const m = String(msg || '').match(/try again in\s+([0-9.]+)s/i);
+                        if(m) waitMs = Math.ceil(Number(m[1]) * 1000);
+                    }
+
+                    // 3) fallback exponential backoff
+                    if(!waitMs) waitMs = Math.min(60000, 1500 * Math.pow(2, attempt - 1));
+                    waitMs += 300;
+
+                    await waitWithStatus(waitMs, `Rate limit (429) • menunggu`);
+                    continue;
+                }
+
+                throw new Error(`Groq error ${res.status}: ${msg}`);
+            }
+        }
+
+        function buildRppPrompt({ m, modelPembelajaran }){
+            // deteksi kurikulum
+            const kur = String(profile.jenis_kurikulum || '').toLowerCase();
+            const isK13 = kur.includes('2013') || kur.includes('k13');
+
+            const bab = m?.bab || m?.bab_title || '';
+            const subBab = m?.sub_bab || m?.subbab || '';
+            const topik = m?.elemen || subBab || 'Topik';
+
+            if(isK13){
+                return `KURIKULUM: Kurikulum 2013 (K13).\nSUMBER DATA: Profil Step 1 (Mapel, Kelas/Fase, Kurikulum) + Step 7 (Bab, Sub-bab, Metode/Model Pembelajaran).\nMAPEL: ${profile.mata_pelajaran}, KELAS: ${profile.fase_kelas}.\nBAB: ${bab || '-'}\nSUB-BAB: ${subBab || '-'}\nTOPIK: "${topik}"\nMODEL PEMBELAJARAN: ${modelPembelajaran}.\n\nTUGAS: Buat RPP sebagai HTML BODY saja (tanpa <html><head>), TANPA Markdown.\nSertakan komponen: Identitas, Tujuan Pembelajaran, Materi, Metode/Model, Media & Sumber Belajar, Langkah Pembelajaran (Pendahuluan, Inti, Penutup), Penilaian (Sikap, Pengetahuan, Keterampilan) + instrumen ringkas.\nGunakan bahasa Indonesia yang jelas, praktis, dan siap cetak.`;
+            }
+
+            // default KM
+            return `KURIKULUM: Kurikulum Merdeka (KM).\nSUMBER DATA: Profil Step 1 (Mapel, Kelas/Fase, Kurikulum) + Step 7 (Bab, Sub-bab, Metode/Model Pembelajaran).\nMAPEL: ${profile.mata_pelajaran}, FASE/KELAS: ${profile.fase_kelas}.\nBAB: ${bab || '-'}\nSUB-BAB: ${subBab || '-'}\nTOPIK: "${topik}"\nMODEL PEMBELAJARAN: ${modelPembelajaran}.\n\nTUGAS: Buat Modul Ajar/RPP ringkas sebagai HTML BODY saja (tanpa <html><head>), TANPA Markdown.\nSertakan: Tujuan Pembelajaran, Pemahaman Bermakna, Pertanyaan Pemantik, Langkah Pembelajaran (Pendahuluan, Inti + Diferensiasi, Penutup), Asesmen (Diagnostik/Formatif/Sumatif), serta Sumber Belajar.\nGunakan bahasa Indonesia yang jelas, praktis, dan siap cetak.`;
+        }
 
         async function batch(){
             const chk = document.querySelectorAll('.chk:checked'); 
@@ -117,49 +309,64 @@
             const btn = document.getElementById('btnGen'); 
             btn.disabled = true; btn.innerHTML = `⏳ Memproses...`;
             
+            // progress bar
+            showProgress(true);
+            currentProgress.total = chk.length;
+            currentProgress.done = 0;
+            setProgress(0, chk.length, 'Mulai…');
+
             let htmlAccumulator = "";
             const model = document.getElementById('model').value;
 
-            for(const c of chk){
+            for(let idx=0; idx<chk.length; idx++){
+                const c = chk[idx];
                 const m = mats[c.value];
-                document.getElementById('print').innerHTML = `<div class="text-center text-blue-600 mt-20"><p>Sedang membuat RPP: <b>${m.elemen}</b>...</p></div>`;
+                const bab = m?.bab || m?.bab_title || '';
+                const subBab = m?.sub_bab || m?.subbab || '';
+                const topik = m?.elemen || subBab || 'Topik';
+                const label = `${bab ? (bab + ' • ') : ''}${subBab ? (subBab + ' • ') : ''}${topik}`;
+
+                setProgress(currentProgress.done, currentProgress.total, `Memproses ${idx+1}/${currentProgress.total}: ${label}`);
+                document.getElementById('print').innerHTML = `<div class="text-center text-blue-600 mt-20"><p>Sedang membuat RPP: <b>${escapeHTML(label)}</b>...</p></div>`;
 
                 try {
-                    const extra = m.detail_tp ? `\nDATA ANALISIS: \n- Tujuan: ${m.detail_tp} \n- Indikator: ${m.detail_kktp}` : "";
-                    const prompt = `PERAN: Guru. TUGAS: Buat RPP HTML Body. MAPEL:${profile.mata_pelajaran}, KELAS:${profile.fase_kelas}, TOPIK:"${m.elemen}", MODEL:${model}. ${extra}. ISI: Tujuan, Pemahaman Bermakna, Langkah Pembelajaran (Pendahuluan, Inti+Diferensiasi, Penutup), Asesmen. NO MARKDOWN.`;
+                    const prompt = buildRppPrompt({ m, modelPembelajaran: model });
 
-                    const res = await fetch('https://api.dify.ai/v1/workflows/run', {
-                        method: 'POST',
-                        headers: {'Authorization':`Bearer ${CONFIG.DIFY_API_KEY_RPP}`, 'Content-Type':'application/json'},
-                        body: JSON.stringify({ inputs: { topik: prompt, kelas: profile.fase_kelas || "Umum", alokasi_waktu: "2 JP" }, response_mode: "blocking", user: user.id })
-                    });
-                    
-                    const json = await res.json();
-                    
-                    // FIX API ERROR: Check if text exists safely
-                    let txt = "";
-                    if(json.data && json.data.outputs && json.data.outputs.text) {
-                        txt = json.data.outputs.text;
-                    } else if (json.data && json.data.answer) {
-                        txt = json.data.answer;
-                    } else {
-                        txt = "<p style='color:red'>Gagal mendapatkan respon dari AI.</p>";
-                    }
+                    let txt = await callGroq(prompt);
+
+                    if(!txt) txt = "<p style='color:red'>Gagal mendapatkan respon dari AI.</p>";
 
                     // Safe Cleaning
                     txt = txt.replace(/<think>[\s\S]*?<\/think>/gi,"").replace(/```html/g,"").replace(/```/g,"");
-                    
-                    htmlAccumulator += `<div class="rpp-section mt-8"><div style="background:#f8fafc; padding:10px; border-left:5px solid #2563eb;"><h2 style="margin:0; font-size:14pt; color:#1e40af;">TOPIK: ${m.elemen}</h2><p style="margin:0; font-size:10pt;">Model: ${model}</p></div>${txt}</div><div class="page-break"></div>`;
 
-                } catch(e) { console.error(e); }
+                    // Sanitasi HTML output AI (hindari XSS)
+                    txt = DOMPurify.sanitize(txt, { USE_PROFILES: { html: true } });
+                    
+                    currentProgress.done += 1;
+                    setProgress(currentProgress.done, currentProgress.total, `Selesai ${currentProgress.done}/${currentProgress.total}`);
+
+                    htmlAccumulator += `<div class="rpp-section mt-8"><div style="background:#f8fafc; padding:10px; border-left:5px solid #2563eb;"><h2 style="margin:0; font-size:14pt; color:#1e40af;">TOPIK: ${escapeHTML(label)}</h2><p style="margin:0; font-size:10pt;">Model: ${escapeHTML(model)}</p></div>${txt}</div><div class="page-break"></div>`;
+
+                } catch(e) {
+                    console.error(e);
+                    currentProgress.done += 1;
+                    setProgress(currentProgress.done, currentProgress.total, `Lewati (error) ${currentProgress.done}/${currentProgress.total}`);
+                    const msg = escapeHTML(String(e?.message || e));
+                    const errHtml = `<p style="color:#b91c1c;font-weight:600">Gagal generate untuk topik ini.</p><p style="color:#b91c1c;font-size:10pt">${msg}</p>`;
+                    document.getElementById('print').innerHTML = errHtml;
+                    htmlAccumulator += `<div class="rpp-section mt-8"><div style="background:#fef2f2; padding:10px; border-left:5px solid #b91c1c;"><h2 style="margin:0; font-size:14pt; color:#b91c1c;">TOPIK: ${escapeHTML(label)}</h2><p style="margin:0; font-size:10pt;">(gagal)</p></div>${errHtml}</div><div class="page-break"></div>`;
+                }
             }
             
             generatedRPP = htmlAccumulator;
-            document.getElementById('print').innerHTML = generatedRPP;
+            document.getElementById('print').innerHTML = DOMPurify.sanitize(generatedRPP, { USE_PROFILES: { html: true } });
             
             await saveRPPToDB();
             
             btn.disabled = false; btn.innerHTML = "✨ Generate & Simpan";
+            setProgress(currentProgress.total, currentProgress.total, 'Selesai ✅');
+            await sleep(400);
+            showProgress(false);
             alert("Berhasil! RPP telah disimpan ke Step 9.");
         }
 
