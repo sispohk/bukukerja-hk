@@ -2,108 +2,85 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Teacher - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="config.js"></script>
+    <style>
+        .logo-container {
+            width: 100px; height: 100px; border-radius: 50%; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.5rem auto; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background: white; 
+        }
+        .logo-img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+        /* Style Popup Custom */
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
 <body class="bg-slate-900 h-screen flex items-center justify-center font-sans">
-
-    <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-sm">
+    <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
         <div class="text-center mb-8">
-            <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <span class="text-3xl">🎓</span>
-            </div>
-            <h1 class="text-2xl font-bold text-slate-800">AI Teacher</h1>
-            <p class="text-slate-500 text-sm">Masuk untuk mengelola administrasi.</p>
+            <div class="logo-container"><img src="logo.png" alt="Logo" class="logo-img"></div>
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Smart Teacher<span class="text-blue-600"> AI</span></h1>
+            <p class="text-slate-500 text-xs mt-1">Sistem Administrasi Guru Husnul Khotimah</p>
         </div>
-
         <div class="space-y-4">
             <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email</label>
-                <input type="email" id="email" class="w-full border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="guru@sekolah.id">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1 tracking-wider">Email</label>
+                <input type="email" id="email" class="w-full border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-sm font-semibold" placeholder="guru@pp.hk">
             </div>
             <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password</label>
-                <input type="password" id="password" class="w-full border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="********">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1 tracking-wider">Password</label>
+                <input type="password" id="password" class="w-full border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-sm font-semibold" placeholder="••••••••">
             </div>
-            
-            <button onclick="login()" id="btnLogin" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg mt-2">
-                Masuk
-            </button>
-            
-            <div class="relative flex py-2 items-center">
-                <div class="flex-grow border-t border-slate-200"></div>
-                <span class="flex-shrink mx-4 text-gray-400 text-xs">ATAU</span>
-                <div class="flex-grow border-t border-slate-200"></div>
+            <div class="grid grid-cols-2 gap-3 mt-6">
+                <button onclick="login()" id="btnLogin" class="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-lg text-sm active:scale-95">Masuk</button>
+                <button onclick="register()" id="btnReg" class="bg-white border-2 border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition text-sm active:scale-95">Daftar</button>
             </div>
-
-            <button onclick="register()" id="btnReg" class="w-full bg-white border border-slate-300 text-slate-600 font-bold py-3 rounded-lg hover:bg-slate-50 transition">
-                Daftar Akun Baru
-            </button>
         </div>
-
-        <p class="mt-8 text-center text-xs text-slate-400">© 2026 AI Teacher Project</p>
+        <div class="mt-8 pt-6 border-t border-slate-100">
+            <p class="text-center text-[13px] text-slate-400 font-mono">v1.0 Smart Teacher AI</p>
+            <p class="text-center text-[11px] text-slate-400 font-mono">&copy; 2026 Dede Jamaludin, S.Pd., Gr.</p>
+        </div>
     </div>
-
     <script>
         const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
-
-        // Cek jika sudah login, langsung lempar ke dashboard
         async function checkSession() {
             const { data: { session } } = await db.auth.getSession();
-            if (session) {
-                window.location.href = 'step1_profil.html';
-            }
+            if (session) window.location.href = 'step1_profil.html';
         }
         checkSession();
 
         async function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const btn = document.getElementById('btnLogin');
-
-            if(!email || !password) return alert("Email dan Password wajib diisi!");
-
-            btn.innerText = "Memuat..."; btn.disabled = true;
-
-            const { data, error } = await db.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
-
+            if(!email || !password) return Swal.fire('Error', 'Email & Password wajib diisi!', 'error');
+            
+            const btn = document.getElementById('btnLogin'); btn.innerText = "⏳"; btn.disabled = true;
+            const { error } = await db.auth.signInWithPassword({ email, password });
             if (error) {
-                alert("Gagal Masuk: " + error.message);
+                Swal.fire('Gagal Masuk', error.message, 'error');
                 btn.innerText = "Masuk"; btn.disabled = false;
             } else {
-                window.location.href = 'step1_profil.html';
+                Swal.fire({icon: 'success', title: 'Berhasil Masuk', showConfirmButton: false, timer: 1500}).then(()=> window.location.href = 'step1_profil.html');
             }
         }
 
         async function register() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const btn = document.getElementById('btnReg');
-
-            if(!email || !password) return alert("Isi Email dan Password untuk mendaftar!");
-            if(password.length < 6) return alert("Password minimal 6 karakter.");
-
-            btn.innerText = "Mendaftarkan..."; btn.disabled = true;
-
-            const { data, error } = await db.auth.signUp({
-                email: email,
-                password: password
-            });
-
+            if(!email || !password) return Swal.fire('Error', 'Isi Email & Password!', 'error');
+            
+            const btn = document.getElementById('btnReg'); btn.innerText = "⏳"; btn.disabled = true;
+            const { error } = await db.auth.signUp({ email, password });
             if (error) {
-                alert("Gagal Daftar: " + error.message);
-                btn.innerText = "Daftar Akun Baru"; btn.disabled = false;
+                Swal.fire('Gagal Daftar', error.message, 'error');
+                btn.innerText = "Daftar"; btn.disabled = false;
             } else {
-                alert("Pendaftaran berhasil! Silakan login.");
-                // Kadang Supabase settingan default butuh konfirmasi email. 
-                // Jika auto-confirm nyala, bisa langsung login.
-                // Kita coba login otomatis:
+                Swal.fire('Sukses!', 'Pendaftaran berhasil. Silakan login.', 'success');
                 login();
             }
         }

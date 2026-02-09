@@ -2,390 +2,697 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Langkah 7: Generator Modul Ajar (RPP)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.11/purify.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
-    <script src="sidebar.js"></script>
+    <script src="layout.js"></script>
+    
     <style>
-        .page-break { page-break-after: always; border-bottom: 2px dashed #ccc; margin: 40px 0; display: block; }
-        .rpp-content h3 { font-size: 13pt; font-weight: bold; margin-top: 20px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; }
-        .rpp-content p { margin-bottom: 10px; text-align: justify; line-height: 1.6; } 
-        .diferensiasi-box { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 10px; font-style: italic; margin-top: 10px; }
+        .inner-scroll::-webkit-scrollbar { width: 5px; }
+        .inner-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        
+        /* Styling Preview RPP (Support Table) */
+        .rpp-preview table { width: 100%; border-collapse: collapse; margin-bottom: 1em; font-size: 0.9em; }
+        .rpp-preview th, .rpp-preview td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; vertical-align: top; }
+        .rpp-preview th { background-color: #f1f5f9; font-weight: bold; width: 25%; }
+        .rpp-preview h3 { font-size: 1.1em; font-weight: 800; color: #1e40af; margin-top: 1.5em; margin-bottom: 0.5em; }
     </style>
 </head>
-<body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
-    
-    <div id="sidebar-container" class="flex-none h-full"></div>
 
-    <div class="flex-1 flex flex-col relative">
-        <header class="bg-white border-b px-6 py-4 shadow-sm flex gap-4 items-center justify-between z-10">
-            <div class="flex items-center gap-4 flex-1">
-                <h1 class="text-xl font-bold text-slate-900">7. Generator RPP</h1>
-                <span class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">
-                    AI: Groq • Model: <span id="modelName"></span>
-                </span>
-                <select id="model" class="border rounded p-2 text-sm bg-slate-50 flex-1 max-w-md cursor-pointer hover:bg-slate-100 font-medium text-slate-700">
-                    <optgroup label="🔥 Populer & Berbasis Masalah">
-                        <option>Problem Based Learning (PBL)</option>
-                        <option>Project Based Learning (PjBL)</option>
-                        <option>Case Based Learning (CBL)</option>
-                        <option>Challenge Based Learning</option>
-                    </optgroup>
-                    <optgroup label="🚀 Pendekatan Modern (Abad 21)">
-                        <option>Deep Learning (Pembelajaran Mendalam)</option>
-                        <option>Teaching at the Right Level (TaRL/Diferensiasi)</option>
-                        <option>STEAM Approach</option>
-                        <option>Blended Learning (Hybrid)</option>
-                        <option>Flipped Classroom</option>
-                        <option>Social Emotional Learning (SEL)</option>
-                        <option>Gamifikasi</option>
-                    </optgroup>
-                    <optgroup label="🧠 Penemuan & Inkuiri">
-                        <option>Discovery Learning</option>
-                        <option>Inquiry Learning (Terbimbing)</option>
-                        <option>Inquiry Learning (Open)</option>
-                        <option>Contextual Teaching & Learning (CTL)</option>
-                    </optgroup>
-                    <optgroup label="🤝 Kooperatif">
-                        <option>Cooperative Learning (Jigsaw)</option>
-                        <option>Cooperative Learning (STAD)</option>
-                        <option>Peer Tutoring (Tutor Sebaya)</option>
-                        <option>Think-Pair-Share (TPS)</option>
-                    </optgroup>
-                </select>
+<body class="bg-slate-100 text-slate-800 h-screen flex font-sans overflow-hidden">
+
+    <div id="sidebar-container" class="flex-none z-50"></div>
+
+    <div class="flex-1 flex flex-col relative min-w-0 bg-slate-100">
+        
+        <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-20 flex justify-between items-center shrink-0">
+            <div>
+                <h1 class="text-xl font-bold text-slate-900">7. Generator Modul Ajar (RPP)</h1>
+                <p class="text-xs text-slate-500">Pilih Sub-bab (TP), tentukan model, dan generate RPP (Format Tabel).</p>
             </div>
-            <button onclick="batch()" id="btnGen" class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold text-sm shadow hover:bg-indigo-700 transition">
-                ✨ Generate & Simpan
-            </button>
         </header>
 
-        <div id="progressWrap" class="bg-white border-b px-6 py-2 hidden">
-            <div class="flex items-center gap-3">
-                <div id="progressText" class="text-xs font-bold text-slate-600 w-20">0/0</div>
-                <div class="flex-1 h-2 bg-slate-200 rounded overflow-hidden">
-                    <div id="progressBar" class="h-2 bg-indigo-600 rounded" style="width:0%"></div>
-                </div>
-                <div id="progressStatus" class="text-xs text-slate-500 w-72 truncate text-right"></div>
-            </div>
-        </div>
-
-        <div class="flex flex-1 overflow-hidden">
-            <aside class="w-80 bg-white border-r overflow-y-auto p-4 flex flex-col">
-                <div class="flex justify-between items-center mb-3 pb-2 border-b">
-                    <span class="text-xs font-bold text-slate-500 uppercase">Pilih Materi</span>
-                    <label class="flex items-center gap-1 text-xs text-blue-600 cursor-pointer font-bold select-none">
-                        <input type="checkbox" onchange="toggleAll(this)"> Pilih Semua
+        <main class="flex-1 flex overflow-hidden relative z-0">
+            
+            <aside class="w-80 bg-white border-r border-slate-200 flex flex-col z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)] shrink-0">
+                <div class="p-4 border-b border-slate-100 bg-slate-50/50 backdrop-blur-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide">Pilih Sub-Materi (TP)</h3>
+                        <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold" id="totalCount">0</span>
+                    </div>
+                    <label class="flex items-center gap-2 text-xs font-bold text-blue-600 cursor-pointer p-2 hover:bg-blue-50 rounded transition border border-transparent hover:border-blue-100">
+                        <input type="checkbox" onchange="toggleAll(this)" class="accent-blue-600 w-4 h-4 rounded">
+                        Pilih Semua
                     </label>
                 </div>
-                <div id="list" class="space-y-1 flex-1"></div>
-            </aside>
-
-            <main class="flex-1 overflow-y-auto p-8 bg-gray-100" id="previewArea">
-                <div id="print" class="bg-white p-12 rounded shadow min-h-[800px] prose prose-sm max-w-none rpp-content">
-                    <div class="flex flex-col items-center justify-center h-64 text-slate-300">
-                        <p class="text-lg">Pilih materi di kiri, lalu klik <b>Generate & Simpan</b>.</p>
+                
+                <div class="overflow-y-auto flex-1 p-3 space-y-1 inner-scroll bg-white" id="list">
+                    <div class="flex flex-col items-center justify-center h-40 text-slate-400 space-y-2">
+                        <div class="animate-spin rounded-full h-5 w-5 border-2 border-slate-300 border-t-blue-500"></div>
+                        <span class="text-xs">Memuat Data...</span>
                     </div>
                 </div>
-            </main>
-        </div>
+            </aside>
 
-        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between z-20 shadow-lg">
-            <a href="step6_promes.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
-            <a href="step8_lampiran.html" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition">
-                Lanjut ke Lampiran (Step 8) →
+            <div class="flex-1 overflow-y-auto p-6 relative scroll-smooth bg-slate-50/50" id="mainArea">
+                
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-center justify-between sticky top-0 z-30">
+                    <div class="flex items-center gap-2 w-full">
+                        <span class="text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Model Pembelajaran:</span>
+                        <select id="model" class="border border-slate-300 rounded-lg p-2 text-sm bg-slate-50 flex-1 cursor-pointer hover:bg-white focus:ring-2 ring-blue-500 outline-none transition font-medium text-slate-700">
+                            
+                            <optgroup label="🔥 Berbasis Masalah & Proyek">
+                                <option value="Problem Based Learning (PBL)">Problem Based Learning (PBL)</option>
+                                <option value="Project Based Learning (PjBL)">Project Based Learning (PjBL)</option>
+                                <option value="Case Based Learning">Case Based Learning (Studi Kasus)</option>
+                                <option value="Challenge Based Learning">Challenge Based Learning (Tantangan)</option>
+                            </optgroup>
+
+                            <optgroup label="🔍 Penemuan & Inkuiri">
+                                <option value="Discovery Learning">Discovery Learning</option>
+                                <option value="Inquiry Learning (Terbimbing)">Inquiry Learning (Terbimbing)</option>
+                                <option value="Inquiry Learning (Open)">Inquiry Learning (Terbuka)</option>
+                                <option value="Contextual Teaching & Learning (CTL)">Contextual Teaching & Learning (CTL)</option>
+                            </optgroup>
+
+                            <optgroup label="🤝 Kooperatif (Kerja Kelompok)">
+                                <option value="Cooperative Learning (Jigsaw)">Jigsaw (Tim Ahli)</option>
+                                <option value="Cooperative Learning (STAD)">STAD</option>
+                                <option value="Cooperative Learning (TGT)">TGT (Games)</option>
+                                <option value="Think-Pair-Share">Think-Pair-Share (TPS)</option>
+                                <option value="Number Heads Together">Number Heads Together (NHT)</option>
+                                <option value="Make a Match">Make a Match</option>
+                                <option value="Group Investigation">Group Investigation</option>
+                            </optgroup>
+
+                            <optgroup label="🚀 Pendekatan Modern & Abad 21">
+                                <option value="Deep Learning (Pembelajaran Mendalam)">Deep Learning (New Pedagogies)</option>
+                                <option value="Teaching at the Right Level (TaRL)">TaRL (Diferensiasi)</option>
+                                <option value="Social Emotional Learning (SEL)">Integrasi SEL</option>
+                                <option value="Culturally Responsive Teaching (CRT)">Culturally Responsive Teaching</option>
+                                <option value="STEAM Approach">Pendekatan STEAM</option>
+                                <option value="Computational Thinking Integration">Integrasi Computational Thinking</option>
+                            </optgroup>
+
+                            <optgroup label="💻 Digital & Hybrid">
+                                <option value="Blended Learning (Station Rotation)">Blended Learning (Rotasi Stasiun)</option>
+                                <option value="Flipped Classroom">Flipped Classroom</option>
+                                <option value="Gamifikasi">Gamifikasi Pembelajaran</option>
+                            </optgroup>
+
+                            <optgroup label="🧠 Metode Klasik & Eksperiensial">
+                                <option value="Experiential Learning">Experiential Learning</option>
+                                <option value="Role Playing">Role Playing</option>
+                                <option value="Demonstrasi & Eksperimen">Demonstrasi & Eksperimen</option>
+                            </optgroup>
+
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    
+                    <div class="bg-white p-6 rounded-xl border border-indigo-200 shadow-sm relative overflow-hidden group hover:shadow-md transition">
+                        <div class="absolute top-0 left-0 w-1.5 h-full bg-indigo-500"></div>
+                        <h3 class="text-sm font-bold text-indigo-800 uppercase tracking-wide mb-3 flex items-center gap-2">
+                            <span class="bg-indigo-100 w-6 h-6 flex items-center justify-center rounded text-xs">1</span> Ambil Prompt AI
+                        </h3>
+                        <p class="text-xs text-slate-600 mb-4 leading-relaxed">
+                            Sistem akan membuatkan prompt detail untuk Sub-bab (TP) yang dipilih. Output AI akan diformat dalam <b>Bentuk Tabel</b>.
+                        </p>
+                        
+                        <div class="grid grid-cols-1 gap-2 mb-3">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-600">Batch ke-</label>
+                                <input id="batchNo" type="number" min="1" value="1"
+                                    class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-300 focus:outline-none bg-slate-50">
+                            </div>
+                        </div>
+<button onclick="openGeminiRPP()" class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-bold shadow hover:bg-indigo-700 transition transform active:scale-95 flex items-center justify-center gap-2 text-sm">
+                            📋 Copy Prompt & Buka Gemini ↗
+                        </button>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-orange-200 shadow-sm relative overflow-hidden group hover:shadow-md transition">
+                        <div class="absolute top-0 left-0 w-1.5 h-full bg-orange-500"></div>
+                        <h3 class="text-sm font-bold text-orange-800 uppercase tracking-wide mb-3 flex items-center gap-2">
+                            <span class="bg-orange-100 w-6 h-6 flex items-center justify-center rounded text-xs">2</span> Tempel Hasil JSON
+                        </h3>
+                        <textarea id="jsonInputRpp" class="w-full h-24 p-3 border border-slate-300 rounded-lg font-mono text-[10px] focus:ring-2 ring-orange-400 outline-none mb-3 bg-slate-50" placeholder='Tempel hasil di sini...'></textarea>
+                        <div class="flex gap-2">
+                            <button onclick="convertRppToTable()" class="flex-1 bg-orange-500 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-orange-600 transition shadow">
+                                ⬇️ Proses
+                            </button>
+                            <button onclick="saveRPPToDB(false)" class="flex-1 bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-slate-900 transition shadow">
+                                💾 Simpan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-700 text-sm">Hasil Generator RPP</h3>
+                        <button onclick="deleteDraftRpp()" class="text-xs text-rose-500 hover:text-rose-700 font-bold px-2 py-1 border border-rose-200 rounded bg-white hover:bg-rose-50">Hapus Semua</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+                                <tr>
+                                    <th class="p-3 border-b w-10">No</th>
+                                    <th class="p-3 border-b">Sub-Materi (TP)</th>
+                                    <th class="p-3 border-b">Model</th>
+                                    <th class="p-3 border-b text-center w-32">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rppTbody" class="divide-y divide-slate-100 bg-white">
+                                <tr><td colspan="4" class="p-8 text-center text-slate-400 text-xs italic">Belum ada data RPP.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="previewWrap" class="hidden bg-white p-8 rounded-xl border border-slate-200 shadow-lg relative animate-fade-in-up mb-20">
+                    <button onclick="closePreview()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition bg-slate-100 p-1 rounded-full">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <h3 class="text-lg font-bold text-slate-800 mb-6 border-b pb-4">Preview Dokumen RPP</h3>
+                    <div id="print" class="prose prose-sm max-w-none rpp-preview text-slate-700"></div>
+                </div>
+
+            </div>
+        </main>
+
+        <footer class="h-20 bg-white border-t border-slate-200 px-6 absolute bottom-0 w-full flex justify-between items-center z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <a href="step6_promes.html" class="px-4 py-2 text-slate-500 font-bold hover:text-slate-800 text-sm transition flex items-center gap-1">
+                <span>←</span> Kembali
             </a>
+            
+            <button onclick="saveAndGo()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition transform active:scale-95 flex items-center gap-2 text-sm">
+                <span>💾</span> Simpan & Lanjut (Lampiran) →
+            </button>
         </footer>
     </div>
 
-    <script>
-        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
-        let user, profile={}, mats=[], generatedRPP = "";
+<script>
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+    let user, profile = {}, mats = [], rppItems = [], allocation = null;
 
-        async function init(){
-            const {data:{session}} = await db.auth.getSession(); 
-            if(!session) return location.href='index.html'; user=session.user;
-            
-            const {data:p} = await db.from('profiles').select('*').eq('id',user.id).maybeSingle(); 
-            profile=p||{ mata_pelajaran:'Umum', fase_kelas:'Umum', jenis_kurikulum:'Merdeka' };
-            
-            const {data:m} = await db.from('work_drafts').select('*').eq('user_id',user.id).eq('doc_type','master_cp_atp').maybeSingle();
-            if(m && m.content_data) mats = m.content_data;
-            renderList();
-            // Step 7 memakai Groq langsung dari frontend (API OpenAI-compatible).
-            document.getElementById('modelName').textContent = (CONFIG.GROQ_MODEL || 'llama-3.3-70b-versatile');
-        } init();
+    async function init(){
+        const { data: { session } } = await db.auth.getSession();
+        if(session) { user = session.user; loadData(); }
+        else window.location.href = 'index.html';
+    }
+    init();
 
-        function escapeHTML(s){
-            return String(s ?? '')
-              .replace(/&/g,'&amp;')
-              .replace(/</g,'&lt;')
-              .replace(/>/g,'&gt;')
-              .replace(/"/g,'&quot;')
-              .replace(/'/g,'&#39;');
-        }
+    async function loadData() {
+        const { data: p } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        profile = p || { mata_pelajaran:'Umum', fase_kelas:'Umum', jenis_kurikulum:'Merdeka' };
 
+        // Load Allocation (RPE) from Step 4 (optional for prompt context)
+        const { data: alloc } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'allocation_data').maybeSingle();
+        allocation = alloc?.content_data || null;
 
-        function renderList() {
-            const l = document.getElementById('list'); l.innerHTML = '';
-            mats.forEach((x, i) => {
-                l.innerHTML += `<label class="flex gap-3 text-sm p-3 border rounded hover:bg-slate-50 cursor-pointer items-start"><input type="checkbox" class="chk mt-1" value="${i}"> <div><div class="font-bold text-slate-700">${escapeHTML(x.elemen || 'Tanpa Judul')}</div><div class="text-xs text-slate-500 line-clamp-2">${escapeHTML(x.deskripsi || '')}</div></div></label>`;
-            });
-        }
-        function toggleAll(src) { document.querySelectorAll('.chk').forEach(c => c.checked = src.checked); }
-
-        function pickGroqText(json){
-            return String(json?.choices?.[0]?.message?.content ?? '').trim();
-        }
-
+        // Load Prota (Source of Truth)
+        const { data: prota } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'prota_data').maybeSingle();
         
-        function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-        let lastGroqCallAt = 0;
-
-        function calcSpacingMs(){
-            // MODE "GURU SABAR": lebih baik menunggu lama daripada error.
-            // Groq rate limit kombinasi RPM & TPM. Jadi kita bikin pacing konservatif.
-            const manual = Number(CONFIG.GROQ_MIN_INTERVAL_MS ?? 0);
-            if(manual && manual > 0) return Math.max(500, manual);
-            return 3500;
+        mats = [];
+        if(prota && prota.content_data) {
+            if(prota.content_data.semester_1) mats.push(...prota.content_data.semester_1);
+            if(prota.content_data.semester_2) mats.push(...prota.content_data.semester_2);
+        }
+        
+        // Fallback to Master CP
+        if(mats.length === 0) {
+            const { data: m } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle();
+            if(m && m.content_data) mats = m.content_data;
         }
 
-        function showProgress(show){
-            const wrap = document.getElementById('progressWrap');
-            if(!wrap) return;
-            wrap.classList.toggle('hidden', !show);
+        renderListGrouped();
+
+        const { data: r } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'rpp_data').maybeSingle();
+        if(r && r.content_data && r.content_data.items) {
+            rppItems = r.content_data.items;
+            renderRppTable();
+        }
+    }
+
+    // --- GROUPING LOGIC (Bab > Sub-bab) ---
+    function renderListGrouped(){
+        const l = document.getElementById('list'); l.innerHTML = '';
+        document.getElementById('totalCount').innerText = mats.length;
+        if(mats.length === 0) { l.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">Data materi kosong.</div>`; return; }
+
+        const grouped = mats.reduce((acc, curr, idx) => {
+            const bab = curr.elemen || 'Topik Umum';
+            if(!acc[bab]) acc[bab] = [];
+            acc[bab].push({ ...curr, originalIdx: idx });
+            return acc;
+        }, {});
+
+        Object.keys(grouped).forEach(bab => {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = "mb-4";
+            groupDiv.innerHTML = `<div class="px-2 mb-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider sticky top-0 bg-white/90 backdrop-blur py-1 z-10 border-b border-slate-100">${escapeHTML(bab)}</div>`;
+            
+            grouped[bab].forEach(item => {
+                const subTitle = item.detail_tp || item.deskripsi || 'Sub-materi';
+                const jp = item.alokasi_jp || '?';
+                
+                groupDiv.innerHTML += `
+                <label class="flex gap-3 p-2 ml-1 border-l-2 border-slate-100 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition group rounded-r-lg">
+                    <input type="checkbox" class="chk mt-1 accent-blue-600 w-3.5 h-3.5 rounded border-gray-300" value="${item.originalIdx}">
+                    <div class="min-w-0">
+                        <div class="font-bold text-xs text-slate-700 group-hover:text-blue-700 leading-tight">${escapeHTML(subTitle)}</div>
+                        <div class="text-[9px] text-slate-400 mt-0.5">${jp} JP</div>
+                    </div>
+                </label>`;
+            });
+            l.appendChild(groupDiv);
+        });
+    }
+
+    function toggleAll(src){ document.querySelectorAll('.chk').forEach(c => c.checked = src.checked); }
+    
+    function getSelectedMaterials(){
+        return Array.from(document.querySelectorAll('.chk:checked')).map(c => mats[Number(c.value)]).filter(Boolean);
+    }
+    
+    function escapeHTML(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // --- PROMPT BARU: Minta Output HTML TABLE ---
+    function openGeminiRPP(){
+        const selected = getSelectedMaterials();
+        if(selected.length === 0) return Swal.fire('Pilih Materi', 'Centang minimal 1 Sub-bab (TP) di sidebar kiri.', 'warning');
+
+        const metode = document.getElementById('model').value;
+        const isMerdeka = (profile.jenis_kurikulum || '').toLowerCase().includes('merdeka');
+
+        const labelKI = isMerdeka ? 'Elemen CP' : 'Kompetensi Inti (KI)';
+        const labelKD = isMerdeka ? 'Capaian Pembelajaran (CP)' : 'Kompetensi Dasar (KD)';
+        const labelTP = isMerdeka ? 'Tujuan Pembelajaran (TP)' : 'Indikator Pencapaian (IPK)';
+
+        const daftar = selected.map((m, idx) => {
+            const bab = m.elemen || m.materi_pembelajaran || 'Topik Umum';
+            const tp = m.detail_tp || m.ipk || m.deskripsi || 'Sub-materi';
+            const sem = String(m.semester || m.col5 || '1');
+            const jp = String(m.alokasi_jp || m.col6 || '?');
+
+            const skl = m.skl || m.col_skl || '';
+            const kegiatan = m.kegiatan_pembelajaran || m.col7 || '';
+            const penilaian = m.rencana_penilaian || m.col8 || '';
+
+            const ki = m.ki_text || m.ki || m.col_ki || '';
+            const kd = m.kd || m.col2 || m.deskripsi || '';
+            const ipk = m.ipk || m.col3 || m.detail_tp || '';
+
+            return [
+                `ITEM ${idx+1}:`,
+                `SEMESTER=${sem}`,
+                `BAB=${bab}`,
+                `${labelTP}=${tp}`,
+                `${labelKI}=${ki}`,
+                `${labelKD}=${kd}`,
+                `${labelTP}_DETAIL=${ipk}`,
+                `SKL=${skl}`,
+                `KEGIATAN_RINGKAS=${kegiatan}`,
+                `PENILAIAN_RINGKAS=${penilaian}`,
+                `ALOKASI_JP=${jp}`
+            ].join(" | ");
+        }).join("\n");
+
+        const rpeInfo = allocation ? 
+`BATAS RPE (hasil Step 4):
+- Semester 1 JP tersedia: ${allocation?.s1?.jp || 0}
+- Semester 2 JP tersedia: ${allocation?.s2?.jp || 0}
+` :
+`BATAS RPE: (Belum diisi. Jika Step 4 sudah diisi, sistem akan menampilkan JP tersedia per semester.)
+`;
+
+                // ===== Prompt (tanpa HTML / tanpa base64): output JSON terstruktur, HTML dibentuk oleh aplikasi =====
+                const batchSize = 5;
+        const batchNo = Math.max(1, parseInt(document.getElementById('batchNo')?.value || '1', 10) || 1);
+        const total = selected.length;
+        const startIdx = (batchNo - 1) * batchSize;
+        const endIdx = Math.min(total, startIdx + batchSize);
+        if (startIdx >= total) {
+            return Swal.fire('Batch melebihi data', `Batch ke-${batchNo} kosong. Total item terpilih: ${total}.`, 'warning');
         }
 
-        function setProgress(done, total, status){
-            const t = document.getElementById('progressText');
-            const b = document.getElementById('progressBar');
-            const s = document.getElementById('progressStatus');
-            if(t) t.textContent = `${done}/${total}`;
-            if(b) b.style.width = total ? `${Math.round((done/total)*100)}%` : "0%";
-            if(s) s.textContent = status || '';
-        }
+        const selectedBatch = selected.slice(startIdx, endIdx);
+        const daftarBatch = selectedBatch.map((m, idx) => {
+            const globalIdx = startIdx + idx;
+            const bab = m.elemen || m.materi_pembelajaran || 'Topik Umum';
+            const tp = m.detail_tp || m.ipk || m.deskripsi || 'Sub-materi';
+            const sem = String(m.semester || m.col5 || '1');
+            const jp = String(m.alokasi_jp || m.col6 || '?');
 
-        const currentProgress = { done: 0, total: 0 };
+            const skl = m.skl || m.col_skl || '';
+            const kegiatan = m.kegiatan_pembelajaran || m.col7 || '';
+            const penilaian = m.rencana_penilaian || m.col8 || '';
 
-        async function waitWithStatus(ms, statusPrefix){
-            const start = Date.now();
-            const total = ms;
-            while(true){
-                const elapsed = Date.now() - start;
-                const left = Math.max(0, total - elapsed);
-                const sec = (left/1000).toFixed(1);
-                setProgress(currentProgress.done, currentProgress.total, `${statusPrefix} ${sec}s…`);
-                if(left <= 0) break;
-                await sleep(Math.min(250, left));
+            const ki = m.ki_text || m.ki || m.col_ki || '';
+            const kd = m.kd || m.col2 || m.deskripsi || '';
+            const ipk = m.ipk || m.col3 || m.detail_tp || '';
+
+            return [
+                `ITEM ${globalIdx+1}:`,
+                `SEMESTER=${sem}`,
+                `BAB=${bab}`,
+                `${labelTP}=${tp}`,
+                `${labelKI}=${ki}`,
+                `${labelKD}=${kd}`,
+                `${labelTP}_DETAIL=${ipk}`,
+                `SKL=${skl}`,
+                `KEGIATAN_RINGKAS=${kegiatan}`,
+                `PENILAIAN_RINGKAS=${penilaian}`,
+                `ALOKASI_JP=${jp}`
+            ].join(" | ");
+        }).join("\n");
+
+        const prompt =
+`PERAN: Guru profesional dan ahli kurikulum.
+KONTEKS: ${profile.mata_pelajaran}, ${profile.fase_kelas}, Kurikulum ${profile.jenis_kurikulum}.
+MODEL PEMBELAJARAN: ${metode}
+
+TUGAS: Buatkan ${isMerdeka ? 'MODUL AJAR' : 'RPP'} untuk setiap ITEM di bawah ini (satu dokumen per item).
+Batch: ${batchNo} (item ${startIdx+1} s.d. ${endIdx} dari total ${total}).
+
+${rpeInfo}
+
+DATA (dari Step 2 / Prota):
+${daftarBatch}
+
+KETENTUAN ISI (WAJIB):
+1) Identitas: Bab, Semester, Alokasi JP.
+2) Tujuan Pembelajaran (jelas, terukur).
+3) Model Pembelajaran: "${metode}".
+4) Sumber Belajar: daftar sumber (buku/modul/LKPD/video/lingkungan).
+5) Kegiatan Pembelajaran HARUS dipisah menjadi:
+   - Pendahuluan
+   - Inti (wajib mengikuti sintaks resmi model "${metode}" tahap demi tahap; aktivitas guru & siswa konkret)
+   - Penutup
+6) Penilaian/Asesmen harus spesifik.
+   - Jika Kurikulum Merdeka: sertakan KKTP dalam bentuk rubrik/deskripsi/interval (bukan angka tunggal).
+
+ATURAN OUTPUT (SANGAT KETAT):
+- Outputkan HANYA JSON Array murni (mulai dengan [ dan berakhir ]).
+- Jangan ada teks lain, jangan ada markdown, jangan ada komentar.
+- Jangan output HTML, jangan output base64.
+- Untuk setiap item, isi SEMUA field (jangan ada yang kosong).
+
+STRUKTUR OBJECT WAJIB:
+[
+  {
+    "elemen": "Nama Bab/Materi",
+    "sub_elemen": "Nama Sub-bab (${labelTP})",
+    "semester": "1 atau 2",
+    "alokasi_jp": 2,
+    "metode": "${metode}",
+    "tujuan": ["...","..."],
+    "sumber_belajar": ["...","..."],
+    "kegiatan": {
+      "pendahuluan": ["...","..."],
+      "inti": ["...","..."],
+      "penutup": ["...","..."]
+    },
+    "penilaian": ["...","..."],
+    "catatan_kktp": "${isMerdeka ? 'Rubrik/interval KKTP untuk TP ini (wajib)' : 'Kosongkan atau isi singkat jika perlu'}"
+  }
+]
+`;
+        navigator.clipboard.writeText(prompt).then(() => {
+            Swal.fire({
+                icon: 'success', title: 'Prompt Tersalin!',
+                html: 'Prompt sudah disesuaikan (Step2 + Step4).<br><b>Paste di Gemini → Salin JSON → Tempel di sini.</b>',
+                timer: 2800, showConfirmButton: false
+            });
+            window.open('https://gemini.google.com/app', '_blank');
+        });
+    }
+
+    function sanitizeJSON(jsonString) {
+        let content = jsonString.replace(/```json/g, '').replace(/```/g, '').trim();
+        let inString = false, escaped = false, result = '';
+        for (let i = 0; i < content.length; i++) {
+            let char = content[i];
+            if (char === '"' && !escaped) inString = !inString;
+            if (char === '\\' && !escaped) escaped = true; else escaped = false;
+            if (inString) {
+                if (char === '\n') char = '\\n';
+                else if (char === '\r') char = '';
+                else if (char === '\t') char = '\\t';
             }
+            result += char;
+        }
+        return result;
+    }
+
+    function safeParseGeminiArray(raw){
+        raw = String(raw || '').trim();
+
+        // Kalau yang ditempel ternyata PROMPT (bukan jawaban JSON)
+        if (/^(PERAN|KONTEKS|TUGAS|INSTRUKSI|ATURAN)\s*:/i.test(raw)) {
+        throw new Error("Yang ditempel adalah PROMPT, bukan jawaban JSON dari Gemini.");
         }
 
-        async function enforceSpacing(){
-            const spacing = calcSpacingMs();
-            const now = Date.now();
-            const wait = Math.max(0, spacing - (now - lastGroqCallAt));
-            if(wait > 0){
-                await waitWithStatus(wait, 'Throttle');
-            }
-        }
+        // Buang code fence jika ada
+        raw = raw.replace(/```json\s*/gi, '```').replace(/```/g, '').trim();
 
-        function deriveRetryWaitMs(res, msg, attempt){
-            // 1) Retry-After header (seconds)
-            const ra = res.headers?.get?.('retry-after');
-            if(ra && !Number.isNaN(Number(ra))) return Math.ceil(Number(ra) * 1000) + 300;
+        // Ambil hanya bagian array JSON pertama
+        const a = raw.indexOf('[');
+        const b = raw.lastIndexOf(']');
+        if (a !== -1 && b !== -1 && b > a) raw = raw.slice(a, b + 1);
 
-            // 2) Parse message: "Please retry in 27.6s."
-            const m = String(msg || '').match(/retry in\s+([0-9.]+)s/i);
-            if(m) return Math.ceil(Number(m[1]) * 1000) + 300;
+        // Repair ringan: trailing comma (JSON tidak mengizinkan koma terakhir)
+        raw = raw.replace(/,\s*([\]}])/g, '$1');
 
-            // 3) Exponential backoff fallback
-            return Math.min(60000, 1500 * Math.pow(2, attempt - 1)) + 300;
-        }
+        // Terakhir, sanitasi karakter kontrol di dalam string
+        raw = sanitizeJSON(raw);
 
-        async function callGroq(prompt){
-            // Groq API OpenAI-compatible: POST /chat/completions
-            const apiKey = String(CONFIG.GROQ_API_KEY || '').trim();
-            if(!apiKey) throw new Error('CONFIG.GROQ_API_KEY masih kosong. Isi di config.js (Groq API Key).');
+        if (!raw.startsWith('[')) throw new Error("Format bukan JSON Array [ ... ]");
+        return JSON.parse(raw);
+    }
 
-            const base = (CONFIG.GROQ_BASE_URL || 'https://api.groq.com/openai/v1').replace(/\/+$/,'');
-            const url = `${base}/chat/completions`;
+    
+    function arrayify(x){
+        if (Array.isArray(x)) return x.map(v => String(v).trim()).filter(Boolean);
+        if (x === null || x === undefined) return [];
+        const s = String(x).trim();
+        if (!s) return [];
+        // Pisah baris / titik koma
+        return s.split(/\n|;+/g).map(v => v.trim()).filter(Boolean);
+    }
 
-            const payload = {
-                model: (CONFIG.GROQ_MODEL || 'llama-3.3-70b-versatile').trim(),
-                temperature: Number(CONFIG.GROQ_TEMPERATURE ?? 0.4),
-                max_tokens: Number(CONFIG.GROQ_MAX_TOKENS ?? 2500),
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'Anda adalah guru profesional di Indonesia. Buat output RPP sebagai HTML BODY saja (tanpa <html>/<head>), TANPA Markdown. Gunakan bahasa Indonesia yang jelas dan praktis.'
-                    },
-                    { role: 'user', content: prompt }
-                ]
-            };
+    function rppStructuredToHtml(x){
+        const tujuan = arrayify(x.tujuan);
+        const sumber = arrayify(x.sumber_belajar);
+        const pend = arrayify(x?.kegiatan?.pendahuluan);
+        const inti = arrayify(x?.kegiatan?.inti);
+        const penutup = arrayify(x?.kegiatan?.penutup);
+        const penilaian = arrayify(x.penilaian);
 
-            let attempt = 0;
-            const maxRetries = Number(CONFIG.GROQ_MAX_RETRIES ?? 12);
-            while(true){
-                attempt++;
+        const ul = (arr) => {
+            if(!arr.length) return '<span class="text-slate-400">-</span>';
+            return '<ul class="list-disc pl-5 space-y-1">' + arr.map(v => `<li>${escapeHTML(v)}</li>`).join('') + '</ul>';
+        };
 
-                await enforceSpacing();
-                lastGroqCallAt = Date.now();
+        const kktp = (x.catatan_kktp || '').toString().trim();
 
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify(payload)
+        const body = `
+          <table class="w-full text-sm border border-slate-200 rounded overflow-hidden">
+            <tbody>
+              <tr class="border-b">
+                <td class="w-52 bg-slate-50 font-bold p-3">Tujuan Pembelajaran</td>
+                <td class="p-3">${ul(tujuan)}</td>
+              </tr>
+              <tr class="border-b">
+                <td class="bg-slate-50 font-bold p-3">Model Pembelajaran</td>
+                <td class="p-3">${escapeHTML(x.metode || '') || '<span class="text-slate-400">-</span>'}</td>
+              </tr>
+              <tr class="border-b">
+                <td class="bg-slate-50 font-bold p-3">Sumber Belajar</td>
+                <td class="p-3">${ul(sumber)}</td>
+              </tr>
+              <tr class="border-b">
+                <td class="bg-slate-50 font-bold p-3">Kegiatan — Pendahuluan</td>
+                <td class="p-3">${ul(pend)}</td>
+              </tr>
+              <tr class="border-b">
+                <td class="bg-slate-50 font-bold p-3">Kegiatan — Inti</td>
+                <td class="p-3">${ul(inti)}</td>
+              </tr>
+              <tr class="border-b">
+                <td class="bg-slate-50 font-bold p-3">Kegiatan — Penutup</td>
+                <td class="p-3">${ul(penutup)}</td>
+              </tr>
+              <tr class="border-b">
+                <td class="bg-slate-50 font-bold p-3">Penilaian</td>
+                <td class="p-3">${ul(penilaian)}</td>
+              </tr>
+              ${kktp ? `
+              <tr>
+                <td class="bg-slate-50 font-bold p-3">Catatan KKTP</td>
+                <td class="p-3">${escapeHTML(kktp)}</td>
+              </tr>` : ''}
+            </tbody>
+          </table>
+        `;
+        return body;
+    }
+
+    function convertRppToTable(){
+        const raw = document.getElementById('jsonInputRpp').value.trim();
+        if(!raw) return Swal.fire('Kosong', 'Tempel JSON dulu.', 'warning');
+
+        try {
+            const data = safeParseGeminiArray(raw);
+            if(!Array.isArray(data)) throw new Error("Output bukan Array");
+
+            const newItems = data.map(x => {
+                const elemen = x.elemen || 'Tanpa Bab';
+                const sub_elemen = x.sub_elemen || x.elemen || 'Tanpa TP';
+                const metode = x.metode || document.getElementById('model').value;
+                const semester = String(x.semester || '');
+                const alokasi_jp = String(x.alokasi_jp || '');
+
+                // Bentuk HTML tabel dari struktur JSON (tanpa base64/HTML dari model)
+                const htmlBody = rppStructuredToHtml({
+                    elemen, sub_elemen, metode, semester, alokasi_jp,
+                    tujuan: x.tujuan,
+                    sumber_belajar: x.sumber_belajar,
+                    kegiatan: x.kegiatan,
+                    penilaian: x.penilaian,
+                    catatan_kktp: x.catatan_kktp || ''
                 });
 
-                // Groq mengembalikan 429 saat rate limit. Header retry-after hanya ada jika 429.
-                if(res.ok){
-                    const json = await res.json();
-                    const txt = pickGroqText(json);
-                    if(!txt) throw new Error('Groq tidak mengembalikan teks (choices kosong).');
-                    return txt;
-                }
+                // Wrapper identitas ringkas di atas tabel konten (untuk preview)
+                const header = `
+                  <div class="mb-3">
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">${escapeHTML(elemen)}</div>
+                    <div class="text-base font-black text-slate-900">${escapeHTML(sub_elemen)}</div>
+                    <div class="text-xs text-slate-600 mt-1">
+                      Semester: <b>${escapeHTML(semester || '-')}</b> • JP: <b>${escapeHTML(alokasi_jp || '-')}</b> • Model: <b>${escapeHTML(metode)}</b>
+                    </div>
+                  </div>
+                `;
 
-                let msg = '';
-                try {
-                    const j = await res.json();
-                    msg = j?.error?.message || JSON.stringify(j);
-                } catch(_){
-                    msg = await res.text();
-                }
+                return ({
+                    elemen, sub_elemen, metode, semester, alokasi_jp,
+                    // simpan struktur juga (untuk Step 9 kalau dibutuhkan)
+                    tujuan: x.tujuan,
+                    sumber_belajar: x.sumber_belajar,
+                    kegiatan: x.kegiatan,
+                    penilaian: x.penilaian,
+                    catatan_kktp: x.catatan_kktp || '',
+                    html: DOMPurify.sanitize(header + htmlBody)
+                });
+            });
 
-                if(res.status === 429){
-                    if(attempt > maxRetries) throw new Error(`Groq error 429 berulang: ${msg}`);
+            rppItems.push(...newItems);
 
-                    // 1) retry-after (seconds)
-                    const ra = res.headers?.get?.('retry-after');
-                    let waitMs = (ra && !Number.isNaN(Number(ra))) ? Math.ceil(Number(ra) * 1000) : 0;
+            renderRppTable();
+            Swal.fire('Berhasil', `${newItems.length} RPP berhasil ditambahkan!`, 'success');
 
-                    // 2) parse message: "Please try again in 1.287s"
-                    if(!waitMs){
-                        const m = String(msg || '').match(/try again in\s+([0-9.]+)s/i);
-                        if(m) waitMs = Math.ceil(Number(m[1]) * 1000);
-                    }
-
-                    // 3) fallback exponential backoff
-                    if(!waitMs) waitMs = Math.min(60000, 1500 * Math.pow(2, attempt - 1));
-                    waitMs += 300;
-
-                    await waitWithStatus(waitMs, `Rate limit (429) • menunggu`);
-                    continue;
-                }
-
-                throw new Error(`Groq error ${res.status}: ${msg}`);
-            }
+        } catch(e) {
+            console.error(e);
+            Swal.fire('Format Salah', e.message || 'Pastikan hanya menyalin Array JSON [ ... ]', 'error');
         }
+    }
 
-        function buildRppPrompt({ m, modelPembelajaran }){
-            // deteksi kurikulum
-            const kur = String(profile.jenis_kurikulum || '').toLowerCase();
-            const isK13 = kur.includes('2013') || kur.includes('k13');
 
-            const bab = m?.bab || m?.bab_title || '';
-            const subBab = m?.sub_bab || m?.subbab || '';
-            const topik = m?.elemen || subBab || 'Topik';
+    function renderRppTable(){
+        const tb = document.getElementById('rppTbody'); tb.innerHTML = '';
+        if(rppItems.length === 0) { tb.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-400 text-xs italic">Belum ada data.</td></tr>`; return; }
 
-            if(isK13){
-                return `KURIKULUM: Kurikulum 2013 (K13).\nSUMBER DATA: Profil Step 1 (Mapel, Kelas/Fase, Kurikulum) + Step 7 (Bab, Sub-bab, Metode/Model Pembelajaran).\nMAPEL: ${profile.mata_pelajaran}, KELAS: ${profile.fase_kelas}.\nBAB: ${bab || '-'}\nSUB-BAB: ${subBab || '-'}\nTOPIK: "${topik}"\nMODEL PEMBELAJARAN: ${modelPembelajaran}.\n\nTUGAS: Buat RPP sebagai HTML BODY saja (tanpa <html><head>), TANPA Markdown.\nSertakan komponen: Identitas, Tujuan Pembelajaran, Materi, Metode/Model, Media & Sumber Belajar, Langkah Pembelajaran (Pendahuluan, Inti, Penutup), Penilaian (Sikap, Pengetahuan, Keterampilan) + instrumen ringkas.\nGunakan bahasa Indonesia yang jelas, praktis, dan siap cetak.`;
-            }
+        rppItems.forEach((x, i) => {
+            tb.innerHTML += `
+            <tr class="hover:bg-slate-50 transition group">
+                <td class="p-3 border-b text-slate-500 text-xs text-center">${i+1}</td>
+                <td class="p-3 border-b align-top">
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">${escapeHTML(x.elemen)}</div>
+                    <div class="text-xs font-bold text-slate-800">${escapeHTML(x.sub_elemen)}</div>
+                </td>
+                <td class="p-3 border-b text-slate-600 text-xs align-top pt-4">${escapeHTML(x.metode)}</td>
+                <td class="p-3 border-b text-center align-top pt-3">
+                    <div class="flex items-center justify-center gap-2">
+                        <button onclick="previewRpp(${i})" class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-100 text-[10px] font-bold transition">Lihat</button>
+                        <button onclick="deleteRppItem(${i})" class="text-slate-400 hover:text-red-500 transition">✕</button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+    }
 
-            // default KM
-            return `KURIKULUM: Kurikulum Merdeka (KM).\nSUMBER DATA: Profil Step 1 (Mapel, Kelas/Fase, Kurikulum) + Step 7 (Bab, Sub-bab, Metode/Model Pembelajaran).\nMAPEL: ${profile.mata_pelajaran}, FASE/KELAS: ${profile.fase_kelas}.\nBAB: ${bab || '-'}\nSUB-BAB: ${subBab || '-'}\nTOPIK: "${topik}"\nMODEL PEMBELAJARAN: ${modelPembelajaran}.\n\nTUGAS: Buat Modul Ajar/RPP ringkas sebagai HTML BODY saja (tanpa <html><head>), TANPA Markdown.\nSertakan: Tujuan Pembelajaran, Pemahaman Bermakna, Pertanyaan Pemantik, Langkah Pembelajaran (Pendahuluan, Inti + Diferensiasi, Penutup), Asesmen (Diagnostik/Formatif/Sumatif), serta Sumber Belajar.\nGunakan bahasa Indonesia yang jelas, praktis, dan siap cetak.`;
+    function fixBase64Padding(b64){
+        b64 = String(b64 || '').trim();
+        const pad = b64.length % 4;
+        if (pad) b64 += '='.repeat(4 - pad);
+        return b64;
+    }
+
+    function b64ToUtf8(b64){
+        try{
+            b64 = fixBase64Padding(b64);
+            const bin = atob(b64);
+            const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+            return new TextDecoder('utf-8').decode(bytes);
+        }catch(e){
+            return '';
         }
+    }
 
-        async function batch(){
-            const chk = document.querySelectorAll('.chk:checked'); 
-            if(chk.length === 0) return alert("Pilih minimal 1 materi!");
-            
-            const btn = document.getElementById('btnGen'); 
-            btn.disabled = true; btn.innerHTML = `⏳ Memproses...`;
-            
-            // progress bar
-            showProgress(true);
-            currentProgress.total = chk.length;
-            currentProgress.done = 0;
-            setProgress(0, chk.length, 'Mulai…');
-
-            let htmlAccumulator = "";
-            const model = document.getElementById('model').value;
-
-            for(let idx=0; idx<chk.length; idx++){
-                const c = chk[idx];
-                const m = mats[c.value];
-                const bab = m?.bab || m?.bab_title || '';
-                const subBab = m?.sub_bab || m?.subbab || '';
-                const topik = m?.elemen || subBab || 'Topik';
-                const label = `${bab ? (bab + ' • ') : ''}${subBab ? (subBab + ' • ') : ''}${topik}`;
-
-                setProgress(currentProgress.done, currentProgress.total, `Memproses ${idx+1}/${currentProgress.total}: ${label}`);
-                document.getElementById('print').innerHTML = `<div class="text-center text-blue-600 mt-20"><p>Sedang membuat RPP: <b>${escapeHTML(label)}</b>...</p></div>`;
-
-                try {
-                    const prompt = buildRppPrompt({ m, modelPembelajaran: model });
-
-                    let txt = await callGroq(prompt);
-
-                    if(!txt) txt = "<p style='color:red'>Gagal mendapatkan respon dari AI.</p>";
-
-                    // Safe Cleaning
-                    txt = txt.replace(/<think>[\s\S]*?<\/think>/gi,"").replace(/```html/g,"").replace(/```/g,"");
-
-                    // Sanitasi HTML output AI (hindari XSS)
-                    txt = DOMPurify.sanitize(txt, { USE_PROFILES: { html: true } });
-                    
-                    currentProgress.done += 1;
-                    setProgress(currentProgress.done, currentProgress.total, `Selesai ${currentProgress.done}/${currentProgress.total}`);
-
-                    htmlAccumulator += `<div class="rpp-section mt-8"><div style="background:#f8fafc; padding:10px; border-left:5px solid #2563eb;"><h2 style="margin:0; font-size:14pt; color:#1e40af;">TOPIK: ${escapeHTML(label)}</h2><p style="margin:0; font-size:10pt;">Model: ${escapeHTML(model)}</p></div>${txt}</div><div class="page-break"></div>`;
-
-                } catch(e) {
-                    console.error(e);
-                    currentProgress.done += 1;
-                    setProgress(currentProgress.done, currentProgress.total, `Lewati (error) ${currentProgress.done}/${currentProgress.total}`);
-                    const msg = escapeHTML(String(e?.message || e));
-                    const errHtml = `<p style="color:#b91c1c;font-weight:600">Gagal generate untuk topik ini.</p><p style="color:#b91c1c;font-size:10pt">${msg}</p>`;
-                    document.getElementById('print').innerHTML = errHtml;
-                    htmlAccumulator += `<div class="rpp-section mt-8"><div style="background:#fef2f2; padding:10px; border-left:5px solid #b91c1c;"><h2 style="margin:0; font-size:14pt; color:#b91c1c;">TOPIK: ${escapeHTML(label)}</h2><p style="margin:0; font-size:10pt;">(gagal)</p></div>${errHtml}</div><div class="page-break"></div>`;
-                }
-            }
-            
-            generatedRPP = htmlAccumulator;
-            document.getElementById('print').innerHTML = DOMPurify.sanitize(generatedRPP, { USE_PROFILES: { html: true } });
-            
-            await saveRPPToDB();
-            
-            btn.disabled = false; btn.innerHTML = "✨ Generate & Simpan";
-            setProgress(currentProgress.total, currentProgress.total, 'Selesai ✅');
-            await sleep(400);
-            showProgress(false);
-            alert("Berhasil! RPP telah disimpan ke Step 9.");
+    function previewRpp(i){
+        const x = rppItems[i];
+        document.getElementById('print').innerHTML = x.html;
+        const area = document.getElementById('previewWrap');
+        area.classList.remove('hidden'); area.scrollIntoView({ behavior:'smooth' });
+    }
+    
+    function closePreview() { document.getElementById('previewWrap').classList.add('hidden'); }
+    function deleteRppItem(i) { rppItems.splice(i,1); renderRppTable(); closePreview(); }
+    
+    async function deleteDraftRpp() { 
+        if(confirm("Hapus semua draft?")) {
+            rppItems = []; renderRppTable(); 
+            await db.from('work_drafts').delete().eq('user_id', user.id).eq('doc_type', 'rpp_data');
         }
+    }
 
-        async function saveRPPToDB() {
-            if(!generatedRPP) return;
-            // FIX ERROR 400: Pastikan semua field terisi
-            const payload = {
-                user_id: user.id,
-                doc_type: 'rpp_result',
-                subject_name: profile.mata_pelajaran || 'Umum',
-                grade_level: profile.fase_kelas || 'Umum',
-                curriculum_type: profile.jenis_kurikulum || 'Merdeka',
-                content_data: { html: generatedRPP },
-                status: 'confirmed'
-            };
-            
-            const { error } = await db.from('work_drafts').upsert(payload, { onConflict: 'user_id, doc_type' });
-            if(error) console.error("Gagal Simpan DB:", error.message);
+    async function saveRPPToDB(redirect = false){
+        if(rppItems.length === 0) return Swal.fire('Data Kosong', 'Belum ada RPP.', 'warning');
+        
+        const payload = {
+            user_id: user.id, doc_type: 'rpp_data',
+            subject_name: profile.mata_pelajaran || 'Umum', grade_level: profile.fase_kelas || 'Umum', curriculum_type: profile.jenis_kurikulum || 'Merdeka',
+            content_data: { items: rppItems }, status: 'confirmed'
+        };
+
+        const { error } = await db.from('work_drafts').upsert(payload, { onConflict: 'user_id,doc_type' });
+        
+        if(error) {
+            Swal.fire('Gagal', error.message, 'error');
+            return false;
+        } else {
+            if(!redirect) Swal.fire('Tersimpan', 'RPP berhasil disimpan.', 'success');
+            return true;
         }
-    </script>
+    }
+
+    async function saveAndGo() {
+        const saved = await saveRPPToDB(true);
+        if(saved) {
+            const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 1500});
+            Toast.fire({icon: 'success', title: 'RPP Tersimpan!'});
+            setTimeout(() => window.location.href = 'step8_lampiran.html', 1500);
+        }
+    }
+</script>
 </body>
 </html>

@@ -2,236 +2,302 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';">
-    <title>Langkah 5: Prota</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Langkah 5: Program Tahunan (Prota)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
-    <script src="sidebar.js"></script>
+    <script src="layout.js"></script>
 </head>
-<body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
 
-    <div id="sidebar-container" class="flex-none h-full"></div>
+<body class="bg-slate-100 text-slate-800 h-screen flex font-sans overflow-hidden">
 
-    <div class="flex-1 flex flex-col relative">
-        <header class="bg-white border-b px-6 py-4 shadow-sm z-10">
-            <h1 class="text-xl font-bold text-slate-900">5. Program Tahunan (PROTA)</h1>
-            <p class="text-xs text-slate-500">Tinjau distribusi materi Semester Ganjil & Genap.</p>
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 flex flex-col relative min-w-0">
+        
+        <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-10 flex justify-between items-center shrink-0">
+            <div>
+                <h1 class="text-xl font-bold text-slate-900">5. Program Tahunan (Prota)</h1>
+                <p class="text-xs text-slate-500">Distribusikan JP Materi agar sesuai dengan ketersediaan waktu.</p>
+            </div>
+            <a href="step2_analisis.html" class="bg-white border border-slate-300 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 hover:text-blue-600 transition flex items-center gap-2 shadow-sm">
+                <span>✏️</span> Edit Data Materi (Step 2)
+            </a>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-8 pb-24">
-            <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow border min-h-[500px]">
-                <h2 class="text-center font-bold text-xl mb-6 text-slate-800">PROGRAM TAHUNAN</h2>
-                <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between mb-4">
-                    <div class="text-xs text-slate-500">
-                        Tabel di bawah <b>bisa diedit</b> (materi & JP). Klik <b>Simpan</b> agar perubahan dipakai di Step 6–9.
-                    </div>
-                    <div class="flex gap-2">
-                        <button id="btnSave" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-emerald-700 transition">💾 Simpan</button>
-                        <button id="btnReset" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-300 transition">↩ Reset</button>
+        <main class="flex-1 overflow-y-auto p-8 pb-32 bg-slate-100">
+            
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex flex-col md:flex-row justify-between items-center shadow-sm gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">ℹ️</div>
+                    <div>
+                        <h3 class="text-sm font-bold text-blue-800">Ketersediaan Waktu</h3>
+                        <p class="text-xs text-blue-600">Total JP Efektif dari Kalender.</p>
                     </div>
                 </div>
-
-                <div id="status" class="text-xs text-slate-500 mb-3"></div>
-                <div id="protaContent" class="text-center text-gray-500 italic">Memuat data...</div>
+                <div class="flex gap-8 text-right">
+                    <div>
+                        <span class="text-[10px] text-slate-500 block uppercase font-bold">Target Smt 1</span>
+                        <span class="text-xl font-extrabold text-slate-800" id="supply_s1">0 JP</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-500 block uppercase font-bold">Target Smt 2</span>
+                        <span class="text-xl font-extrabold text-slate-800" id="supply_s2">0 JP</span>
+                    </div>
+                </div>
             </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-4 justify-between items-center">
+                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                        <span class="w-2 h-6 bg-blue-500 rounded-full"></span> Semester 1 (Ganjil)
+                    </h3>
+                    
+                    <div class="flex items-center gap-3">
+                        <button onclick="autoFitJP(1)" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow flex items-center gap-1 transition transform active:scale-95" title="Sesuaikan JP materi dengan total tersedia">
+                            <span>⚡</span> Auto Fit JP
+                        </button>
+                        <div class="text-xs font-bold bg-white border px-3 py-1.5 rounded-lg shadow-sm">
+                            Terpakai: <span id="used_s1" class="text-blue-600 text-sm">0</span> JP
+                        </div>
+                    </div>
+                </div>
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-white text-slate-500 font-bold uppercase text-[10px] border-b">
+                        <tr>
+                            <th class="p-4 w-12 text-center">No</th>
+                            <th class="p-4">Materi Pokok (Elemen)</th>
+                            <th class="p-4 w-1/3">Tujuan Pembelajaran (TP)</th>
+                            <th class="p-4 w-24 text-center">JP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody_s1" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-4 justify-between items-center">
+                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                        <span class="w-2 h-6 bg-purple-500 rounded-full"></span> Semester 2 (Genap)
+                    </h3>
+                    
+                    <div class="flex items-center gap-3">
+                        <button onclick="autoFitJP(2)" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow flex items-center gap-1 transition transform active:scale-95" title="Sesuaikan JP materi dengan total tersedia">
+                            <span>⚡</span> Auto Fit JP
+                        </button>
+                        <div class="text-xs font-bold bg-white border px-3 py-1.5 rounded-lg shadow-sm">
+                            Terpakai: <span id="used_s2" class="text-purple-600 text-sm">0</span> JP
+                        </div>
+                    </div>
+                </div>
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-white text-slate-500 font-bold uppercase text-[10px] border-b">
+                        <tr>
+                            <th class="p-4 w-12 text-center">No</th>
+                            <th class="p-4">Materi Pokok (Elemen)</th>
+                            <th class="p-4 w-1/3">Tujuan Pembelajaran (TP)</th>
+                            <th class="p-4 w-24 text-center">JP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody_s2" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+
         </main>
 
-        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between z-20 shadow-lg">
-            <a href="step4_alokasi.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
-            <a href="step6_promes.html" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition transform active:scale-95">
-                Lanjut ke Promes →
-            </a>
+        <footer class="h-20 bg-white border-t border-slate-200 px-6 absolute bottom-0 w-full flex justify-between items-center z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <a href="step4_alokasi.html" class="px-4 py-2 text-slate-500 font-bold hover:text-slate-800 text-sm transition flex items-center gap-1"><span>←</span> Kembali</a>
+            <button onclick="saveAndNext()" id="btnSave" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition transform active:scale-95 flex items-center gap-2 text-sm">
+                <span>💾</span> Simpan & Lanjut (Promes) →
+            </button>
         </footer>
     </div>
 
-    <script>
-        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
-        let startYear=new Date().getFullYear(); 
-        const MONTHS=["Juli","Agustus","September","Oktober","November","Desember","Januari","Februari","Maret","April","Mei","Juni"];
+<script>
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+    let user, profile = {}, allMaterials = [], allocation = {};
 
-        let sessionUser = null;
-        let draftRow = null;
-        let originalData = null;
-        let currentData = null;
-        let mats = [];
+    async function init() {
+        const { data: { session } } = await db.auth.getSession();
+        if (session) { user = session.user; loadData(); }
+    }
+    init();
 
-        async function init() {
-            const { data: { session } } = await db.auth.getSession();
-            if(!session) return location.href = 'index.html'; 
-            sessionUser = session.user;
-            
-            const { data: p } = await db.from('profiles').select('tahun_ajaran').eq('id', session.user.id).maybeSingle();
-            if(p && p.tahun_ajaran) startYear = parseInt(p.tahun_ajaran.split('/')[0]) || startYear;
+    async function loadData() {
+        // Load data penting
+        const [prof, cp, alloc] = await Promise.all([
+            db.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+            db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle(),
+            db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'allocation_data').maybeSingle()
+        ]);
 
-            const { data: d } = await db.from('work_drafts').select('*').eq('user_id', session.user.id).eq('doc_type', 'promes_data').maybeSingle();
-            if(d) {
-                draftRow = d;
-                originalData = JSON.parse(JSON.stringify(d.content_data || {}));
-                currentData = JSON.parse(JSON.stringify(d.content_data || {}));
-                mats = Array.isArray(currentData.materials) ? JSON.parse(JSON.stringify(currentData.materials)) : [];
-                bindButtons();
-                render();
-            } else {
-                alert("Data belum lengkap.");
-                location.href = 'step3_kalender.html';
+        if(prof.data) profile = prof.data;
+        
+        // 1. Load Materials (Sumber Kebenaran: Step 2)
+        if(cp.data && cp.data.content_data) {
+            allMaterials = cp.data.content_data; 
+        }
+
+        // 2. Load Allocation Supply (Referensi dari Step 4)
+        if(alloc.data && alloc.data.content_data) {
+            allocation = alloc.data.content_data;
+            document.getElementById('supply_s1').innerText = (allocation.s1?.jp || 0) + " JP";
+            document.getElementById('supply_s2').innerText = (allocation.s2?.jp || 0) + " JP";
+        }
+
+        renderTable(1);
+        renderTable(2);
+        calculateUsage();
+    }
+
+    function renderTable(sem) {
+        const tbody = document.getElementById(sem === 1 ? 'tbody_s1' : 'tbody_s2');
+        tbody.innerHTML = '';
+        const items = allMaterials.filter(m => m.semester == sem);
+
+        if(items.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic text-xs">Tidak ada materi untuk Semester ${sem}. Cek Step 2.</td></tr>`;
+            return;
+        }
+
+        items.forEach((item, idx) => {
+            const jp = item.alokasi_jp || 0;
+            tbody.innerHTML += `
+                <tr class="hover:bg-slate-50 transition border-b group">
+                    <td class="p-4 text-center text-slate-400 text-xs">${idx + 1}</td>
+                    <td class="p-4">
+                        <div class="font-bold text-slate-700 text-xs">${item.elemen || 'Tanpa Judul'}</div>
+                    </td>
+                    <td class="p-4 text-xs text-slate-600 leading-relaxed">${item.detail_tp || item.deskripsi}</td>
+                    <td class="p-4 text-center">
+                        <input type="number" value="${jp}" 
+                            onchange="updateJP('${item.elemen}', this.value, ${sem})"
+                            class="w-16 text-center border border-slate-200 bg-slate-50 rounded p-1 text-xs font-bold focus:ring-2 ring-blue-500 outline-none transition">
+                    </td>
+                </tr>`;
+        });
+    }
+
+    function updateJP(elemenName, newVal, sem) {
+        const idx = allMaterials.findIndex(m => m.elemen === elemenName && m.semester == sem);
+        if(idx !== -1) {
+            allMaterials[idx].alokasi_jp = parseInt(newVal) || 0;
+            calculateUsage();
+        }
+    }
+
+    function calculateUsage() {
+        const s1 = allMaterials.filter(m => m.semester == 1).reduce((sum, m) => sum + (parseInt(m.alokasi_jp)||0), 0);
+        const s2 = allMaterials.filter(m => m.semester == 2).reduce((sum, m) => sum + (parseInt(m.alokasi_jp)||0), 0);
+
+        const el1 = document.getElementById('used_s1');
+        const el2 = document.getElementById('used_s2');
+        
+        el1.innerText = s1; el2.innerText = s2;
+        
+        const supply1 = allocation.s1?.jp || 0;
+        const supply2 = allocation.s2?.jp || 0;
+        
+        el1.className = s1 > supply1 ? "text-rose-600 font-bold animate-pulse" : (s1 === supply1 ? "text-emerald-600 font-bold" : "text-blue-600");
+        el2.className = s2 > supply2 ? "text-rose-600 font-bold animate-pulse" : (s2 === supply2 ? "text-emerald-600 font-bold" : "text-purple-600");
+    }
+
+    // --- FITUR AUTO FIT JP ---
+    function autoFitJP(sem) {
+        const supply = (sem === 1) ? (allocation.s1?.jp || 0) : (allocation.s2?.jp || 0);
+        if (supply <= 0) return Swal.fire('Error', 'Data Alokasi Waktu (Step 4) belum ada atau 0 JP.', 'error');
+
+        const items = allMaterials.filter(m => m.semester == sem);
+        const itemCount = items.length;
+        if (itemCount === 0) return Swal.fire('Kosong', 'Tidak ada materi di semester ini.', 'warning');
+
+        const currentUsed = items.reduce((sum, m) => sum + (parseInt(m.alokasi_jp) || 0), 0);
+        const diff = supply - currentUsed;
+
+        if (diff === 0) return Swal.fire('Sudah Pas', 'Total JP materi sudah sesuai dengan ketersediaan.', 'info');
+
+        Swal.fire({
+            title: 'Sesuaikan Otomatis?',
+            html: `Target: <b>${supply} JP</b><br>Terpakai: <b>${currentUsed} JP</b><br>Selisih: <b class="${diff>0?'text-green-600':'text-red-600'}">${diff>0?'+':''}${diff} JP</b><br>Akan dibagikan ke ${itemCount} materi.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Ratakan'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                distributeDiff(items, diff);
+                renderTable(sem);
+                calculateUsage();
+                Swal.fire('Berhasil', 'JP telah disesuaikan.', 'success');
             }
-        } init();
+        });
+    }
 
-        function setStatus(msg, tone='info') {
-            const el = document.getElementById('status');
-            const color = tone==='ok' ? 'text-emerald-700' : tone==='err' ? 'text-red-700' : 'text-slate-500';
-            el.className = `text-xs mb-3 ${color}`;
-            el.textContent = msg;
+    function distributeDiff(items, totalDiff) {
+        const count = items.length;
+        let remain = totalDiff;
+        let i = 0;
+        
+        const quickBase = Math.floor(remain / count);
+        if (quickBase !== 0) {
+            items.forEach(m => { m.alokasi_jp = (parseInt(m.alokasi_jp)||0) + quickBase; });
+            remain -= (quickBase * count);
         }
 
-        function bindButtons(){
-            document.getElementById('btnSave').onclick = saveChanges;
-            document.getElementById('btnReset').onclick = () => {
-                if(!originalData) return;
-                currentData = JSON.parse(JSON.stringify(originalData));
-                mats = Array.isArray(currentData.materials) ? JSON.parse(JSON.stringify(currentData.materials)) : [];
-                render();
-                setStatus('Perubahan dibatalkan. Kembali ke data awal.', 'info');
-            };
-        }
-
-        function escapeHTML(s){
-            return String(s ?? '')
-              .replace(/&/g,'&amp;')
-              .replace(/</g,'&lt;')
-              .replace(/>/g,'&gt;')
-              .replace(/"/g,'&quot;')
-              .replace(/'/g,'&#39;');
-        }
-
-
-        function render() {
-            const data = currentData || {};
-            const cal = data.calendar || {};
-            const jp = parseInt(data.jp_per_week) || 4;
-
-            // Hitung Kapasitas Semester 1 (Juli - Des)
-            let capSmt1 = 0;
-            for(let i=0; i<6; i++) {
-                const year = startYear; const mIdx = i+6; 
-                const days = new Date(year, mIdx+1, 0).getDate();
-                for(let d=1; d<=days; d++) {
-                    const k = `${year}-${mIdx}-${d}`;
-                    if(new Date(year, mIdx, d).getDay()!==0 && !cal[k]) capSmt1++;
+        while (remain !== 0) {
+            if (remain > 0) {
+                items[i].alokasi_jp += 1;
+                remain--;
+            } else {
+                if (items[i].alokasi_jp > 0) { 
+                    items[i].alokasi_jp -= 1;
+                    remain++;
                 }
             }
-            let jpSmt1Cap = Math.floor(capSmt1 * (jp/5));
-
-            const wrap = document.getElementById('protaContent');
-            wrap.innerHTML = '';
-
-            if(!mats.length){
-                wrap.className = 'text-center text-gray-500 italic';
-                wrap.textContent = 'Belum ada materi pada data promes.';
-                return;
-            }
-
-            const table = document.createElement('table');
-            table.className = 'w-full border-collapse border text-sm text-left';
-
-            const thead = document.createElement('thead');
-            thead.className = 'bg-gray-100 font-bold text-slate-700 text-center';
-            const hr = document.createElement('tr');
-            ['SMT','No','Materi Pokok','Alokasi (JP)'].forEach((t, idx) => {
-                const th = document.createElement('th');
-                th.className = 'border p-3' + (idx===2 ? ' text-left' : '');
-                th.textContent = t;
-                hr.appendChild(th);
-            });
-            thead.appendChild(hr);
-            table.appendChild(thead);
-
-            const tbody = document.createElement('tbody');
-
-            let acc = 0;
-            mats.forEach((m, i) => {
-                const jpVal = Math.max(1, parseInt(m.jp) || 1);
-                acc += jpVal;
-                const smt = acc <= jpSmt1Cap ? '1 (Ganjil)' : '2 (Genap)';
-                const bg = smt.includes('1') ? 'bg-white' : 'bg-slate-50';
-
-                const tr = document.createElement('tr');
-                tr.className = bg;
-
-                const tdS = document.createElement('td');
-                tdS.className = 'border p-3 text-center font-bold text-slate-500';
-                tdS.textContent = smt;
-
-                const tdNo = document.createElement('td');
-                tdNo.className = 'border p-3 text-center';
-                tdNo.textContent = String(i+1);
-
-                const tdT = document.createElement('td');
-                tdT.className = 'border p-2';
-                const inpT = document.createElement('input');
-                inpT.type = 'text';
-                inpT.value = (m.topic ?? '').toString();
-                inpT.className = 'w-full border rounded px-3 py-2 text-sm bg-white';
-                inpT.oninput = (e) => {
-                    mats[i].topic = e.target.value;
-                    setStatus('Ada perubahan yang belum disimpan.', 'info');
-                };
-                tdT.appendChild(inpT);
-
-                const tdJ = document.createElement('td');
-                tdJ.className = 'border p-2 text-center';
-                const inpJ = document.createElement('input');
-                inpJ.type = 'number';
-                inpJ.min = '1';
-                inpJ.step = '1';
-                inpJ.value = String(jpVal);
-                inpJ.className = 'w-24 border rounded px-3 py-2 text-sm text-center bg-white';
-                inpJ.onchange = (e) => {
-                    const v = Math.max(1, parseInt(e.target.value) || 1);
-                    mats[i].jp = v;
-                    render();
-                    setStatus('Ada perubahan yang belum disimpan.', 'info');
-                };
-                tdJ.appendChild(inpJ);
-
-                tr.appendChild(tdS);
-                tr.appendChild(tdNo);
-                tr.appendChild(tdT);
-                tr.appendChild(tdJ);
-                tbody.appendChild(tr);
-            });
-
-            table.appendChild(tbody);
-            wrap.className = '';
-            wrap.appendChild(table);
-            setStatus('Siap. Edit materi/JP lalu klik Simpan.', 'info');
+            i = (i + 1) % count; 
         }
+    }
 
-        async function saveChanges(){
-            if(!draftRow || !sessionUser) return;
-            const btn = document.getElementById('btnSave');
-            btn.disabled = true;
-            btn.textContent = '⏳ Menyimpan...';
-            try{
-                currentData.materials = mats;
-                const { error } = await db.from('work_drafts')
-                    .update({ content_data: currentData })
-                    .eq('id', draftRow.id)
-                    .eq('user_id', sessionUser.id);
-                if(error) throw error;
-                // Refresh original snapshot
-                originalData = JSON.parse(JSON.stringify(currentData));
-                setStatus('Tersimpan ✅ Perubahan akan dipakai di Step 6–9.', 'ok');
-            } catch(e){
-                console.error(e);
-                setStatus('Gagal menyimpan. Cek console/log Supabase.', 'err');
-                alert('Gagal menyimpan perubahan. Silakan cek console.');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '💾 Simpan';
-            }
+    async function saveAndNext() {
+        const btn = document.getElementById('btnSave'); btn.innerHTML = '⏳ Menyimpan...'; btn.disabled = true;
+
+        const semester_1 = allMaterials.filter(m => m.semester == 1);
+        const semester_2 = allMaterials.filter(m => m.semester == 2);
+
+        // --- 1. SIMPAN KE PROTA DATA (Format Struktur Semester) ---
+        const payloadProta = {
+            user_id: user.id, doc_type: 'prota_data',
+            subject_name: profile.mata_pelajaran || 'Umum', grade_level: profile.fase_kelas || 'Umum', curriculum_type: profile.jenis_kurikulum || 'Merdeka',
+            content_data: { semester_1, semester_2 },
+            status: 'draft'
+        };
+        const saveProta = db.from('work_drafts').upsert(payloadProta, { onConflict: 'user_id,doc_type' });
+
+        // --- 2. SYNC BACK KE MASTER DATA STEP 2 (Agar JP tersimpan permanen di source) ---
+        const payloadMaster = {
+            user_id: user.id, doc_type: 'master_cp_atp', // ID Step 2
+            subject_name: profile.mata_pelajaran || 'Umum', grade_level: profile.fase_kelas || 'Umum', curriculum_type: profile.jenis_kurikulum || 'Merdeka',
+            content_data: allMaterials, // Array flat yang sudah di-update JP-nya
+            status: 'confirmed'
+        };
+        const saveMaster = db.from('work_drafts').upsert(payloadMaster, { onConflict: 'user_id,doc_type' });
+
+        // Eksekusi Simpan Paralel
+        const [resProta, resMaster] = await Promise.all([saveProta, saveMaster]);
+
+        if (resProta.error || resMaster.error) { 
+            Swal.fire('Gagal', (resProta.error?.message || '') + ' ' + (resMaster.error?.message || ''), 'error'); 
+            btn.innerHTML = '<span>💾</span> Simpan & Lanjut (Promes) →'; btn.disabled = false; 
         }
-    </script>
+        else { 
+            const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 1000});
+            Toast.fire({icon: 'success', title: 'Tersimpan & Sinkron ke Step 2'});
+            setTimeout(() => window.location.href = 'step6_promes.html', 1000);
+        }
+    }
+</script>
 </body>
 </html>

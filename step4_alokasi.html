@@ -2,163 +2,377 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';">
-    <title>Langkah 4: Alokasi JP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Langkah 4: Alokasi Waktu (RPE)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
-    <script src="sidebar.js"></script>
+    <script src="layout.js"></script>
 </head>
-<body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
+<body class="bg-slate-100 text-slate-800 h-screen flex font-sans overflow-hidden">
 
-    <div id="sidebar-container" class="flex-none h-full"></div>
+    <div id="sidebar-container"></div>
 
-    <div class="flex-1 flex flex-col relative">
-        <header class="bg-white border-b px-6 py-4 shadow-sm flex justify-between items-center z-10">
+    <div class="flex-1 flex flex-col relative min-w-0">
+        <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-10 flex justify-between items-center shrink-0">
             <div>
-                <h1 class="text-xl font-bold text-slate-900">4. Alokasi Jam Pelajaran</h1>
-                <p class="text-xs text-slate-500">Tentukan JP per minggu dan bagi ke materi.</p>
-            </div>
-            <div class="flex items-center gap-4 bg-blue-50 px-4 py-2 rounded border border-blue-200">
-                <div>
-                    <label class="text-[10px] font-bold uppercase text-blue-800 block">JP / Minggu</label>
-                    <input type="number" id="jpWeek" value="4" class="w-16 border border-blue-300 rounded px-1 text-center font-bold text-blue-700" onchange="renderTable()">
-                </div>
-                <div class="pl-4 border-l border-blue-200">
-                    <p class="text-[10px] uppercase font-bold text-slate-500">Kapasitas</p>
-                    <p class="text-xl font-bold text-slate-800"><span id="totalCapJP">0</span> JP</p>
-                </div>
+                <h1 class="text-xl font-bold text-slate-900">4. Rincian Pekan Efektif (RPE)</h1>
+                <p class="text-xs text-slate-500">Kalkulasi ketersediaan waktu berdasarkan kalender akademik.</p>
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-6 pb-24">
-            <div class="max-w-5xl mx-auto bg-white rounded-xl shadow border border-gray-200 p-6">
-                <div class="mb-4 flex justify-end">
-                    <button onclick="autoDistribute()" class="text-indigo-600 bg-indigo-50 border border-indigo-200 px-4 py-2 rounded font-bold hover:bg-indigo-100 text-xs flex items-center gap-2">
-                        ⚡ Bagi Rata Otomatis
-                    </button>
+        <main class="flex-1 overflow-y-auto p-8 pb-32 bg-slate-100">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-xl border border-blue-200 shadow-sm">
+                    <h3 class="font-bold text-blue-800 border-b pb-2 mb-4">Semester 1 (Ganjil)</h3>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-slate-600">Total Pekan Kalender</span>
+                        <span class="font-bold" id="s1_total_weeks">0</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-slate-600">Pekan Tidak Efektif (Libur)</span>
+                        <span class="font-bold text-rose-600" id="s1_ineffective">0</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t mt-2">
+                        <span class="text-sm font-bold text-slate-800">Pekan Efektif</span>
+                        <span class="font-bold text-emerald-600 text-lg" id="s1_effective">0</span>
+                    </div>
+                    <div class="mt-4 bg-blue-50 p-3 rounded-lg text-center">
+                        <span class="text-xs text-blue-600 uppercase font-bold">Total Jam Pelajaran (JP) Tersedia</span>
+                        <div class="text-2xl font-extrabold text-blue-700" id="s1_total_jp">0 JP</div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-indigo-200 shadow-sm">
+                    <h3 class="font-bold text-indigo-800 border-b pb-2 mb-4">Semester 2 (Genap)</h3>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-slate-600">Total Pekan Kalender</span>
+                        <span class="font-bold" id="s2_total_weeks">0</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-slate-600">Pekan Tidak Efektif (Libur)</span>
+                        <span class="font-bold text-rose-600" id="s2_ineffective">0</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t mt-2">
+                        <span class="text-sm font-bold text-slate-800">Pekan Efektif</span>
+                        <span class="font-bold text-emerald-600 text-lg" id="s2_effective">0</span>
+                    </div>
+                    <div class="mt-4 bg-indigo-50 p-3 rounded-lg text-center">
+                        <span class="text-xs text-indigo-600 uppercase font-bold">Total Jam Pelajaran (JP) Tersedia</span>
+                        <div class="text-2xl font-extrabold text-indigo-700" id="s2_total_jp">0 JP</div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <!-- VALIDASI JP (Demand vs Supply) -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold">✓</div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800">Validasi JP Materi (Step 2) vs JP Tersedia (RPE)</h3>
+                            <p class="text-xs text-slate-500">Cek cepat: apakah total JP materi per semester sudah masuk ke jatah pekan efektif.</p>
+                        </div>
+                    </div>
+                    <a href="step5_prota.html" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow inline-flex items-center gap-2 transition">
+                        <span>⚡</span> Buka Step 5 (Auto Fit JP)
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+                    <div class="border rounded-xl p-4 bg-slate-50">
+                        <div class="flex items-center justify-between">
+                            <div class="font-bold text-slate-700 text-sm">Semester 1</div>
+                            <span id="validBadgeS1" class="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-200 text-slate-700">—</span>
+                        </div>
+                        <div class="mt-3 grid grid-cols-3 gap-3 text-xs">
+                            <div>
+                                <div class="text-slate-500 font-bold uppercase text-[10px]">Tersedia</div>
+                                <div class="text-slate-900 font-extrabold" id="validSupplyS1">0</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-500 font-bold uppercase text-[10px]">Terpakai (Step2)</div>
+                                <div class="text-slate-900 font-extrabold" id="validDemandS1">0</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-500 font-bold uppercase text-[10px]">Selisih</div>
+                                <div class="text-slate-900 font-extrabold" id="validDiffS1">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border rounded-xl p-4 bg-slate-50">
+                        <div class="flex items-center justify-between">
+                            <div class="font-bold text-slate-700 text-sm">Semester 2</div>
+                            <span id="validBadgeS2" class="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-200 text-slate-700">—</span>
+                        </div>
+                        <div class="mt-3 grid grid-cols-3 gap-3 text-xs">
+                            <div>
+                                <div class="text-slate-500 font-bold uppercase text-[10px]">Tersedia</div>
+                                <div class="text-slate-900 font-extrabold" id="validSupplyS2">0</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-500 font-bold uppercase text-[10px]">Terpakai (Step2)</div>
+                                <div class="text-slate-900 font-extrabold" id="validDemandS2">0</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-500 font-bold uppercase text-[10px]">Selisih</div>
+                                <div class="text-slate-900 font-bold" id="validDiffS2">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-xs text-slate-500">
+                    <span class="font-bold">Catatan:</span> Validasi ini tidak mengubah data. Perbaikan distribusi JP dilakukan di Step 5 melalui fitur <b>Auto Fit JP</b>.
+                </div>
+            </div>
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200">
+                    <h3 class="font-bold text-slate-700">Rincian Per Bulan</h3>
                 </div>
                 <table class="w-full text-sm text-left">
-                    <thead class="bg-slate-100 text-slate-700 uppercase font-bold text-xs border-b">
+                    <thead class="bg-white text-slate-500 font-bold uppercase text-xs border-b">
                         <tr>
-                            <th class="p-3 w-10">No</th>
-                            <th class="p-3">Materi Pokok</th>
-                            <th class="p-3 w-32 text-center">Alokasi (JP)</th>
-                            <th class="p-3 w-32 text-center">Est. Minggu</th>
+                            <th class="p-4">Bulan</th>
+                            <th class="p-4 text-center">Jml Pekan</th>
+                            <th class="p-4 text-center">Tidak Efektif</th>
+                            <th class="p-4 text-center">Pekan Efektif</th>
+                            <th class="p-4 text-center bg-blue-50 text-blue-700">Total JP</th>
                         </tr>
                     </thead>
-                    <tbody id="jpTableBody"></tbody>
-                    <tfoot class="bg-slate-50 font-bold border-t">
-                        <tr><td colspan="2" class="p-3 text-right">Total Terpakai:</td><td class="p-3 text-center" id="sumUsedJP">0</td><td></td></tr>
-                    </tfoot>
+                    <tbody id="rpeBody" class="divide-y divide-slate-100">
+                        </tbody>
                 </table>
             </div>
+
         </main>
 
-        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between z-20 shadow-lg">
-            <a href="step3_kalender.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
-            <button onclick="saveAndNext()" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition transform active:scale-95">
-                Simpan & Lanjut (Prota) →
+        <footer class="h-20 bg-white border-t border-slate-200 px-6 absolute bottom-0 w-full flex justify-between items-center z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <a href="step3_kalender.html" class="px-4 py-2 text-slate-500 font-bold hover:text-slate-800 text-sm transition flex items-center gap-1"><span>←</span> Kembali</a>
+            <button onclick="saveAndNext()" id="btnSave" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition transform active:scale-95 flex items-center gap-2 text-sm">
+                <span>💾</span> Simpan & Lanjut (Prota) →
             </button>
         </footer>
     </div>
 
-    <script>
-        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
-        let user, profile={}, fullDraft={}, calData={}, mats=[], totalHE=0;
-        const MONTHS = ["Juli", "Agustus", "September", "Oktober", "November", "Desember", "Januari", "Februari", "Maret", "April", "Mei", "Juni"];
-        let START_YEAR = new Date().getFullYear();
+<script>
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+    let user, profile = {}, calendarData = {};
+    
+    // Konfigurasi Bulan
+    const SEM_1_MONTHS = ["Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const SEM_2_MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni"];
 
-        async function init() {
-            const { data: { session } } = await db.auth.getSession();
-            if(!session) return location.href = 'index.html'; user = session.user;
+    async function init() {
+        const { data: { session } } = await db.auth.getSession();
+        if (session) { user = session.user; loadData(); }
+    }
+    init();
 
-            const { data: prof } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
-            profile = prof || { mata_pelajaran: 'Umum', fase_kelas: 'Umum', jenis_kurikulum: 'Merdeka' };
-            if(profile.tahun_ajaran) START_YEAR = parseInt(profile.tahun_ajaran.split('/')[0]) || START_YEAR;
+    async function loadData() {
+        const [prof, cal] = await Promise.all([
+            db.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+            db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'calendar_data').maybeSingle()
+        ]);
 
-            const { data: draft } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'promes_data').maybeSingle();
-            if(draft && draft.content_data) {
-                fullDraft = draft.content_data; calData = fullDraft.calendar || {};
-                if(fullDraft.jp_per_week) document.getElementById('jpWeek').value = fullDraft.jp_per_week;
-            } else { alert("Isi kalender dulu!"); return location.href = 'step3_kalender.html'; }
+        if(prof.data) profile = prof.data;
+        if(cal.data && cal.data.content_data) calendarData = cal.data.content_data.holidays || {};
+        
+        calculateRPE();
+    }
 
-            const { data: m } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle();
-            if(m && m.content_data) {
-                let saved = fullDraft.materials || [];
-                mats = m.content_data.map((x,i) => {
-                    let f = saved.find(s => s.topic === (x.elemen || x.col1));
-                    return { topic: x.elemen || x.col1, jp: f ? f.jp : 0 };
-                });
-            }
-            calcHE(); renderTable();
-        } init();
+    function countWeeksAndHolidays(monthIndex, year) {
+        // Logic sederhana: Hitung jumlah minggu yang tersentuh bulan ini
+        // Dan hitung berapa minggu yang "rusak" gara-gara libur > 3 hari
+        // Ini estimasi untuk Step 4. Akurasi real ada di Step 6.
+        
+        let totalWeeks = 0;
+        let ineffectiveWeeks = 0;
+        
+        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+        
+        // Asumsi: Minggu dianggap ada jika ada hari Jumat di bulan itu (Simplified)
+        // Better logic: Loop per 7 hari
+        // Kita pakai logic standar: rata-rata 4-5 minggu
+        
+        // Hitung real weeks based on calendar structure
+        // Kita hitung berdasarkan hari Senin
+        let mondays = 0;
+        let brokenWeeks = 0;
 
-        function escapeHTML(s){
-            return String(s ?? '')
-              .replace(/&/g,'&amp;')
-              .replace(/</g,'&lt;')
-              .replace(/>/g,'&gt;')
-              .replace(/"/g,'&quot;')
-              .replace(/'/g,'&#39;');
-        }
-
-
-        function calcHE() {
-            let c=0; MONTHS.forEach((_, i) => {
-                const year = i < 6 ? START_YEAR : START_YEAR+1; const mIdx = i < 6 ? i+6 : i-6;
-                const days = new Date(year, mIdx+1, 0).getDate();
-                for(let d=1; d<=days; d++) {
-                    const k = `${year}-${mIdx}-${d}`;
-                    if(new Date(year, mIdx, d).getDay()!==0 && !calData[k]) c++;
+        for (let d = 1; d <= daysInMonth; d++) {
+            let date = new Date(year, monthIndex, d);
+            if (date.getDay() === 1) { // Senin
+                mondays++;
+                
+                // Cek apakah minggu ini banyak liburnya (Senin-Jumat)
+                let holidayCount = 0;
+                for(let k=0; k<5; k++) {
+                    let checkDate = new Date(year, monthIndex, d+k);
+                    if(checkDate.getMonth() !== monthIndex) continue;
+                    
+                    let key = `${checkDate.getFullYear()}-${String(checkDate.getMonth()+1).padStart(2,'0')}-${String(checkDate.getDate()).padStart(2,'0')}`;
+                    if(calendarData[key]) holidayCount++;
                 }
-            });
-            totalHE = c;
-        }
-
-        function renderTable() {
-            const tb = document.getElementById('jpTableBody'); tb.innerHTML = '';
-            const jpWeek = parseInt(document.getElementById('jpWeek').value) || 4;
-            const totalCap = Math.floor(totalHE * (jpWeek / 5));
-            document.getElementById('totalCapJP').innerText = totalCap;
-
-            const stepInput = (jpWeek % 2 === 0) ? 2 : 1; let used = 0;
-
-            mats.forEach((m, i) => {
-                used += m.jp;
-                const meet = Math.ceil(m.jp / jpWeek);
-                tb.innerHTML += `<tr class="border-b hover:bg-slate-50"><td class="p-3 text-slate-500">${i+1}</td><td class="p-3 font-medium">${escapeHTML(m.topic)}</td><td class="p-3 text-center"><input type="number" class="w-16 border rounded text-center font-bold" value="${m.jp}" step="${stepInput}" onchange="mats[${i}].jp=parseInt(this.value)||0;renderTable()"> JP</td><td class="p-3 text-center text-xs text-gray-500">~ ${meet} Mg</td></tr>`;
-            });
-            
-            const sumEl = document.getElementById('sumUsedJP');
-            sumEl.innerText = used;
-            if(used > totalCap) sumEl.classList.add('text-red-600'); else sumEl.classList.remove('text-red-600');
-        }
-
-        function autoDistribute() {
-            const jpWeek = parseInt(document.getElementById('jpWeek').value) || 4;
-            const totalCap = Math.floor(totalHE * (jpWeek / 5));
-            if(mats.length > 0) {
-                let base = Math.floor(totalCap / mats.length);
-                if(jpWeek % 2 === 0 && base % 2 !== 0) base--;
-                let rem = totalCap - (base * mats.length);
-                mats.forEach(m => m.jp = base);
-                let i=0; const chunk = (jpWeek % 2 === 0) ? 2 : 1;
-                while(rem >= chunk) { mats[i].jp += chunk; rem -= chunk; i=(i+1)%mats.length; }
+                
+                if(holidayCount >= 3) brokenWeeks++;
             }
-            renderTable();
         }
+        
+        return { total: mondays, ineffective: brokenWeeks };
+    }
 
-        async function saveAndNext() {
-            fullDraft.materials = mats; fullDraft.jp_per_week = document.getElementById('jpWeek').value;
-            const payload = {
-                user_id: user.id, doc_type: 'promes_data',
-                subject_name: profile.mata_pelajaran, grade_level: profile.fase_kelas, curriculum_type: profile.jenis_kurikulum,
-                content_data: fullDraft, status: 'confirmed'
+    function calculateRPE() {
+        const jp = parseInt(profile.jp_per_week) || 4;
+        const tbody = document.getElementById('rpeBody');
+        tbody.innerHTML = '';
+
+        let s1_total = 0, s1_ineff = 0;
+        let s2_total = 0, s2_ineff = 0;
+
+        // Process Semester 1 (2025)
+        SEM_1_MONTHS.forEach((m, i) => {
+            const realIdx = 6 + i; // Juli = 6
+            const { total, ineffective } = countWeeksAndHolidays(realIdx, 2025);
+            const eff = Math.max(0, total - ineffective);
+            
+            s1_total += total; s1_ineff += ineffective;
+
+            tbody.innerHTML += `
+                <tr class="hover:bg-slate-50 border-b">
+                    <td class="p-4 font-medium text-slate-700">${m}</td>
+                    <td class="p-4 text-center text-slate-500">${total}</td>
+                    <td class="p-4 text-center text-rose-500">${ineffective}</td>
+                    <td class="p-4 text-center font-bold text-slate-800">${eff}</td>
+                    <td class="p-4 text-center bg-blue-50 font-bold text-blue-700">${eff * jp} JP</td>
+                </tr>`;
+        });
+
+        // Separator
+        tbody.innerHTML += `<tr class="bg-slate-100"><td colspan="5" class="p-2 text-center font-bold text-slate-500 text-xs uppercase tracking-widest">Batas Semester</td></tr>`;
+
+        // Process Semester 2 (2026)
+        SEM_2_MONTHS.forEach((m, i) => {
+            const realIdx = i; // Januari = 0
+            const { total, ineffective } = countWeeksAndHolidays(realIdx, 2026);
+            const eff = Math.max(0, total - ineffective);
+            
+            s2_total += total; s2_ineff += ineffective;
+
+            tbody.innerHTML += `
+                <tr class="hover:bg-slate-50 border-b">
+                    <td class="p-4 font-medium text-slate-700">${m}</td>
+                    <td class="p-4 text-center text-slate-500">${total}</td>
+                    <td class="p-4 text-center text-rose-500">${ineffective}</td>
+                    <td class="p-4 text-center font-bold text-slate-800">${eff}</td>
+                    <td class="p-4 text-center bg-indigo-50 font-bold text-indigo-700">${eff * jp} JP</td>
+                </tr>`;
+        });
+
+        // Update Summary Cards
+        const s1_eff = s1_total - s1_ineff;
+        document.getElementById('s1_total_weeks').innerText = s1_total;
+        document.getElementById('s1_ineffective').innerText = s1_ineff;
+        document.getElementById('s1_effective').innerText = s1_eff;
+        document.getElementById('s1_total_jp').innerText = (s1_eff * jp) + " JP";
+
+        const s2_eff = s2_total - s2_ineff;
+        document.getElementById('s2_total_weeks').innerText = s2_total;
+        document.getElementById('s2_ineffective').innerText = s2_ineff;
+        document.getElementById('s2_effective').innerText = s2_eff;
+        document.getElementById('s2_total_jp').innerText = (s2_eff * jp) + " JP";
+
+        // Simpan data global untuk di-pass ke DB
+        window.allocationData = {
+            s1: { total: s1_total, ineff: s1_ineff, eff: s1_eff, jp: s1_eff * jp },
+            s2: { total: s2_total, ineff: s2_ineff, eff: s2_eff, jp: s2_eff * jp }
+        };
+        // Update panel validasi setelah data supply dihitung
+        validateJPDemand();
+    }
+
+    
+    async function validateJPDemand(){
+        try{
+            // supply dari hasil hitungan RPE
+            const supply1 = window.allocationData?.s1?.jp || 0;
+            const supply2 = window.allocationData?.s2?.jp || 0;
+
+            document.getElementById('validSupplyS1').innerText = supply1 + " JP";
+            document.getElementById('validSupplyS2').innerText = supply2 + " JP";
+
+            // demand dari Step 2 (master_cp_atp)
+            const { data: cp } = await db.from('work_drafts')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('doc_type', 'master_cp_atp')
+                .maybeSingle();
+
+            const arr = (cp && cp.content_data) ? cp.content_data : [];
+            const demand1 = arr.filter(m => String(m.semester) === '1').reduce((sum, m) => sum + (parseInt(m.alokasi_jp)||0), 0);
+            const demand2 = arr.filter(m => String(m.semester) === '2').reduce((sum, m) => sum + (parseInt(m.alokasi_jp)||0), 0);
+
+            document.getElementById('validDemandS1').innerText = demand1 + " JP";
+            document.getElementById('validDemandS2').innerText = demand2 + " JP";
+
+            const diff1 = supply1 - demand1;
+            const diff2 = supply2 - demand2;
+
+            const diffEl1 = document.getElementById('validDiffS1');
+            const diffEl2 = document.getElementById('validDiffS2');
+            diffEl1.innerText = (diff1>0?'+':'') + diff1 + " JP";
+            diffEl2.innerText = (diff2>0?'+':'') + diff2 + " JP";
+
+            const badge1 = document.getElementById('validBadgeS1');
+            const badge2 = document.getElementById('validBadgeS2');
+
+            const setBadge = (badge, diff) => {
+                if (diff === 0){
+                    badge.className = "text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700";
+                    badge.innerText = "PAS";
+                } else if (diff > 0){
+                    badge.className = "text-[10px] font-bold px-2 py-1 rounded-full bg-blue-100 text-blue-700";
+                    badge.innerText = "KURANG " + diff + " JP";
+                } else {
+                    badge.className = "text-[10px] font-bold px-2 py-1 rounded-full bg-rose-100 text-rose-700";
+                    badge.innerText = "LEBIH " + Math.abs(diff) + " JP";
+                }
             };
-            const { error } = await db.from('work_drafts').upsert(payload, { onConflict: 'user_id, doc_type' });
-            if(error) alert("Error: " + error.message); else window.location.href = 'step5_prota.html';
+
+            setBadge(badge1, diff1);
+            setBadge(badge2, diff2);
+
+        }catch(e){
+            console.error(e);
+            // jangan ganggu UI utama
         }
-    </script>
+    }
+
+async function saveAndNext() {
+        const btn = document.getElementById('btnSave'); btn.innerHTML = '⏳ Menyimpan...'; btn.disabled = true;
+
+        const payload = {
+            user_id: user.id, doc_type: 'allocation_data',
+            subject_name: profile.mata_pelajaran || 'Umum', grade_level: profile.fase_kelas || 'Umum', curriculum_type: profile.jenis_kurikulum || 'Merdeka',
+            content_data: window.allocationData, // Simpan hasil hitungan
+            status: 'draft'
+        };
+
+        const { error } = await db.from('work_drafts').upsert(payload, { onConflict: 'user_id,doc_type' });
+        
+        if (error) { Swal.fire('Gagal', error.message, 'error'); btn.innerHTML = '<span>💾</span> Simpan & Lanjut (Prota) →'; btn.disabled = false; }
+        else { 
+            const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 1000});
+            Toast.fire({icon: 'success', title: 'RPE Tersimpan'});
+            setTimeout(() => window.location.href = 'step5_prota.html', 1000);
+        }
+    }
+</script>
 </body>
 </html>

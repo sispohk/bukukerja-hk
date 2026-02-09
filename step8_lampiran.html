@@ -1,92 +1,277 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';">
-    <title>Langkah 8: Lampiran</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
-    <script src="sidebar.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Langkah 8: Lampiran Administrasi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js"></script>
+  <script src="layout.js"></script>
+  
+  <style>
+      textarea { resize: vertical; min-height: 180px; line-height: 1.6; font-size: 0.875rem; }
+      .section-label { font-size: 0.875rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; display: block; text-transform: uppercase; letter-spacing: 0.05em; }
+      .card-box { background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 1.5rem; height: 100%; display: flex; flex-direction: column; }
+      .card-header { margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; items-center; }
+  </style>
 </head>
-<body class="bg-gray-50 text-slate-800 h-screen flex font-sans overflow-hidden">
 
-    <div id="sidebar-container" class="flex-none h-full"></div>
+<body class="bg-slate-100 text-slate-800 h-screen flex font-sans overflow-hidden">
+  
+  <div id="sidebar-container" class="flex-none z-50"></div>
 
-    <div class="flex-1 flex flex-col relative">
-        <header class="bg-white border-b px-6 py-4 shadow-sm z-10">
-            <h1 class="text-xl font-bold text-slate-900">8. Lampiran Dokumen Guru</h1>
-            <p class="text-xs text-slate-500">Kode Etik, Ikrar, dan Tata Tertib.</p>
-        </header>
+  <div class="flex-1 flex flex-col relative min-w-0 bg-slate-100">
+    
+    <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-20 flex justify-between items-center shrink-0">
+      <div>
+        <h1 class="text-xl font-bold text-slate-900">8. Lampiran Administrasi</h1>
+        <p class="text-xs text-slate-500">Lengkapi dokumen pendukung: Kode Etik, Jadwal, hingga Jurnal.</p>
+      </div>
+    </header>
 
-        <main class="flex-1 overflow-y-auto p-8 pb-24 space-y-8">
-            <div class="bg-white p-6 rounded-xl border shadow-sm">
-                <h3 class="font-bold text-blue-800 mb-2 border-b pb-2">A. Kode Etik Guru</h3>
-                <textarea id="kode_etik" class="w-full h-48 border p-3 rounded text-sm leading-relaxed text-justify focus:ring-2 ring-blue-200 outline-none">
-1. Guru berbakti membimbing anak didik seutuhnya untuk membentuk manusia pembangunan yang ber-Pancasila.
-2. Guru memiliki dan melaksanakan kejujuran profesional.
-3. Guru berusaha memperoleh informasi tentang anak didik sebagai bahan melakukan bimbingan dan pembinaan.
-4. Guru menciptakan suasana sekolah sebaik-baiknya yang menunjang berhasilnya proses belajar-mengajar.
-5. Guru memelihara hubungan baik dengan orang tua murid dan masyarakat sekitarnya untuk membina peran serta dan rasa tanggung jawab bersama terhadap pendidikan.
-                </textarea>
+    <main class="flex-1 overflow-y-auto p-8 pb-32 space-y-6 bg-slate-50/50">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <div class="card-box shadow-sm hover:shadow-md transition relative overflow-hidden group border-indigo-200">
+            <div class="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
+            <div class="card-header">
+                <div>
+                    <h3 class="font-bold text-indigo-900 text-base">A. Ringkasan SKL</h3>
+                    <p class="text-[10px] text-slate-500">Otomatis dari Step 2.</p>
+                </div>
+                <button onclick="syncSKLFromStep2()" class="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-indigo-600 hover:text-white transition flex items-center gap-1">
+                    🔄 Sync
+                </button>
             </div>
+            <textarea id="skl_text" readonly class="w-full flex-1 border border-slate-200 rounded-lg p-3 text-sm bg-slate-50 text-slate-600 focus:outline-none" placeholder="Data diambil dari Step 2..."></textarea>
+          </div>
 
-            <div class="bg-white p-6 rounded-xl border shadow-sm">
-                <h3 class="font-bold text-blue-800 mb-2 border-b pb-2">B. Ikrar Guru Indonesia</h3>
-                <textarea id="ikrar" class="w-full h-48 border p-3 rounded text-sm leading-relaxed text-justify focus:ring-2 ring-blue-200 outline-none">
-1. Kami Guru Indonesia, adalah insan pendidik Bangsa yang beriman dan bertaqwa kepada Tuhan Yang Maha Esa.
-2. Kami Guru Indonesia, adalah pengemban dan pelaksana cita-cita Proklamasi Kemerdekaan Republik Indonesia, pembela dan pengamal Pancasila serta Undang-Undang Dasar 1945.
-3. Kami Guru Indonesia, bertekad bulat mewujudkan tujuan Nasional dalam mencerdaskan kehidupan Bangsa.
-                </textarea>
+          <div class="card-box shadow-sm hover:shadow-md transition">
+            <div class="card-header">
+                <h3 class="section-label text-slate-700">B. Kode Etik Guru</h3>
             </div>
+            <textarea id="kode_etik" class="w-full flex-1 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+          </div>
 
-            <div class="bg-white p-6 rounded-xl border shadow-sm">
-                <h3 class="font-bold text-blue-800 mb-2 border-b pb-2">C. Tata Tertib Guru</h3>
-                <textarea id="tata_tertib" class="w-full h-48 border p-3 rounded text-sm leading-relaxed text-justify focus:ring-2 ring-blue-200 outline-none">
-1. Berkewajiban datang di sekolah 15 menit sebelum pelajaran dimulai.
-2. Wajib menandatangani daftar hadir.
-3. Wajib mengikuti upacara bendera setiap hari Senin dan hari besar nasional.
-4. Memberikan teladan yang baik bagi siswa dalam berpakaian, bertutur kata, dan berperilaku.
-                </textarea>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <div class="card-box shadow-sm hover:shadow-md transition">
+            <div class="card-header">
+                <h3 class="section-label text-slate-700">C. Ikrar Guru Indonesia</h3>
             </div>
-        </main>
+            <textarea id="ikrar" class="w-full flex-1 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+          </div>
 
-        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between z-20 shadow-lg">
-            <a href="step7_rpp.html" class="px-6 py-2 text-slate-500 font-bold hover:text-slate-800">← Kembali</a>
-            <button onclick="save()" class="bg-green-600 text-white px-8 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition transform active:scale-95">
-                Simpan & Cetak (Step 9) →
-            </button>
-        </footer>
-    </div>
+          <div class="card-box shadow-sm hover:shadow-md transition">
+            <div class="card-header">
+                <h3 class="section-label text-slate-700">D. Tata Tertib Guru</h3>
+            </div>
+            <textarea id="tata_tertib" class="w-full flex-1 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+          </div>
 
-    <script>
-        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
-        let user;
+      </div>
 
-        async function init() {
-            const { data: { session } } = await db.auth.getSession();
-            if(!session) return location.href = 'index.html'; user = session.user;
+      <div class="card-box border-blue-200 shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1 bg-blue-500 h-full"></div>
+        <div class="flex items-center justify-between mb-4 pl-2">
+            <h3 class="font-bold text-blue-900 text-lg">E. Jadwal Mengajar</h3>
+            <button onclick="addJadwalRow({})" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition">+ Tambah Baris</button>
+        </div>
+        <div class="overflow-hidden border border-slate-200 rounded-xl">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider">
+                    <tr>
+                        <th class="p-3 border-b text-center w-12">No</th>
+                        <th class="p-3 border-b w-32">Hari</th>
+                        <th class="p-3 border-b w-32">Jam Ke-</th>
+                        <th class="p-3 border-b w-32">Kelas</th>
+                        <th class="p-3 border-b">Mata Pelajaran / Ket.</th>
+                        <th class="p-3 border-b w-12 text-center">Hapus</th>
+                    </tr>
+                </thead>
+                <tbody id="jadwalBody" class="bg-white divide-y divide-slate-100"></tbody>
+            </table>
+        </div>
+      </div>
 
-            const { data } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'lampiran_buku_kerja').maybeSingle();
-            if(data && data.content_data) {
-                document.getElementById('kode_etik').value = data.content_data.kode_etik || '';
-                document.getElementById('ikrar').value = data.content_data.ikrar || '';
-                document.getElementById('tata_tertib').value = data.content_data.tata_tertib || '';
-            }
-        } init();
+      <div class="card-box border-emerald-200 shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1 bg-emerald-500 h-full"></div>
+        <div class="flex items-center justify-between mb-4 pl-2">
+            <h3 class="font-bold text-emerald-900 text-lg">F. Sampel Jurnal Mengajar</h3>
+            <button onclick="addJurnalRow({})" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 shadow-sm transition">+ Tambah Baris</button>
+        </div>
+        <div class="overflow-hidden border border-slate-200 rounded-xl">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider">
+                    <tr>
+                        <th class="p-3 border-b text-center w-12">No</th>
+                        <th class="p-3 border-b w-40">Tanggal</th>
+                        <th class="p-3 border-b w-24">Kelas</th>
+                        <th class="p-3 border-b">Materi / Catatan</th>
+                        <th class="p-3 border-b w-12 text-center">Hapus</th>
+                    </tr>
+                </thead>
+                <tbody id="jurnalBody" class="bg-white divide-y divide-slate-100"></tbody>
+            </table>
+        </div>
+      </div>
 
-        async function save() {
-            const payload = { kode_etik: document.getElementById('kode_etik').value, ikrar: document.getElementById('ikrar').value, tata_tertib: document.getElementById('tata_tertib').value };
-            const { data: prof } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
+    </main>
 
-            const { error } = await db.from('work_drafts').upsert({
-                user_id: user.id, doc_type: 'lampiran_buku_kerja',
-                subject_name: prof?.mata_pelajaran || 'Umum', grade_level: prof?.fase_kelas || 'Umum', curriculum_type: prof?.jenis_kurikulum || 'Merdeka',
-                content_data: payload, status: 'confirmed'
-            }, { onConflict: 'user_id, doc_type' });
+    <footer class="h-20 bg-white border-t border-slate-200 px-6 absolute bottom-0 w-full flex justify-between items-center z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <a href="step7_rpp.html" class="px-4 py-2 text-slate-500 font-bold hover:text-slate-800 text-sm transition flex items-center gap-1">
+          <span>←</span> Kembali
+      </a>
+      
+      <button onclick="saveAndGo()" id="btnSave" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition transform active:scale-95 flex items-center gap-2 text-sm">
+        <span>💾</span> Simpan & Finalisasi (Cetak) →
+      </button>
+    </footer>
+  </div>
 
-            if(error) alert("Error: " + error.message); else window.location.href = 'step9_cetak.html';
-        }
-    </script>
+<script>
+  const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+  let user, profile = { mata_pelajaran:'Umum', fase_kelas:'Umum', jenis_kurikulum:'Merdeka' };
+
+  async function init(){
+    const { data: { session } } = await db.auth.getSession();
+    if(session) {
+        user = session.user;
+        const { data: prof } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        if(prof) profile = prof;
+        loadData();
+    } else {
+        window.location.href = 'index.html';
+    }
+  }
+  init();
+
+  async function loadData() {
+    const defaultKode = "1. Guru berbakti membimbing anak didik seutuhnya untuk membentuk manusia pembangunan yang ber-Pancasila.\n2. Guru memiliki dan melaksanakan kejujuran profesional.\n3. Guru berusaha memperoleh informasi tentang peserta didik sebagai bahan melakukan bimbingan dan pembinaan.";
+    const defaultIkrar = "1. Kami Guru Indonesia, adalah insan pendidik Bangsa yang beriman dan bertaqwa kepada Tuhan Yang Maha Esa.\n2. Kami Guru Indonesia, adalah pengemban dan pelaksana Cita-cita Proklamasi Kemerdekaan Republik Indonesia.";
+    const defaultTata = "1. Berkewajiban datang di sekolah 15 menit sebelum pelajaran dimulai.\n2. Menandatangani daftar hadir saat datang dan pulang.\n3. Melaksanakan tugas mengajar dengan penuh tanggung jawab.";
+
+    const { data } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'lampiran_buku_kerja').maybeSingle();
+    
+    if(data && data.content_data){
+      document.getElementById('skl_text').value = data.content_data.skl_text || '';
+      if(!document.getElementById('skl_text').value.trim()) await syncSKLFromStep2(false);
+      
+      document.getElementById('kode_etik').value = data.content_data.kode_etik || defaultKode;
+      document.getElementById('ikrar').value = data.content_data.ikrar || defaultIkrar;
+      document.getElementById('tata_tertib').value = data.content_data.tata_tertib || defaultTata;
+      
+      hydrateJurnal(data.content_data.jurnal_rows || []);
+      hydrateJadwal(data.content_data.jadwal_rows || []); 
+    } else {
+      document.getElementById('kode_etik').value = defaultKode;
+      document.getElementById('ikrar').value = defaultIkrar;
+      document.getElementById('tata_tertib').value = defaultTata;
+      hydrateJurnal([]); 
+      hydrateJadwal([]); 
+      await syncSKLFromStep2(false);
+    }
+  }
+
+  // --- SKL HELPER ---
+  async function syncSKLFromStep2(showToast=true){
+    try{
+      const { data: cp } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle();
+      const rows = (cp && cp.content_data) ? cp.content_data : [];
+      const sklList = [];
+      rows.forEach(r=>{ const v = (r.skl || r.col_skl || '').toString().trim(); if(v) sklList.push(v); });
+      const uniq = Array.from(new Set(sklList.map(x=>x.replace(/\s+/g,' ').trim())));
+      const out = uniq.length ? uniq.map((x,i)=>`${i+1}. ${x}`).join('\n') : `1. (Tambahkan SKL pada Step 2 agar ringkasan otomatis muncul di sini)`;
+      document.getElementById('skl_text').value = out;
+      if(showToast) Swal.fire({icon:'success', title:'SKL tersinkron', text:'Ringkasan SKL diambil dari Step 2.', timer: 1500, showConfirmButton:false});
+    }catch(e){ if(showToast) Swal.fire('Gagal', 'Pastikan Step 2 sudah tersimpan.', 'warning'); }
+  }
+
+  // --- JURNAL HELPER ---
+  function addJurnalRow(row={}){
+    const tbody = document.getElementById('jurnalBody');
+    const idx = tbody.children.length + 1;
+    const tr = document.createElement('tr');
+    tr.className = "hover:bg-slate-50 transition";
+    tr.innerHTML = `
+      <td class="p-2 text-center text-slate-400 text-xs align-middle">${idx}</td>
+      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-emerald-500 outline-none transition" type="date" value="${row.tanggal||''}"></td>
+      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-emerald-500 outline-none transition" type="text" placeholder="Kls..." value="${row.kelas||''}"></td>
+      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-emerald-500 outline-none transition" type="text" placeholder="Catatan kegiatan..." value="${row.materi||''}"></td>
+      <td class="p-2 text-center align-middle"><button class="text-slate-300 hover:text-rose-500 transition font-bold px-2" onclick="this.closest('tr').remove()">✕</button></td>`;
+    tbody.appendChild(tr);
+  }
+  function hydrateJurnal(rows){
+    const tbody = document.getElementById('jurnalBody'); tbody.innerHTML = '';
+    if(rows.length === 0) for(let i=0;i<3;i++) addJurnalRow({});
+    else rows.forEach(r=>addJurnalRow(r));
+  }
+
+  // --- JADWAL HELPER ---
+  function addJadwalRow(row={}){
+    const tbody = document.getElementById('jadwalBody');
+    const idx = tbody.children.length + 1;
+    const tr = document.createElement('tr');
+    tr.className = "hover:bg-slate-50 transition";
+    const hariOpts = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"].map(h => `<option value="${h}" ${row.hari===h?'selected':''}>${h}</option>`).join('');
+    tr.innerHTML = `
+      <td class="p-2 text-center text-slate-400 text-xs align-middle">${idx}</td>
+      <td class="p-2 align-top"><select class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs outline-none focus:ring-2 ring-blue-500 transition cursor-pointer">${hariOpts}</select></td>
+      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" type="text" placeholder="1 - 2" value="${row.jam||''}"></td>
+      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" type="text" placeholder="X-1" value="${row.kelas||''}"></td>
+      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" type="text" placeholder="Matematika" value="${row.mapel||''}"></td>
+      <td class="p-2 text-center align-middle"><button class="text-slate-300 hover:text-rose-500 transition font-bold px-2" onclick="this.closest('tr').remove()">✕</button></td>`;
+    tbody.appendChild(tr);
+  }
+  function hydrateJadwal(rows){
+    const tbody = document.getElementById('jadwalBody'); tbody.innerHTML = '';
+    if(rows.length === 0) for(let i=0;i<3;i++) addJadwalRow({});
+    else rows.forEach(r=>addJadwalRow(r));
+  }
+
+  async function saveAndGo(){
+    const btn = document.getElementById('btnSave'); btn.innerHTML = '⏳ Menyimpan...'; btn.disabled = true;
+
+    // Save Jurnal
+    const jurnalRows = [];
+    document.querySelectorAll('#jurnalBody tr').forEach(tr=>{
+      const inps = tr.querySelectorAll('input');
+      if(inps.length>0) jurnalRows.push({tanggal:inps[0].value, kelas:inps[1].value, materi:inps[2].value});
+    });
+
+    // Save Jadwal
+    const jadwalRows = [];
+    document.querySelectorAll('#jadwalBody tr').forEach(tr=>{
+      const sel = tr.querySelector('select');
+      const inps = tr.querySelectorAll('input');
+      if(inps.length>0) jadwalRows.push({hari: sel.value, jam: inps[0].value, kelas: inps[1].value, mapel: inps[2].value});
+    });
+
+    const payload = {
+        user_id: user.id, doc_type: 'lampiran_buku_kerja',
+        subject_name: profile.mata_pelajaran || 'Umum', grade_level: profile.fase_kelas || 'Umum', curriculum_type: profile.jenis_kurikulum || 'Merdeka',
+        content_data: {
+            skl_text: document.getElementById('skl_text').value,
+            kode_etik: document.getElementById('kode_etik').value,
+            ikrar: document.getElementById('ikrar').value,
+            tata_tertib: document.getElementById('tata_tertib').value,
+            jurnal_rows: jurnalRows,
+            jadwal_rows: jadwalRows 
+        },
+        status: 'confirmed'
+    };
+
+    const { error } = await db.from('work_drafts').upsert(payload, { onConflict: 'user_id,doc_type' });
+    if(error) { Swal.fire('Gagal', error.message, 'error'); btn.innerHTML = '<span>💾</span> Simpan & Finalisasi (Cetak) →'; btn.disabled = false; }
+    else { window.location.href = 'step9_cetak.html'; }
+  }
+</script>
 </body>
 </html>

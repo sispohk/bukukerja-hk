@@ -1,432 +1,734 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self';">
-    <title>Cetak Dokumen Lengkap</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.11/purify.min.js"></script>
-    <script src="config.js"></script>
-    <script src="sidebar.js"></script>
-    <style>
-        /* SETTING KERTAS A4 */
-        @page { size: A4; margin: 10mm 15mm 10mm 20mm; /* Atas Kanan Bawah Kiri */ }
-        body { background: #525659; font-family: 'Times New Roman', Times, serif; }
-        
-        /* TAMPILAN KERTAS DI LAYAR */
-        .paper { 
-            background: white; width: 210mm; min-height: 297mm; 
-            margin: 20px auto; padding: 20mm 20mm 20mm 25mm; /* Margin jilid kiri lebih besar */
-            box-shadow: 0 0 15px rgba(0,0,0,0.3); position: relative; overflow: hidden;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cetak Buku Kerja Guru</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.11/purify.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js"></script>
+  <script src="layout.js"></script>
 
-        /* --- COVER STYLES --- */
-        .cover-border { border: 3px double black; padding: 10mm; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; }
-        .cover-title { font-size: 24pt; font-weight: bold; font-family: Arial, sans-serif; margin-bottom: 10px; }
-        .cover-sub { font-size: 16pt; font-weight: bold; margin-bottom: 40px; }
-        .cover-logo { width: 120px; height: 120px; margin: 20px auto; opacity: 0.5; background: url('assets/logo_tutwuri.png') no-repeat center/contain; }
-        .cover-identitas { width: 100%; text-align: center; margin: 20px 0; font-size: 14pt; }
-        .cover-identitas td { padding: 5px; border: none; text-align: left; }
-        .cover-footer { font-size: 14pt; font-weight: bold; text-transform: uppercase; }
+  <style>
+      /* PRINT STYLES */
+      .paper { width: 210mm; min-height: 297mm; background: white; margin: 0 auto; padding: 20mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; margin-bottom: 20px; }
+      
+      /* Separator / Cover Sub-buku */
+      .separator-page { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 250mm; border: 3px double #334155; text-align: center; }
+      .separator-title { font-size: 24pt; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; font-family: 'Times New Roman', serif; }
+      .separator-subtitle { font-size: 14pt; font-weight: 600; text-transform: uppercase; color: #64748b; }
 
-        /* --- CONTENT STYLES --- */
-        h1.bab-title { font-size: 14pt; font-weight: bold; text-transform: uppercase; text-align: center; border-bottom: 2px solid black; padding-bottom: 5px; margin-bottom: 20px; margin-top: 0; }
-        h2 { font-size: 12pt; font-weight: bold; margin-top: 15px; margin-bottom: 5px; }
-        p, li, td { font-size: 11pt; line-height: 1.5; color: black; }
-        
-        /* TABLE STYLES */
-        table.data-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        table.data-table th, table.data-table td { border: 1px solid black; padding: 4px 6px; vertical-align: middle; }
-        table.data-table th { background-color: #e5e7eb !important; text-align: center; font-weight: bold; -webkit-print-color-adjust: exact; }
-        
-        /* PAGE BREAK UTILITY */
-        .page-break { page-break-before: always; display: block; }
-        .no-break { page-break-inside: avoid; }
+      /* Tabel Cetak Standard */
+      .table-print { width: 100%; border-collapse: collapse; font-size: 10pt; font-family: 'Times New Roman', serif; }
+      .table-print th, .table-print td { border: 1px solid black; padding: 5px; vertical-align: top; }
+      .table-print th { background-color: #f1f5f9; text-align: center; font-weight: bold; }
 
-        /* RPP OFFICIAL STYLE */
-        .rpp-container { border: 1px solid black; padding: 2px; }
-        .rpp-header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .rpp-header-table td { border: none; padding: 2px; font-size: 11pt; }
-        .rpp-title { text-align: center; font-weight: bold; text-decoration: underline; font-size: 12pt; margin: 10px 0; text-transform: uppercase; }
-        .rpp-sign-table { width: 100%; margin-top: 40px; border: none; }
-        .rpp-sign-table td { border: none; text-align: center; vertical-align: top; padding-bottom: 60px; width: 50%; }
+      /* Daftar Isi Tengah */
+      .toc-wrapper { display: flex; flex-direction: column; justify-content: center; height: 200mm; }
 
-        /* PROMES BLACK BLOCK FIX */
-        .bg-black-block { background-color: black !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      /* Visual Kalender */
+      .mini-cal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+      .mini-month { border: 1px solid #ccc; padding: 5px; }
+      .mini-month h5 { text-align: center; font-weight: bold; font-size: 8pt; margin: 0 0 5px 0; background: #eee; }
+      .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 6pt; }
+      .day-cell { padding: 2px 0; }
+      .day-red { color: red; font-weight: bold; }
 
-        /* ROTATE LANDSCAPE CONTENT IN PORTRAIT PAGE (FOR PDF) */
-        .landscape-wrapper {
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
-            width: 250mm; /* Lebih panjang dari lebar A4 */
-            position: absolute;
-            top: 50%; left: 50%;
-            margin-left: -125mm; /* Setengah width */
-            margin-top: -100mm;
-            text-align: center;
-        }
+      /* Landscape CSS Helper */
+      .landscape-page-wrapper {
+          position: relative; width: 100%; height: 100%; overflow: hidden;
+          display: flex; align-items: center; justify-content: center;
+      }
+      .landscape-content {
+          width: 255mm; /* Lebar Aman A4 Landscape */
+          height: 180mm; 
+          transform: rotate(-90deg); 
+          transform-origin: center center;
+          font-size: 9pt;
+      }
 
-        @media print {
-            body { background: white; }
-            .no-print { display: none !important; }
-            .paper { box-shadow: none; margin: 0; width: 100%; height: auto; border: none; padding: 0; page-break-after: always; }
-            #sidebar-container { display: none; }
-            
-            /* FORCE COLORS */
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        }
-    </style>
+      @media print {
+          body { background: white; }
+          .no-print, #sidebar-container, header { display: none !important; }
+          .paper { box-shadow: none; margin: 0; width: 100%; padding: 15mm; page-break-after: always; }
+          .page-break { page-break-after: always; }
+      }
+  </style>
 </head>
-<body class="flex">
 
-    <div id="sidebar-container" class="no-print h-screen sticky top-0"></div>
+<body class="bg-slate-100 text-slate-800 h-screen flex font-sans overflow-hidden">
 
-    <div class="flex-1 min-w-0">
-        
-        <div class="no-print sticky top-0 left-0 w-full bg-white border-b p-4 flex justify-between items-center z-50 shadow-sm">
-            <div>
-                <h1 class="text-lg font-bold text-slate-800">Preview & Cetak Dokumen</h1>
-                <p class="text-xs text-slate-500">Pastikan semua data sudah terisi sebelum mencetak.</p>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="window.print()" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-blue-700 shadow flex items-center gap-2">
-                    🖨️ Cetak (Browser)
-                </button>
-                <button onclick="downloadPDF()" class="bg-red-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-red-700 shadow flex items-center gap-2">
-                    📄 Download PDF
-                </button>
-            </div>
+  <div id="sidebar-container" class="flex-none z-50 print:hidden"></div>
+
+  <div class="flex-1 flex flex-col relative min-w-0 bg-slate-200">
+      <header class="h-16 bg-white border-b border-slate-200 px-6 flex justify-between items-center z-40 shrink-0 shadow-sm print:hidden">
+        <div>
+            <h1 class="text-lg font-bold text-slate-800">🖨️ Cetak Dokumen</h1>
+            <p class="text-xs text-slate-500">Buku Kerja 1 & 2 Siap Cetak.</p>
         </div>
+        <div class="flex gap-2">
+            <a href="step8_lampiran.html" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition text-xs border border-slate-300">← Edit Data</a>
+            <button onclick="window.print()" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-blue-700 shadow flex items-center gap-2 text-xs">🖨️ Cetak</button>
+        </div>
+      </header>
 
-        <div class="pt-10 pb-20 bg-gray-600" id="documentArea">
+      <main class="flex-1 overflow-auto p-8 flex justify-center bg-slate-200/50 print:p-0 print:bg-white print:overflow-visible">
+          <div id="documentArea" class="w-fit print:w-full">
+             <div class="flex flex-col items-center justify-center h-96 text-slate-400">
+                <div class="animate-spin rounded-full h-10 w-10 border-4 border-slate-300 border-t-blue-600 mb-4"></div>
+                <p>Sedang menyusun Buku Kerja...</p>
+            </div>
+          </div>
+      </main>
+  </div>
 
-            <div class="paper">
-                <div class="cover-border">
-                    <div class="mt-10">
-                        <div class="cover-title">BUKU KERJA GURU 1</div>
-                        <div class="cover-sub">PERENCANAAN PEMBELAJARAN</div>
-                        <div class="cover-logo"></div>
+<script>
+  const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+  let user, profile = {};
+  const MONTHS_NAME = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+  async function init(){
+    const { data: { session } } = await db.auth.getSession();
+    if(session) { user = session.user; await loadAllData(); }
+  }
+  init();
+
+  async function loadAllData() {
+    const [prof, cp, alloc, prota, promes, lamp, rpp, cal] = await Promise.all([
+        db.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+        db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle(),
+        db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'allocation_data').maybeSingle(),
+        db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'prota_data').maybeSingle(),
+        db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'promes_data').maybeSingle(),
+        db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'lampiran_buku_kerja').maybeSingle(),
+        db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'rpp_data').maybeSingle(),
+        db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'calendar_data').maybeSingle()
+    ]);
+
+    if(prof.data) profile = prof.data;
+    const container = document.getElementById('documentArea');
+    container.innerHTML = '';
+
+    const __kur = (profile.jenis_kurikulum || '').toString().toLowerCase();
+    const isMerdeka = (__kur === 'km') || __kur.includes('merdeka');
+    const labels = {
+        ki: isMerdeka ? "Elemen CP" : "Kompetensi Inti (KI)",
+        kd: isMerdeka ? "Capaian Pembelajaran (CP)" : "Kompetensi Dasar (KD)",
+        tp: isMerdeka ? "Tujuan Pembelajaran (TP)" : "Indikator (IPK)",
+        kktp: isMerdeka ? "KKTP" : "KKM",
+        atp: isMerdeka ? "Alur Tujuan Pembelajaran" : "Silabus",
+        rpp: isMerdeka ? "Modul Ajar" : "Rencana Pelaksanaan Pembelajaran (RPP)"
+    };
+
+    // --- COVER UTAMA ---
+    renderMainCover(container);
+
+    // ===========================
+    // BUKU KERJA 1
+    // ===========================
+    renderSeparator(container, "BUKU KERJA 1", "Perencanaan Pembelajaran");
+    renderTOC(container, "DAFTAR ISI BUKU KERJA 1", [
+        "Standar Kompetensi Lulusan (SKL)",
+        `${labels.ki} & ${labels.kd}`,
+        `${labels.atp}`,
+        `${labels.rpp}`,
+        `${labels.kktp}`,
+        "Jadwal Mengajar"
+    ]);
+
+    // 1. SKL
+    renderSeparator(container, "DOKUMEN I", "Standar Kompetensi Lulusan (SKL)");
+    const sklFromLamp = lamp.data?.content_data?.skl_text;
+    const sklFallback = (cp.data?.content_data||[]).map(x=>x.skl||x.col_skl||'').filter(Boolean);
+    const sklText = sklFromLamp || (sklFallback.length? sklFallback.map((t,i)=>`${i+1}. ${t}`).join('\n') : '');
+    renderSKLAsTable(container, sklText);
+
+    // Persiapan Data CP
+    let cpItems = cp.data?.content_data || [];
+    cpItems = cpItems.map(x=>({
+        skl: x.skl || x.col_skl || x.SKL || "",
+        ki: x.ki_text || x.ki || x.col_ki || x.col1 || x.elemen || "",
+        kd: x.kd || x.col2 || x.deskripsi || "",
+        tp: x.ipk || x.detail_tp || x.col3 || "",
+        materi: x.materi_pembelajaran || x.col1 || x.elemen || "",
+        semester: String(x.semester || x.col5 || ""),
+        jp: String(x.alokasi_jp || x.col6 || ""),
+        kegiatan: x.kegiatan_pembelajaran || x.col7 || "",
+        penilaian: x.rencana_penilaian || x.col8 || "",
+        kktp: x.detail_kktp || x.kkm || x.kktp || x.col9 || "",
+        kko: x.kko || x.col_kko || "",
+        kata_kunci: x.kata_kunci || x.col_katakunci || "",
+        sumber_belajar: x.sumber_belajar || x.sumber || "",
+        kompleksitas: x.kompleksitas || "",
+        daya_dukung: x.daya_dukung || x.dayadukung || "",
+        intake: x.intake || ""
+    }));
+
+    // 2. Analisis
+    renderSeparator(container, "DOKUMEN II", isMerdeka ? "Analisis Capaian Pembelajaran (CP)" : "Analisis SKL, KI, KD");
+    if (isMerdeka) {
+        renderTablePage(container, "Analisis CP (Per Elemen)", ["No", "Elemen", "CP", "Kompetensi (KKO)", "Lingkup Materi"],
+            cpItems.map((x,i)=>[i+1, x.ki || "-", x.kd || "-", x.kko || "-", x.materi || "-"]));
+    } else {
+        renderTablePage(container, "Analisis SKL, KI, KD", ["No", "SKL", "KI", "KD"],
+            cpItems.map((x,i)=>[i+1, x.skl || "-", x.ki || "-", x.kd || "-"]));
+    }
+
+    // 3. ATP / Silabus
+    renderSeparator(container, "DOKUMEN III", isMerdeka ? "ATP (Alur Tujuan Pembelajaran)" : "Silabus");
+    if (isMerdeka) {
+        renderTablePage(container, "ATP (Format Minimal)", ["No", "Elemen", "TP", "JP", "Kata Kunci"],
+            cpItems.map((x,i)=>[i+1, x.ki || "-", x.tp || "-", x.jp || "-", x.kata_kunci || "-"]));
+    } else {
+        renderTablePage(container, "Silabus", ["No", "KD", "Materi", "Pembelajaran", "Penilaian", "JP", "Sumber"],
+            cpItems.map((x,i)=>[i+1, x.kd || "-", x.materi || "-", x.kegiatan || "-", x.penilaian || "-", x.jp || "-", x.sumber_belajar || "-"]));
+    }
+
+    // 4. RPP
+    renderSeparator(container, "DOKUMEN IV", labels.rpp);
+    const rppList = (rpp.data?.content_data?.items || []).map(it => {
+        if(it.html_b64 && !it.html) it.html = b64ToUtf8(it.html_b64) || "";
+        return it;
+    });
+    if(rppList.length > 0) rppList.forEach((item,idx) => renderRPP(container, item, idx+1, labels.rpp));
+    else renderPage(container, labels.rpp, `<p class='text-center italic'>Belum ada ${labels.rpp}.</p>`);
+
+    // 5. KKTP / KKM
+    renderSeparator(container, "DOKUMEN V", isMerdeka ? "KKTP" : "KKM");
+    if (isMerdeka) {
+        renderKKTP_KM(container, cpItems);
+    } else {
+        renderTablePage(container, "KKM", ["KD","Kompleksitas","Daya Dukung","Intake","KKM"],
+            cpItems.map(x=>[x.kd || "-", x.kompleksitas || "-", x.daya_dukung || "-", x.intake || "-", x.kktp || "-"]));
+    }
+
+    // 6. Jadwal Mengajar (Dokumen VI)
+    const jadwalData = lamp.data?.content_data?.jadwal_rows || [];
+    renderSeparator(container, "DOKUMEN VI", "Jadwal Mengajar");
+    renderJadwal(container, jadwalData);
+
+    // ===========================
+    // BUKU KERJA 2
+    // ===========================
+    renderSeparator(container, "BUKU KERJA 2", "Administrasi Guru");
+    renderTOC(container, "DAFTAR ISI BUKU KERJA 2", [
+        "Kode Etik, Ikrar, Tata Tertib", 
+        "Kalender Pendidikan", 
+        "Alokasi Waktu (RPE)", 
+        "Program Tahunan (Prota)", 
+        "Program Semester (Promes)", 
+        "Jurnal Agenda Guru"
+    ]);
+
+    const lampData = lamp.data?.content_data || {};
+
+    // 1. Kode Etik, Ikrar, Tata Tertib (Format Tabel)
+    renderTextAsTablePage(container, "KODE ETIK GURU", lampData.kode_etik);
+    renderTextAsTablePage(container, "IKRAR GURU INDONESIA", lampData.ikrar);
+    renderTextAsTablePage(container, "TATA TERTIB GURU", lampData.tata_tertib);
+
+    // 2. Kalender
+    renderSeparator(container, "DOKUMEN II", "Kalender Pendidikan");
+    renderVisualCalendar(container, cal.data?.content_data?.holidays);
+
+    // 3. Alokasi Waktu
+    renderSeparator(container, "DOKUMEN III", "Alokasi Waktu (RPE)");
+    renderAllocation(container, alloc.data?.content_data, cal.data?.content_data?.holidays);
+
+    // 4. Prota
+    renderSeparator(container, "DOKUMEN IV", "Program Tahunan");
+    renderProta(container, prota.data?.content_data);
+
+    // 5. Promes (Landscape)
+    renderSeparator(container, "DOKUMEN V", "Program Semester");
+    renderPromes(container, prota.data?.content_data, promes.data?.content_data);
+
+    // 6. Jurnal (Auto-Fill 20 Baris)
+    renderSeparator(container, "DOKUMEN VI", "Jurnal Agenda Guru");
+    const jurnalSource = lampData.jurnal_rows || [];
+    let jurnalRows = jurnalSource.map((x, i) => [i + 1, x.tanggal, x.kelas, x.materi]);
+    const minRows = 20;
+    if (jurnalRows.length < minRows) {
+        for (let i = jurnalRows.length; i < minRows; i++) {
+            jurnalRows.push([i + 1, "", "", ""]);
+        }
+    }
+    renderTablePage(container, "Jurnal Mengajar", ["No","Tanggal","Kelas","Materi / Kegiatan"], jurnalRows);
+  }
+
+  // ======================
+  // HELPER FUNCTIONS
+  // ======================
+
+  function createDiv(cls, html) { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; return d; }
+  function escapeHTML(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  
+  function fixBase64Padding(b64){
+    b64 = String(b64 || '').trim();
+    const pad = b64.length % 4;
+    if (pad) b64 += '='.repeat(4 - pad);
+    return b64;
+  }
+
+  function b64ToUtf8(b64){
+    try{
+      b64 = fixBase64Padding(b64);
+      const bin = atob(b64);
+      const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+      return new TextDecoder('utf-8').decode(bytes);
+    }catch(e){ return ''; }
+  }
+
+  // --- RENDER TABLE OF CONTENTS (TOC) SEBAGAI TABEL ---
+  function renderTOC(container, title, items) {
+      const rows = items.map((item, idx) => `
+        <tr>
+            <td style="text-align: center; width: 8%;">${idx + 1}</td>
+            <td style="padding-left: 10px;">${item}</td>
+            <td style="text-align: center; width: 15%;">✓</td>
+        </tr>
+      `).join('');
+
+      const html = `
+        <div class="doc-title" style="margin-bottom: 30px;">${title}</div>
+        <table class="table-print" style="width: 100%; border: 1px solid black;">
+            <thead>
+                <tr style="background-color: #f0f0f0;">
+                    <th style="padding: 10px; border: 1px solid black;">No</th>
+                    <th style="padding: 10px; border: 1px solid black;">Jenis Dokumen</th>
+                    <th style="padding: 10px; border: 1px solid black;">Keterangan</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows}
+            </tbody>
+        </table>
+        <div style="margin-top: 20px; font-size: 10pt; font-style: italic;">
+            * Beri tanda centang (✓) pada kolom keterangan jika dokumen tersedia.
+        </div>
+      `;
+      container.appendChild(createDiv("paper", html));
+      container.appendChild(createDiv("page-break", ""));
+  }
+
+  // --- RENDER JADWAL ---
+  function renderJadwal(container, rows) {
+      if(!rows || rows.length === 0) {
+          renderPage(container, "Jadwal Mengajar", "<p class='text-center'>Jadwal belum diisi.</p>");
+          return;
+      }
+      const hariOrder = { "Senin":1, "Selasa":2, "Rabu":3, "Kamis":4, "Jumat":5, "Sabtu":6 };
+      rows.sort((a,b) => (hariOrder[a.hari]||99) - (hariOrder[b.hari]||99));
+
+      renderTablePage(container, "Jadwal Mengajar Guru", 
+          ["No", "Hari", "Jam Ke-", "Kelas", "Mata Pelajaran"], 
+          rows.map((r,i) => [i+1, r.hari, r.jam, r.kelas, r.mapel])
+      );
+  }
+
+  // --- HELPER TEXT TO TABLE (Untuk Kode Etik, dll) ---
+  function renderTextAsTablePage(container, title, rawText) {
+      let lines = String(rawText || '').split(/\n+/);
+      lines = lines.map(l => l.trim()).filter(l => l.length > 0);
+      const rows = lines.map((line, index) => {
+          const cleanLine = line.replace(/^[\d\w]+[\.\)\-]\s*/, ''); 
+          return [index + 1, cleanLine];
+      });
+      if (rows.length === 0) rows.push(["-", "-"]);
+      renderTablePage(container, title, ["No", "Butir / Uraian"], rows);
+  }
+
+  // --- HELPER KKTP MERDEKA ---
+  function renderKKTP_KM(container, data) {
+      if(!data || data.length === 0) {
+          renderPage(container, "KKTP", "<p class='text-center'>Data kosong.</p>");
+          return;
+      }
+      const th = `<tr><th style="width: 5%; text-align: center;">No</th><th style="width: 45%;">Tujuan Pembelajaran (TP)</th><th style="width: 35%;">Deskripsi Kriteria / Indikator</th><th style="width: 15%; text-align: center;">Interval Min.</th></tr>`;
+      const tr = data.map((x, i) => {
+          let krit = x.kktp || x.kkm || "70"; 
+          let intervalDisplay = "";
+          if (/^\d+$/.test(krit.trim())) {
+              intervalDisplay = `${krit} - 100`; 
+              krit = "Peserta didik mampu mencapai indikator tujuan pembelajaran ini minimal " + krit + "%";
+          } else {
+              intervalDisplay = "Sesuai Deskripsi";
+          }
+          return `<tr><td style="text-align: center; vertical-align: top;">${i + 1}</td><td style="vertical-align: top;">${escapeHTML(x.tp || '-')}</td><td style="vertical-align: top; text-align: justify;">${escapeHTML(krit)}</td><td style="text-align: center; vertical-align: top; font-weight: bold;">${escapeHTML(intervalDisplay)}</td></tr>`;
+      }).join('');
+
+      const legendHTML = `<div style="margin-top: 20px; border: 1px solid #000; padding: 10px; font-size: 9pt; page-break-inside: avoid;"><div style="font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 2px;">Panduan Interval Ketercapaian (Rubrik Umum):</div><table style="width: 100%; border: none;"><tr><td style="width: 15%; font-weight: bold; border: none;">0 - 40%</td><td style="border: none;">: <span style="color: #ef4444;">Belum Mencapai</span> (Remedial di seluruh bagian)</td></tr><tr><td style="font-weight: bold; border: none;">41 - 65%</td><td style="border: none;">: <span style="color: #f97316;">Belum Mencapai Ketuntasan</span> (Remedial di bagian yang diperlukan)</td></tr><tr><td style="font-weight: bold; border: none;">66 - 85%</td><td style="border: none;">: <span style="color: #059669;">Sudah Mencapai Ketuntasan</span> (Tidak perlu remedial)</td></tr><tr><td style="font-weight: bold; border: none;">86 - 100%</td><td style="border: none;">: <span style="color: #2563eb;">Sudah Mencapai Ketuntasan</span> (Perlu pengayaan / tantangan lebih)</td></tr></table></div>`;
+
+      const html = `<div class="doc-title">Kriteria Ketercapaian Tujuan Pembelajaran (KKTP)</div><table class="table-print"><thead>${th}</thead><tbody>${tr}</tbody></table>${legendHTML}`;
+      container.appendChild(createDiv("paper", html));
+      container.appendChild(createDiv("page-break", ""));
+  }
+
+  // --- HELPER DATE UTILS (Untuk Kalender) ---
+  function formatDateID(dateStr, short=false){
+      if(!dateStr) return '-';
+      const parts = dateStr.split('-');
+      if(parts.length!==3) return dateStr;
+      const y = parseInt(parts[0],10), m = parseInt(parts[1],10), d = parseInt(parts[2],10);
+      const months = short ? ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"] : ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+      return d + ' ' + months[m-1] + ' ' + y;
+  }
+
+  function groupHolidayRanges(holidays){
+      const byCat = {};
+      Object.keys(holidays||{}).forEach(function(k){
+          const cat = String(holidays[k] || 'Libur').trim() || 'Libur';
+          if(!byCat[cat]) byCat[cat] = [];
+          byCat[cat].push(k);
+      });
+      const result = {};
+      Object.keys(byCat).forEach(function(cat){
+          const dates = byCat[cat].sort();
+          const ranges = [];
+          if (dates.length > 0) {
+              let start = dates[0];
+              let prev = dates[0];
+              for (let i = 1; i < dates.length; i++) {
+                  const curr = dates[i];
+                  const dPrev = new Date(prev);
+                  const dCurr = new Date(curr);
+                  const diffDays = Math.ceil(Math.abs(dCurr - dPrev) / (1000 * 60 * 60 * 24)); 
+                  if (diffDays === 1) { prev = curr; } 
+                  else { ranges.push({start: start, end: prev}); start = curr; prev = curr; }
+              }
+              ranges.push({start: start, end: prev});
+          }
+          result[cat] = ranges;
+      });
+      return result;
+  }
+
+  // --- RENDER VISUAL CALENDAR ---
+  function renderVisualCalendar(container, holidays) {
+      if(!holidays) holidays = {};
+      let html = `<div class="doc-title">Kalender Pendidikan</div>`;
+      html += `<div class="mini-cal-grid" style="margin-bottom: 20px;">`;
+      const startYear = parseInt((profile.tahun_ajaran||'').split('/')[0]) || 2025;
+      for(let i=0; i<12; i++) {
+          const monthIdx = (6 + i) % 12; 
+          const year = monthIdx < 6 ? startYear + 1 : startYear; 
+          const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+          const startDay = new Date(year, monthIdx, 1).getDay();
+          let monthHTML = `<div class="mini-month"><h5>${MONTHS_NAME[monthIdx]} ${year}</h5><div class="days-grid">`;
+          ['M','S','S','R','K','J','S'].forEach((d, idx) => {
+             const clr = (idx===0) ? 'text-red-600' : '';
+             monthHTML += `<div class="font-bold bg-slate-100 ${clr}">${d}</div>`
+          });
+          for(let j=0; j<startDay; j++) monthHTML += `<div></div>`;
+          for(let d=1; d<=daysInMonth; d++) {
+              const dateKey = `${year}-${String(monthIdx+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+              const status = holidays[dateKey];
+              let cellClass = "";
+              if (status) {
+                  if(status.includes("Ujian")) cellClass = "bg-amber-200 font-bold";
+                  else if(status.includes("Kegiatan")) cellClass = "bg-blue-200 font-bold";
+                  else cellClass = "bg-rose-200 font-bold text-red-700";
+              } else {
+                  if (new Date(year, monthIdx, d).getDay() === 0) cellClass = "text-red-600 font-bold";
+              }
+              monthHTML += `<div class="day-cell ${cellClass}">${d}</div>`;
+          }
+          monthHTML += `</div></div>`;
+          html += monthHTML;
+      }
+      html += `</div>`;
+      const groupedRanges = groupHolidayRanges(holidays);
+      const getColorDot = (cat) => {
+          cat = cat.toLowerCase();
+          if(cat.includes('ujian')) return 'background-color:#fcd34d; border-color:#d97706;'; 
+          if(cat.includes('kegiatan')) return 'background-color:#bfdbfe; border-color:#2563eb;'; 
+          if(cat.includes('nasional') || cat.includes('libur')) return 'background-color:#fecaca; border-color:#dc2626;'; 
+          return 'background-color:#e2e8f0; border-color:#475569;'; 
+      };
+      const categories = Object.keys(groupedRanges).sort();
+      html += `<h4 class="font-bold mb-2 uppercase text-sm border-b border-black inline-block">Keterangan & Rincian Agenda</h4>
+        <table class="table-print" style="margin-top:5px;"><thead><tr><th style="width:5%;">No</th><th style="width:5%;">Simbol</th><th style="width:30%;">Kategori Kegiatan</th><th style="width:60%;">Waktu Pelaksanaan (Rentang Tanggal)</th></tr></thead><tbody>`;
+      if(categories.length === 0) html += `<tr><td colspan="4" class="text-center italic text-slate-500">Belum ada agenda.</td></tr>`;
+      else {
+          categories.forEach((cat, idx) => {
+              const ranges = groupedRanges[cat];
+              const rangeText = ranges.map(r => (r.start === r.end) ? formatDateID(r.start, true) : `${formatDateID(r.start, true)} s.d. ${formatDateID(r.end, true)}`).join('; <br>');
+              html += `<tr><td style="text-align:center;">${idx+1}</td><td style="text-align:center;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;border:1px solid #000;${getColorDot(cat)}"></span></td><td style="font-weight:bold;">${escapeHTML(cat)}</td><td style="line-height:1.4;">${rangeText}</td></tr>`;
+          });
+      }
+      html += `</tbody></table>`;
+      container.appendChild(createDiv("paper", html));
+      container.appendChild(createDiv("page-break", ""));
+  }
+
+  // --- RENDER PROMES (LANDSCAPE, MULTI-SEMESTER, ANTI-BLANK) ---
+  function renderPromes(container, protaSrc, promesSrc) {
+      const toLongIndoDate = (raw) => {
+        if (!raw) return '';
+        const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)){ const [y,m,d] = raw.split('-').map(x=>parseInt(x,10)); return `${d} ${months[m-1]} ${y}`; }
+        return raw;
+      };
+      const tglSah = profile.tanggal_pengesahan ? toLongIndoDate(profile.tanggal_pengesahan) : "....................";
+      const kotaSah = escapeHTML(profile.kota || profile.kabupaten || 'Kuningan');
+
+      if (!protaSrc) {
+          container.appendChild(createDiv("paper", `<div class="p-10 text-red-600 border-2 border-red-300 border-dashed">Data Prota Kosong. Simpan Step 5 dulu.</div>`));
+          container.appendChild(createDiv("page-break", ""));
+          return;
+      }
+
+      [1, 2].forEach(sem => {
+          const protaKey = "semester_" + sem;
+          const promKey  = "semester_" + sem;
+          const materiList = Array.isArray(protaSrc[protaKey]) ? protaSrc[protaKey] : [];
+
+          if (materiList.length === 0) return; 
+
+          const values = (promesSrc && promesSrc[promKey] && promesSrc[promKey].values) ? promesSrc[promKey].values : {};
+          const caps   = (promesSrc && promesSrc[promKey] && promesSrc[promKey].capacities) ? promesSrc[promKey].capacities : {};
+          const MONTHS_SEM = { 1: ["Juli", "Agustus", "September", "Oktober", "November", "Desember"], 2: ["Januari", "Februari", "Maret", "April", "Mei", "Juni"] };
+          const months = MONTHS_SEM[sem];
+
+          let colGroupHTML = `<colgroup><col style="width: 3%;"><col style="width: 31%;"><col style="width: 6%;">`;
+          for(let i=0; i<30; i++) colGroupHTML += `<col style="width: 2%;">`;
+          colGroupHTML += `</colgroup>`;
+
+          let thMonth = `<th rowspan="2">No</th><th rowspan="2">Materi Pokok / TP</th><th rowspan="2">JP</th>`;
+          months.forEach(m => { thMonth += `<th colspan="5" style="background:#f8fafc; font-size:7pt; text-transform:uppercase; letter-spacing:1px;">${m}</th>`; });
+
+          let thWeek = ``;
+          for(let i=0; i<6; i++) { for(let w=1; w<=5; w++) { thWeek += `<th style="background:#f1f5f9; font-size:7pt; border-bottom:2px solid #000;">${w}</th>`; } }
+
+          let tbody = ``;
+          materiList.forEach((item, idx) => {
+              const targetJP = item.alokasi_jp || 0;
+              const textMateri = `<div style="text-align:left; font-size:8pt; line-height:1.2; padding:2px;"><b style="color:#0f172a;">${escapeHTML(item.elemen || '')}</b><br/><span style="color:#334155;">${escapeHTML(item.detail_tp || item.deskripsi || '')}</span></div>`;
+              let rowCells = ``;
+              for(let m=0; m<6; m++) {
+                  for(let w=1; w<=5; w++) {
+                      const weekKey = `${m}_${w}`; const cellKey = `${idx}_${m}_${w}`;
+                      const cap = caps[weekKey]; const val = values[cellKey];
+                      let style = ""; let txt = "";
+                      if (cap === 0 || cap === -1) {
+                          style = `background-color:#fee2e2; background-image:linear-gradient(45deg,#fecaca 25%,transparent 25%,transparent 50%,#fecaca 50%,#fecaca 75%,transparent 75%,transparent); background-size:4px 4px;`;
+                      } else if (val && val != "0") {
+                          style = `background-color:#bbf7d0; font-weight:bold; color:#14532d;`; txt = val;
+                      }
+                      rowCells += `<td style="${style}">${txt}</td>`;
+                  }
+              }
+              tbody += `<tr><td style="text-align:center;">${idx + 1}</td><td style="vertical-align:top;">${textMateri}</td><td style="text-align:center; font-weight:bold;">${targetJP}</td>${rowCells}</tr>`;
+          });
+
+          const htmlContent = `
+            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; background:white; position:relative; z-index:1;">
+                <div style="width: 255mm; height: 180mm; transform: rotate(-90deg); transform-origin: center center; font-family: 'Times New Roman', serif; position: relative; background: white; z-index: 10; padding: 10px;">
+                    <div style="text-align:center; margin-bottom:10px;">
+                        <h3 style="margin:0; font-size:14pt; font-weight:bold; text-transform:uppercase;">PROGRAM SEMESTER ${sem === 1 ? 'GANJIL' : 'GENAP'}</h3>
+                        <p style="margin:0; font-size:10pt;">Tahun Pelajaran ${escapeHTML(profile.tahun_ajaran)}</p>
                     </div>
-                    
-                    <table class="cover-identitas" style="width: 80%; margin: 0 auto;">
-                        <tr><td width="40%"><strong>Mata Pelajaran</strong></td><td width="5%">:</td><td><span class="ph-mapel">...</span></td></tr>
-                        <tr><td><strong>Kelas / Fase</strong></td><td>:</td><td><span class="ph-kelas">...</span></td></tr>
-                        <tr><td><strong>Tahun Ajaran</strong></td><td>:</td><td><span class="ph-tahun">...</span></td></tr>
-                        <tr><td><strong>Guru Pengampu</strong></td><td>:</td><td><span class="ph-nama">...</span></td></tr>
+                    <div style="display:flex; justify-content:space-between; font-size:9pt; font-weight:bold; margin-bottom:5px; border-bottom:2px double #000; padding-bottom:5px;">
+                        <span>Satuan Pendidikan: ${escapeHTML(profile.sekolah)}</span>
+                        <span>Mata Pelajaran: ${escapeHTML(profile.mata_pelajaran)}</span>
+                        <span>Kelas/Fase: ${escapeHTML(profile.fase_kelas)}</span>
+                    </div>
+                    <table style="width:100%; border-collapse:collapse; font-size:8pt; table-layout: fixed; border: 1px solid #000;">
+                        ${colGroupHTML}
+                        <thead><tr style="height:25px; border:1px solid #000;">${thMonth}</tr><tr style="height:15px; border:1px solid #000;">${thWeek}</tr></thead>
+                        <tbody style="border:1px solid #000;">${tbody}</tbody>
                     </table>
-
-                    <div class="cover-footer mb-10">
-                        <p class="ph-sekolah">NAMA SEKOLAH</p>
-                        <p class="text-sm font-normal mt-2">Indonesia, 2026</p>
+                    <div style="margin-top:15px; display:flex; justify-content:space-between; font-size:10pt;">
+                        <div style="text-align:center; width:30%;">Mengetahui,<br>Kepala Sekolah<br><br><br><br><u><b>${escapeHTML(profile.kepala_sekolah)}</b></u></div>
+                        <div style="text-align:center; width:30%;">${kotaSah}, ${tglSah}<br>Guru Mata Pelajaran<br><br><br><br><u><b>${escapeHTML(profile.nama_lengkap)}</b></u></div>
                     </div>
                 </div>
-            </div>
+            </div>`;
+          const styleBlock = document.createElement('style');
+          styleBlock.innerHTML = `.landscape-wrapper table, .landscape-wrapper th, .landscape-wrapper td { border: 1px solid black !important; }`;
+          container.appendChild(styleBlock);
+          container.appendChild(createDiv("paper", htmlContent));
+          container.appendChild(createDiv("page-break", ""));
+      });
+  }
 
-            <div class="paper">
-                <h1 class="bab-title" id="judulAnalisis">A. Analisis Capaian Pembelajaran & ATP</h1>
-                <table class="data-table text-xs">
-                    <thead>
-                        <tr><th width="5%">No</th><th width="20%">Elemen / Materi</th><th width="35%">Capaian Pembelajaran (CP/KD)</th><th width="40%">Tujuan (TP/IPK) & KKTP</th></tr>
-                    </thead>
-                    <tbody id="tblCP"></tbody>
-                </table>
-            </div>
+  // --- STANDARD RENDERERS ---
 
-            <div class="paper">
-                <h1 class="bab-title">B. Modul Ajar / RPP</h1>
-                
-                <div id="rppOutput">
-                    <div class="border-2 border-dashed p-10 text-center text-gray-400">
-                        Data RPP belum digenerate di Langkah 7.
-                    </div>
-                </div>
-            </div>
-
-
-            <div class="paper page-break">
-                <div class="cover-border">
-                    <div class="mt-10">
-                        <div class="cover-title">BUKU KERJA GURU 2</div>
-                        <div class="cover-sub">ADMINISTRASI GURU</div>
-                        <div class="cover-logo"></div>
-                    </div>
-                    
-                    <div class="text-center font-bold text-lg">
-                        <p>KODE ETIK GURU</p>
-                        <p>IKRAR GURU INDONESIA</p>
-                        <p>TATA TERTIB GURU</p>
-                        <p>KALENDER PENDIDIKAN</p>
-                        <p>ALOKASI WAKTU</p>
-                        <p>PROGRAM TAHUNAN</p>
-                        <p>PROGRAM SEMESTER</p>
-                    </div>
-
-                    <div class="cover-footer mb-10">
-                        <p class="ph-sekolah">...</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="paper">
-                <h1 class="bab-title">C. Kode Etik Guru</h1>
-                <div id="printKodeEtik" class="mb-10 text-justify whitespace-pre-wrap"></div>
-            </div>
-
-            <div class="paper">
-                <h1 class="bab-title">D. Ikrar Guru Indonesia</h1>
-                <div id="printIkrar" class="mb-10 text-justify whitespace-pre-wrap"></div>
-            </div>
-
-            <div class="paper">
-                <h1 class="bab-title">E. Tata Tertib Guru</h1>
-                <div id="printTataTertib" class="mb-10 text-justify whitespace-pre-wrap"></div>
-            </div>
-
-            <div class="paper">
-                <h1 class="bab-title">F. Kalender Pendidikan</h1>
-                <div class="mb-6">
-                    <p>Total Hari Efektif: <strong id="printHE">...</strong> Hari</p>
-                    <div id="printKalender" class="grid grid-cols-4 gap-4 mt-4 text-[9px]"></div>
-                </div>
-
-                <div class="page-break"></div>
-
-                <h1 class="bab-title mt-10">G. Rincian Alokasi Waktu</h1>
-                <p>Alokasi Waktu Mata Pelajaran <span class="ph-mapel font-bold"></span> Kelas <span class="ph-kelas font-bold"></span></p>
-                <p class="mb-4">Jatah Jam Pelajaran (JP) per Minggu: <strong id="printJPW">...</strong> JP</p>
-                
-                <table class="data-table text-center text-xs">
-                    <thead><tr><th>No</th><th>Bulan</th><th>Jml Pekan</th><th>Pekan Efektif</th><th>Tidak Efektif</th><th>Keterangan</th></tr></thead>
-                    <tbody id="tblRincianPekan"></tbody>
-                    <tfoot class="font-bold bg-gray-100" id="tblRincianTotal"></tfoot>
-                </table>
-            </div>
-
-            <div class="paper">
-                <h1 class="bab-title">H. Program Tahunan (Prota)</h1>
-                <table class="data-table text-xs">
-                    <thead><tr><th width="10%">SMT</th><th width="10%">No</th><th>Materi Pokok</th><th width="15%">Alokasi Waktu</th></tr></thead>
-                    <tbody id="tblProta"></tbody>
-                </table>
-            </div>
-
-            <div class="paper">
-                <div class="landscape-wrapper">
-                    <h1 class="bab-title">I. Program Semester (Promes)</h1>
-                    <table class="data-table text-[8px]" id="tblPromes">
-                        </table>
-                    <p class="text-xs text-left italic mt-2">*Blok Hitam menandakan pelaksanaan pembelajaran.</p>
-                </div>
-            </div>
-
+  function renderMainCover(container) {
+      container.appendChild(createDiv("paper", `
+      <div class="h-full border-[3px] border-double border-black p-10 flex flex-col justify-between items-center text-center">
+        <div class="mt-12"><h1 class="text-4xl font-extrabold mb-6 font-serif">BUKU KERJA GURU</h1><h2 class="text-xl font-bold uppercase mb-12 border-b-2 border-black pb-2 inline-block">Tahun Ajaran ${escapeHTML(profile.tahun_ajaran)}</h2>
+        <div class="w-40 h-40 mx-auto mb-8"><img src="logo.png" class="w-full h-full object-contain" alt="Logo"></div></div>
+        <table class="w-3/4 mx-auto text-left text-lg font-bold font-serif mb-12">
+            <tr><td class="py-2">Mata Pelajaran</td><td>: ${escapeHTML(profile.mata_pelajaran)}</td></tr>
+            <tr><td class="py-2">Kelas / Fase</td><td>: ${escapeHTML(profile.fase_kelas)}</td></tr>
+            <tr><td class="py-2">Guru</td><td>: ${escapeHTML(profile.nama_lengkap)}</td></tr>
+        </table>
+        <div class="mb-10 uppercase font-bold text-2xl font-serif">
+            <p>${escapeHTML(profile.sekolah)}</p>
+            <p class="text-sm font-normal normal-case mt-4 text-slate-500 italic">Jl. Raya Maniskidul Jalaksana Kuningan Jawa Barat</p>
         </div>
-    </div>
+      </div>`));
+      container.appendChild(createDiv("page-break", ""));
+  }
 
-    <script>
-        const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
-        let user;
-        const MONTHS = ["Juli","Agustus","September","Oktober","November","Desember","Januari","Februari","Maret","April","Mei","Juni"];
+  function renderSeparator(container, title, subtitle) {
+      container.appendChild(createDiv("paper", `<div class="separator-page"><div class="separator-title">${title}</div><div class="separator-subtitle">${subtitle}</div></div>`));
+      container.appendChild(createDiv("page-break", ""));
+  }
 
-        async function init() {
-            const { data: { session } } = await db.auth.getSession();
-            if(!session) return location.href = 'index.html'; user = session.user;
+  function renderPage(container, title, content) {
+      container.appendChild(createDiv("paper", `<div class="doc-title">${title}</div>${content}`));
+      container.appendChild(createDiv("page-break", ""));
+  }
 
-            // Load All Data
-            const [p, cp, promes, lamp, rpp] = await Promise.all([
-                db.from('profiles').select('*').eq('id', user.id).maybeSingle(),
-                db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle(),
-                db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'promes_data').maybeSingle(),
-                db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'lampiran_buku_kerja').maybeSingle(),
-                db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'rpp_result').maybeSingle()
-            ]);
+  // Updated renderTablePage: Auto Center "No", KKM, and Components
+  function renderTablePage(container, title, headers, rows) {
+      const th = headers.map(h => {
+          let style = "";
+          if (h === "No") style = 'style="width: 5%; text-align: center;"';
+          else if (["JP", "KKM", "Sem", "Smt"].includes(h)) style = 'style="width: 8%; text-align: center;"';
+          else if (["Kompleksitas", "Daya Dukung", "Intake"].includes(h)) style = 'style="width: 12%; text-align: center;"'; 
+          return `<th ${style}>${h}</th>`;
+      }).join('');
 
-            renderDoc(p.data, cp.data, promes.data, lamp.data, rpp.data);
-        } init();
+      const tr = rows.map(r => {
+          const cells = r.map((c, i) => {
+              let style = "";
+              const centeredCols = ["No", "JP", "KKM", "Sem", "Smt", "Hari", "Jam Ke-", "Kelas", "Kompleksitas", "Daya Dukung", "Intake"];
+              if (centeredCols.includes(headers[i])) style = 'style="text-align: center; vertical-align: top;"';
+              else style = 'style="text-align: left; vertical-align: top;"';
+              return `<td ${style}>${escapeHTML(c)}</td>`;
+          }).join('');
+          return `<tr>${cells}</tr>`;
+      }).join('');
 
+      container.appendChild(createDiv("paper", `<div class="doc-title">${title}</div><table class="table-print"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table>`));
+      container.appendChild(createDiv("page-break", ""));
+  }
 
-        function escapeHTML(s){
-            return String(s ?? '')
-              .replace(/&/g,'&amp;')
-              .replace(/</g,'&lt;')
-              .replace(/>/g,'&gt;')
-              .replace(/"/g,'&quot;')
-              .replace(/'/g,'&#39;');
-        }
+  function renderSKLAsTable(container, text) {
+      if(!text) return renderPage(container, "SKL", "-");
+      const cleanText = text.replace(/[*#]/g, '').trim();
+      const lines = cleanText.split(/\n|•|- /).map(s => s.trim()).filter(s => s.length > 5);
+      let html = `<div class="doc-title">Standar Kompetensi Lulusan (SKL)</div><table class="table-print"><thead><tr><th style="width: 8%; text-align: center;">No</th><th style="text-align: center;">Kompetensi Lulusan</th></tr></thead><tbody>`;
+      if(lines.length === 0) html += `<tr><td colspan="2" class="text-center italic">Data SKL belum diisi.</td></tr>`;
+      else lines.forEach((l, i) => { const content = l.replace(/^\s*\d+[\.\)\-]\s*/, ''); html += `<tr><td style="text-align: center; vertical-align: top;">${i + 1}</td><td style="text-align: justify; vertical-align: top;">${escapeHTML(content)}</td></tr>`; });
+      html += `</tbody></table>`;
+      container.appendChild(createDiv("paper", html));
+      container.appendChild(createDiv("page-break", ""));
+  }
 
-        function renderDoc(prof, cp, promes, lamp, rpp) {
-            const p = prof || {};
-            // 1. FILL PLACEHOLDERS
-            document.querySelectorAll('.ph-mapel').forEach(e => e.innerText = p.mata_pelajaran || '...');
-            document.querySelectorAll('.ph-kelas').forEach(e => e.innerText = p.fase_kelas || '...');
-            document.querySelectorAll('.ph-nama').forEach(e => e.innerText = p.nama_lengkap || '...');
-            document.querySelectorAll('.ph-sekolah').forEach(e => e.innerText = p.sekolah || '...');
-            document.querySelectorAll('.ph-tahun').forEach(e => e.innerText = p.tahun_ajaran || '...');
+  function renderAllocation(container, data, holidays) {
+      if(!data) return;
+      if(!holidays) holidays = {};
+      const jpPerWeek = parseInt(profile.jp_per_week || 0, 10) || 0;
+      const startYear = parseInt((profile.tahun_ajaran||'').split('/')[0], 10) || 2025;
+      const monthOrder = [{y:startYear, m:6}, {y:startYear, m:7}, {y:startYear, m:8}, {y:startYear, m:9}, {y:startYear, m:10}, {y:startYear, m:11}, {y:startYear+1, m:0}, {y:startYear+1, m:1}, {y:startYear+1, m:2}, {y:startYear+1, m:3}, {y:startYear+1, m:4}, {y:startYear+1, m:5}];
+      const monthRows = monthOrder.map(({y,m})=>{
+          const daysInMonth = new Date(y, m+1, 0).getDate();
+          let sundays = 0, hol = 0;
+          for(let d=1; d<=daysInMonth; d++){
+              const dt = new Date(y, m, d);
+              const dateKey = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+              if(dt.getDay() === 0) sundays++;
+              if(holidays[dateKey]) hol++;
+          }
+          const efektif = Math.max(0, daysInMonth - sundays - hol);
+          const estJP = jpPerWeek ? Math.round((efektif/6) * jpPerWeek) : 0;
+          return [MONTHS_NAME[m] + ' ' + y, String(daysInMonth), String(sundays), String(hol), String(efektif), jpPerWeek ? String(estJP) : "-"];
+      });
+      let html = '<div class="doc-title">Alokasi Waktu (RPE)</div><h4 class="font-bold mt-2 mb-2 uppercase">Rekap Bulanan (Statistik)</h4><table class="table-print alloc-month-table"><thead><tr><th>Bulan</th><th>Total Hari</th><th>Ahad</th><th>Libur</th><th>Hari Efektif</th><th>Estimasi JP</th></tr></thead><tbody>' + monthRows.map(r => `<tr><td>${r[0]}</td><td align="center">${r[1]}</td><td align="center">${r[2]}</td><td align="center">${r[3]}</td><td align="center" class="bg-blue-50 font-bold">${r[4]}</td><td align="center">${r[5]}</td></tr>`).join('') + '</tbody></table><div class="alloc-note">Catatan: "Libur" dihitung dari Kalender Pendidikan.</div>';
+      const renderSem = (lbl, d) => `<h4 class="font-bold mt-6 mb-2 uppercase">${lbl}</h4><table class="table-print"><tr><th>Total Pekan</th><th>Tidak Efektif</th><th>Efektif</th><th>Total JP</th></tr><tr><td align="center">${d?.total||0}</td><td align="center">${d?.ineff||0}</td><td align="center">${d?.eff||0}</td><td align="center" class="bg-blue-50 font-bold">${d?.jp||0}</td></tr></table>`;
+      html += renderSem("Semester 1 (Dari Input)", data.s1) + renderSem("Semester 2 (Dari Input)", data.s2);
+      container.appendChild(createDiv("paper", html));
+      container.appendChild(createDiv("page-break", ""));
+  }
 
-            if(p.jenis_kurikulum === 'K13') document.getElementById('judulAnalisis').innerText = "A. Analisis KI/KD & Indikator";
+  function renderProta(container, data) {
+      if(!data) return;
+      let rows = [];
+      if(data.semester_1) data.semester_1.forEach((x,i)=> rows.push(['1', i+1, x.elemen, x.detail_tp, x.alokasi_jp]));
+      if(data.semester_2) data.semester_2.forEach((x,i)=> rows.push(['2', i+1, x.elemen, x.detail_tp, x.alokasi_jp]));
+      renderTablePage(container, "Program Tahunan", ["Smt","No","Bab","Sub-Materi","JP"], rows);
+  }
 
-            // 2. CP / ATP TABLE
-            if(cp && cp.content_data) {
-                let h = "";
-                cp.content_data.forEach((d, i) => {
-                    h += `<tr><td align="center">${i+1}</td><td>${escapeHTML(d.elemen)}</td><td>${escapeHTML(d.deskripsi)}</td><td><strong>Tujuan:</strong> ${escapeHTML(d.detail_tp)}<br><br><strong>KKTP:</strong> ${escapeHTML(d.detail_kktp)}</td></tr>`;
-                });
-                document.getElementById('tblCP').innerHTML = h;
-            }
+  function stripDuplicateRppTitle(html){
+      let s = String(html || '').replace(/<div[^>]*class=["'][^"']*doc-title[^"']*["'][^>]*>[\s\S]*?<\/div>/gi, '');
+      return s.replace(/<h[12][^>]*>\s*RENCANA[\s\S]*?RPP[\s\S]*?<\/h[12]>/gi, '').trim();
+  }
 
-            // 3. RPP (RE-FORMATTED TO OFFICIAL STYLE)
-            if(rpp && rpp.content_data && rpp.content_data.html) {
-                const rawHTML = rpp.content_data.html;
-                // Kita bungkus HTML AI dengan Kop dan Tanda Tangan
-                // Asumsi: rawHTML berisi beberapa <div class="rpp-section">
-                
-                // Regex sederhana untuk mengambil judul topik dari HTML jika ada
-                // Tapi untuk amannya, kita bungkus seluruh output dalam satu container RPP Resmi
-                
-                const officialRPP = `
-                    <div class="rpp-official">
-                        <div class="rpp-title">MODUL AJAR / RENCANA PELAKSANAAN PEMBELAJARAN</div>
-                        <table class="rpp-header-table">
-                            <tr><td width="20%">Satuan Pendidikan</td><td width="2%">:</td><td>${p.sekolah}</td></tr>
-                            <tr><td>Mata Pelajaran</td><td>:</td><td>${p.mata_pelajaran}</td></tr>
-                            <tr><td>Kelas / Fase</td><td>:</td><td>${p.fase_kelas}</td></tr>
-                            <tr><td>Tahun Ajaran</td><td>:</td><td>${p.tahun_ajaran}</td></tr>
-                        </table>
-                        
-                        <hr style="border: 1px solid black; margin-bottom: 20px;">
-                        
-                        <div class="rpp-content-body text-justify">
-                            ${rawHTML}
-                        </div>
+  function renderRPP(container, item, num, docTitle) {
+      const cleanedBody = stripDuplicateRppTitle(item.html || '');
+      const safeHtml = (window.DOMPurify ? DOMPurify.sanitize(cleanedBody) : cleanedBody);
+      const sekolahVal = (profile.sekolah || '').toString();
+      const mapelVal   = (profile.mata_pelajaran || '').toString();
+      const kelasVal   = (profile.fase_kelas || profile.kelas || '').toString();
+      const babVal     = (item.elemen || '').toString();
+      // FIX: Cek JP dari Item RPP dulu (Step 7/5), baru fallback ke Profile (Step 1)
+      const jpItem = item.alokasi_jp || item.alokasi_waktu || item.jp || item.col6;
+      const jpVal  = (jpItem || profile.jp_per_week || profile.jumlah_jp || '').toString();
+      const guruVal    = (profile.nama_lengkap || '').toString();
+      const kepalaVal  = (profile.kepala_sekolah || '').toString();
+      const tempatVal  = (profile.kota || 'Kuningan').toString();
+      const tglRaw     = (profile.tanggal_pengesahan || '').toString();
+      const toLongIndoDate = (raw) => {
+        if (!raw) return '';
+        const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)){ const [y,m,d] = raw.split('-').map(x=>parseInt(x,10)); return `${d} ${months[m-1]} ${y}`; }
+        return raw;
+      };
+      const tglLong = toLongIndoDate(tglRaw);
+      let tujuan = '', sumber = '', pendahuluan = '', inti = '', penutup = '', penilaian = '', model = (item.metode || '').toString();
+      try{
+        const doc = new DOMParser().parseFromString(cleanedBody, 'text/html');
+        const getTableValue = (keywords) => {
+          const rows = Array.from(doc.body.querySelectorAll('tr'));
+          for (const tr of rows){
+            const tds = tr.querySelectorAll('td,th');
+            if (tds.length < 2) continue;
+            const left = (tds[0].textContent || '').toLowerCase();
+            if (keywords.some(k => left.includes(k))) return (tds[1].innerHTML || '').trim();
+          }
+          return '';
+        };
+        tujuan = getTableValue(['tujuan']) || tujuan;
+        const modelFromTable = getTableValue(['model']);
+        if(modelFromTable) model = modelFromTable.replace(/(<([^>]+)>)/gi, "").trim(); 
+        sumber = getTableValue(['sumber']) || sumber;
+        pendahuluan = getTableValue(['pendahuluan']) || pendahuluan;
+        inti = getTableValue(['inti']) || inti;
+        penutup = getTableValue(['penutup']) || penutup;
+        penilaian = getTableValue(['asesmen','penilaian']) || penilaian;
+      }catch(e){}
+      const safe = (h) => (window.DOMPurify ? DOMPurify.sanitize(h || '') : (h || ''));
+      const wrap = (content) => `<div style="line-height:1.5;">${content}</div>`;
 
-                        <table class="rpp-sign-table no-break">
-                            <tr>
-                                <td>
-                                    Mengetahui,<br>Kepala Sekolah<br><br><br><br>
-                                    <strong>( ..................................... )</strong><br>
-                                    NIP. ...........................
-                                </td>
-                                <td>
-                                    .................., .................... 20....<br>Guru Mata Pelajaran<br><br><br><br>
-                                    <strong>${p.nama_lengkap}</strong><br>
-                                    NIP. ...........................
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                `;
-                document.getElementById('rppOutput').innerHTML = DOMPurify.sanitize(officialRPP, { USE_PROFILES: { html: true } });
-            }
-
-            // 4. LAMPIRAN
-            if(lamp && lamp.content_data) {
-                document.getElementById('printKodeEtik').innerText = lamp.content_data.kode_etik;
-                document.getElementById('printIkrar').innerText = lamp.content_data.ikrar;
-                document.getElementById('printTataTertib').innerText = lamp.content_data.tata_tertib;
-            }
-
-            // 5. KALENDER & ALOKASI
-            if(promes && promes.content_data) {
-                const pd = promes.content_data;
-                const cal = pd.calendar || {};
-                let startYear = parseInt((p.tahun_ajaran||"").split('/')[0]) || new Date().getFullYear();
-                
-                // Mini Calendar
-                let heCount = 0;
-                document.getElementById('printKalender').innerHTML = "";
-                MONTHS.forEach((m, i) => {
-                    const year = i<6 ? startYear : startYear+1; const mIdx = i<6 ? i+6 : i-6;
-                    const days = new Date(year, mIdx+1, 0).getDate();
-                    let html = `<div class="border border-slate-400 p-1"><div class="font-bold text-center bg-gray-200">${m}</div><div class="grid grid-cols-7 text-center">`;
-                    for(let d=1; d<=days; d++) {
-                        const k = `${year}-${mIdx}-${d}`;
-                        const isHol = cal[k]; const isSun = new Date(year, mIdx, d).getDay()===0;
-                        if(!isHol && !isSun) heCount++;
-                        html += `<span style="color:${isSun?'red':(isHol?'red':'black')}">${d}</span>`;
-                    }
-                    document.getElementById('printKalender').innerHTML += html + `</div></div>`;
-                });
-                document.getElementById('printHE').innerText = heCount;
-
-                // Rincian Pekan
-                let totP=0, totE=0, totNE=0;
-                let rincianHTML = "";
-                MONTHS.forEach((m, i) => {
-                    const year = i<6 ? startYear : startYear+1; const mIdx = i<6 ? i+6 : i-6;
-                    const days = new Date(year, mIdx+1, 0).getDate();
-                    let pTotal = Math.ceil(days/7);
-                    let pEff = 0;
-                    for(let w=1; w<=pTotal; w++) {
-                        let d = (w-1)*7+2; if(d>days)d=days;
-                        if(!cal[`${year}-${mIdx}-${d}`]) pEff++;
-                    }
-                    let pNon = pTotal - pEff;
-                    totP+=pTotal; totE+=pEff; totNE+=pNon;
-                    
-                    rincianHTML += `<tr><td>${i+1}</td><td align="left">${m}</td><td>${pTotal}</td><td>${pEff}</td><td>${pNon}</td><td></td></tr>`;
-                    if(i===5) rincianHTML += `<tr class="bg-gray-100 font-bold"><td colspan="2">Jumlah Smt 1</td><td>${totP}</td><td>${totE}</td><td>${totNE}</td><td></td></tr>`;
-                });
-                document.getElementById('tblRincianPekan').innerHTML = rincianHTML;
-                document.getElementById('tblRincianTotal').innerHTML = `<tr><td colspan="2">TOTAL SETAHUN</td><td>${totP}</td><td>${totE}</td><td>${totNE}</td><td></td></tr>`;
-                document.getElementById('printJPW').innerText = pd.jp_per_week || 4;
-
-                // Prota
-                let acc=0; const capSmt1 = Math.floor(heCount/2 * (pd.jp_per_week/5));
-                (pd.materials||[]).forEach((m, i) => {
-                    acc+=m.jp;
-                    document.getElementById('tblProta').innerHTML += `<tr><td align="center">${acc<=capSmt1?'1 (Ganjil)':'2 (Genap)'}</td><td align="center">${i+1}</td><td>${escapeHTML(m.topic)}</td><td align="center">${m.jp} JP</td></tr>`;
-                });
-
-                // Promes (Landscape Logic)
-                let h1=`<tr><th rowspan="2" width="20%">Materi Pokok</th><th rowspan="2" width="5%">JP</th>`;
-                let h2=`<tr>`; let wMap=[];
-                MONTHS.forEach((m)=>{ h1+=`<th colspan="5">${m}</th>`; for(let w=1;w<=5;w++) h2+=`<th>${w}</th>`; });
-                
-                // Re-calculate Matrix for Print
-                let mGrid={}; let wLoad=new Array(60).fill(0); let jpW=parseInt(pd.jp_per_week)||4;
-                // Build Week Map again
-                MONTHS.forEach((m,i)=>{
-                    const y=i<6?startYear:startYear+1; const idx=i<6?i+6:i-6; const ds=new Date(y,idx+1,0).getDate();
-                    for(let w=1;w<=5;w++){
-                        let sd=(w-1)*7+3; if(sd>ds)sd=ds; wMap.push(!cal[`${y}-${idx}-${sd}`]);
-                    }
-                });
-
-                (pd.materials||[]).forEach((m,r)=>{
-                    let s=m.jp; let c=0;
-                    while(s>0 && c<60){
-                        if(!wMap[c] || wLoad[c]>=jpW){ c++; continue; }
-                        let take=Math.min(s, jpW-wLoad[c]);
-                        mGrid[`${r}-${c}`]=take; wLoad[c]+=take; s-=take;
-                    }
-                });
-
-                let bHtml="";
-                (pd.materials||[]).forEach((m,r)=>{
-                    bHtml+=`<tr><td>${escapeHTML(m.topic)}</td><td align="center">${m.jp}</td>`;
-                    for(let w=0;w<60;w++){
-                        let val = mGrid[`${r}-${w}`];
-                        // Black Block Logic
-                        bHtml += `<td class="${val ? 'bg-black-block' : ''}"></td>`;
-                    }
-                    bHtml+=`</tr>`;
-                });
-                document.getElementById('tblPromes').innerHTML = `<thead>${h1}</tr>${h2}</tr></thead><tbody>${bHtml}</tbody>`;
-            }
-        }
-
-        function downloadPDF() {
-            const element = document.getElementById('documentArea');
-            const opt = {
-                margin: 0,
-                filename: 'Dokumen_Administrasi_Guru.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 1.5, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(element).save();
-        }
-    </script>
+      const html = `<div class="doc-title">${escapeHTML(docTitle)} (${num})</div>
+        <table class="table-print" style="margin-bottom:10px;">
+          <tr><td style="width:28%;background:#f1f5f9;font-weight:bold;">Nama Sekolah</td><td>${escapeHTML(sekolahVal)}</td></tr>
+          <tr><td style="background:#f1f5f9;font-weight:bold;">Mata Pelajaran</td><td>${escapeHTML(mapelVal)}</td></tr>
+          <tr><td style="background:#f1f5f9;font-weight:bold;">Kelas</td><td>${escapeHTML(kelasVal)}</td></tr>
+          <tr><td style="background:#f1f5f9;font-weight:bold;">Bab</td><td>${escapeHTML(babVal)}</td></tr>
+          <tr><td style="background:#f1f5f9;font-weight:bold;">Alokasi Waktu</td><td>${escapeHTML(jpVal)} JP</td></tr>
+        </table>
+        <table class="table-print">
+          <tr><td style="width:28%;background:#f1f5f9;font-weight:bold;">Tujuan Pembelajaran</td><td>${wrap(safe(tujuan) || '-')}</td></tr>
+          <tr><td style="background:#f1f5f9;font-weight:bold;">Model Pembelajaran</td><td>${wrap(escapeHTML(model) || '-')}</td></tr>
+          <tr><td style="background:#f1f5f9;font-weight:bold;">Sumber Belajar</td><td>${wrap(safe(sumber) || '-')}</td></tr>
+          <tr><td style="background:#f1f5f9;font-weight:bold;">Kegiatan (Pendahuluan)</td><td>${wrap(safe(pendahuluan) || '-')}</td></tr>
+          <tr><td style="background:#f1f5f9;font-weight:bold;">Kegiatan (Inti)</td><td>${wrap(safe(inti) || '-')}</td></tr>
+          <tr><td style="background:#f1f5f9;font-weight:bold;">Kegiatan (Penutup)</td><td>${wrap(safe(penutup) || '-')}</td></tr>
+          <tr><td style="background:#f1f5f9;font-weight:bold;">Penilaian</td><td>${wrap(safe(penilaian) || '-')}</td></tr>
+        </table>
+        <div style="margin-top:18px; page-break-inside: avoid;"><table style="width:100%;border:none;border-collapse:collapse;"><tr><td style="width:50%;border:none;text-align:center;vertical-align:top;">Mengetahui,<br/>Kepala ${escapeHTML(sekolahVal)}</td><td style="width:50%;border:none;text-align:center;vertical-align:top;">${escapeHTML(tempatVal)}, ${tglLong}<br/>Guru Mata Pelajaran,</td></tr><tr><td style="border:none;height:70px;"></td><td style="border:none;height:70px;"></td></tr><tr><td style="border:none;text-align:center;font-weight:bold;text-decoration:underline;">${escapeHTML(kepalaVal)}</td><td style="border:none;text-align:center;font-weight:bold;text-decoration:underline;">${escapeHTML(guruVal)}</td></tr></table></div>`;
+      container.appendChild(createDiv("paper", html));
+      container.appendChild(createDiv("page-break", ""));
+  }
+</script>
 </body>
 </html>
