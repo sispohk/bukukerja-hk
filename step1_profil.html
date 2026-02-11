@@ -14,24 +14,25 @@
         .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 h-screen flex font-sans overflow-hidden">
+<body class="bg-slate-100 text-slate-800 h-screen flex font-sans overflow-hidden">
 
     <div id="sidebar-container"></div>
 
     <div class="flex-1 flex flex-col relative min-w-0">
-        <header class="h-20 bg-white border-b border-slate-200 px-8 py-4 shadow-sm z-10 flex justify-between items-center shrink-0">
+        <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-20 flex justify-between items-center shrink-0">
             <div>
                 <h1 class="text-xl font-bold text-slate-900 tracking-tight">1. Identitas & Profil</h1>
                 <p class="text-xs text-slate-500 font-medium">Pengaturan dasar untuk KOP Dokumen & Rumus JP.</p>
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-8 bg-slate-50 flex justify-center">
+        <main class="flex-1 overflow-y-auto p-8 bg-slate-100 pb-32 flex justify-center">
             
             <div class="w-full max-w-5xl space-y-6">
                 
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
-                    <div class="absolute top-0 left-0 w-2 h-full bg-indigo-600"></div> <div class="p-8">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-indigo-600"></div> 
+                    <div class="p-8">
                         <div class="flex flex-col md:flex-row gap-8 items-start">
                             <div class="hidden md:flex flex-col items-center gap-3 shrink-0">
                                 <div class="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-4xl shadow-inner text-indigo-500 border border-indigo-100">
@@ -42,17 +43,17 @@
 
                             <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                                 <div class="col-span-1 md:col-span-2">
-                                    <label class="block text-xs font-extrabold text-slate-500 uppercase mb-1 ml-1">Nama Lengkap & Gelar</label>
-                                    <input type="text" id="nama" class="w-full text-lg font-bold border-b-2 border-slate-200 bg-transparent px-2 py-1 focus:border-indigo-600 focus:outline-none transition placeholder-slate-300 text-slate-800" placeholder="Contoh: Budi Santoso, S.Pd.">
+                                    <label class="block text-xs font-extrabold text-slate-500 uppercase mb-1 ml-1">Nama Lengkap & Gelar <span class="text-red-500">*</span></label>
+                                    <input type="text" id="nama" required class="w-full text-lg font-bold border-b-2 border-slate-200 bg-transparent px-2 py-1 focus:border-indigo-600 focus:outline-none transition placeholder-slate-300 text-slate-800" placeholder="misal: Dede Jamaludin, S.Pd., Gr.">
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Instansi / Sekolah</label>
-                                    <input type="text" id="sekolah" class="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Nama Sekolah">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Instansi / Sekolah <span class="text-red-500">*</span></label>
+                                    <input type="text" id="sekolah" required class="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Nama Sekolah">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Kepala Sekolah</label>
-                                    <input type="text" id="kepala_sekolah" class="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Nama Kepala Sekolah">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Kepala Sekolah <span class="text-red-500">*</span></label>
+                                    <input type="text" id="kepala_sekolah" required class="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Nama Kepala Sekolah">
                                 </div>
                             </div>
                         </div>
@@ -64,9 +65,9 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group">
                         <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
                         <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                            <span>📚</span> Kurikulum
+                            <span>📚</span> Kurikulum <span class="text-red-500">*</span>
                         </h3>
-                        <select id="kurikulum" class="w-full bg-amber-50 border border-amber-200 text-amber-900 text-sm font-bold rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer appearance-none">
+                        <select id="kurikulum" required class="w-full bg-amber-50 border border-amber-200 text-amber-900 text-sm font-bold rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer appearance-none">
                             <option value="KM">Kurikulum Merdeka</option>
                             <option value="K13">Kurikulum 2013</option>
                         </select>
@@ -76,32 +77,32 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
                         <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                            <span>🏷️</span> Mapel & Kelas
+                            <span>🏷️</span> Mapel & Kelas <span class="text-red-500">*</span>
                         </h3>
                         <div class="space-y-3">
-                            <input type="text" id="mapel" class="w-full border-b border-slate-200 py-1 text-sm font-medium focus:border-blue-500 outline-none bg-transparent" placeholder="Mata Pelajaran">
-                            <input type="text" id="kelas" class="w-full border-b border-slate-200 py-1 text-sm font-medium focus:border-blue-500 outline-none bg-transparent" placeholder="Fase / Kelas (mis: X)">
+                            <input type="text" id="mapel" required class="w-full border-b border-slate-200 py-1 text-sm font-medium focus:border-blue-500 outline-none bg-transparent" placeholder="Mata Pelajaran">
+                            <input type="text" id="kelas" required class="w-full border-b border-slate-200 py-1 text-sm font-medium focus:border-blue-500 outline-none bg-transparent" placeholder="misal: E/F/X/XI">
                         </div>
                     </div>
 
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
                         <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                            <span>⏱️</span> Alokasi Waktu
+                            <span>⏱️</span> Alokasi Waktu <span class="text-red-500">*</span>
                         </h3>
                         <div class="flex gap-4">
                             <div class="flex-1">
-                                <label class="text-[10px] uppercase font-bold text-slate-400">Thn Ajar</label>
-                                <input type="text" id="tahun" class="w-full font-bold text-sm text-slate-700 border-b border-slate-200 py-1 outline-none focus:border-emerald-500" placeholder="2025/2026">
+                                <label class="text-[10px] uppercase font-bold text-slate-400">Tahun Ajaran <span class="text-red-500">*</span></label>
+                                <input type="text" id="tahun" required class="w-full font-bold text-sm text-slate-700 border-b border-slate-200 py-1 outline-none focus:border-emerald-500" placeholder="misal: 2025/2026">
                             </div>
                             <div class="w-20">
-                                <label class="text-[10px] uppercase font-bold text-emerald-600">JP/Minggu</label>
-                                <input type="number" id="jpPerWeek" class="w-full font-black text-xl text-emerald-700 border-b-2 border-emerald-200 py-0 outline-none focus:border-emerald-500 text-center" value="4">
+                                <label class="text-[10px] uppercase font-bold text-emerald-600">JP/Minggu <span class="text-red-500">*</span></label>
+                                <input type="number" id="jpPerWeek" required class="w-full font-black text-xl text-emerald-700 border-b-2 border-emerald-200 py-0 outline-none focus:border-emerald-500 text-center" value="4" placeholder="2">
                             </div>
                         </div>
                         <div class="mt-3">
-                            <label class="text-[10px] uppercase font-bold text-slate-400">Tgl Sah</label>
-                            <input type="date" id="tanggal_pengesahan" class="w-full text-xs font-medium text-slate-600 border-none p-0 outline-none bg-transparent">
+                            <label class="text-[10px] uppercase font-bold text-slate-400">Tanggal Pengesahan <span class="text-red-500">*</span></label>
+                            <input type="date" id="tanggal_pengesahan" required class="w-full text-xs font-medium text-slate-600 border-none p-0 outline-none bg-transparent">
                         </div>
                     </div>
 
@@ -110,8 +111,8 @@
             </div>
         </main>
 
-        <footer class="bg-white border-t border-slate-200 p-4 absolute bottom-0 w-full flex justify-end items-center z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-            <button onclick="save()" id="btnSave" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black shadow-lg transition transform active:scale-95 flex items-center gap-2 text-sm">
+        <footer class="h-20 bg-white border-t border-slate-200 px-6 absolute bottom-0 w-full flex justify-end items-center z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <button onclick="save()" id="btnSave" class="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition transform active:scale-95 flex items-center gap-2 text-sm">
                 <span>💾</span> Simpan & Lanjut (Analisis) →
             </button>
         </footer>
@@ -137,8 +138,8 @@
                 document.getElementById('mapel').value = data.mata_pelajaran || '';
                 document.getElementById('kelas').value = data.fase_kelas || '';
                 
-                const v = (data.jenis_kurikulum || 'KM');
-                const kurVal = (String(v).toLowerCase().includes('merdeka')) ? 'KM' : 'K13';
+                const rawKurikulum = (data.jenis_kurikulum || 'KM').toString().toUpperCase();
+                const kurVal = (rawKurikulum === 'KM' || rawKurikulum.includes('MERDEKA')) ? 'KM' : 'K13';
                 document.getElementById('kurikulum').value = kurVal;
                 
                 document.getElementById('tahun').value = data.tahun_ajaran || '';
@@ -148,18 +149,59 @@
 
         async function save() {
             const btn = document.getElementById('btnSave'); 
+            
+            // --- VALIDASI FORM ---
+            const fields = [
+                { id: 'nama', name: 'Nama Lengkap & Gelar' },
+                { id: 'sekolah', name: 'Instansi / Sekolah' },
+                { id: 'kepala_sekolah', name: 'Kepala Sekolah' },
+                { id: 'kurikulum', name: 'Kurikulum' },
+                { id: 'mapel', name: 'Mata Pelajaran' },
+                { id: 'kelas', name: 'Kelas / Fase' },
+                { id: 'tahun', name: 'Tahun Ajaran' },
+                { id: 'jpPerWeek', name: 'JP Per Minggu' },
+                { id: 'tanggal_pengesahan', name: 'Tanggal Pengesahan' }
+            ];
+
+            let isComplete = true;
+            let firstEmptyField = null;
+
+            for (let field of fields) {
+                const el = document.getElementById(field.id);
+                if (!el.value || el.value.trim() === '') {
+                    isComplete = false;
+                    firstEmptyField = field.name;
+                    // Memberikan efek highlight merah pada border bawah/kotak yang kosong
+                    el.classList.add('border-red-500', 'ring-red-500');
+                    setTimeout(() => {
+                        el.classList.remove('border-red-500', 'ring-red-500');
+                    }, 3000);
+                }
+            }
+
+            if (!isComplete) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Data Belum Lengkap!',
+                    html: `Silakan isi kolom <b>${firstEmptyField}</b> terlebih dahulu.`,
+                    confirmButtonColor: '#4f46e5'
+                });
+                return; // Hentikan proses simpan
+            }
+            // --- AKHIR VALIDASI ---
+
             btn.innerHTML = '⏳ Menyimpan...'; btn.disabled = true;
 
             const payload = {
                 id: user.id,
-                nama_lengkap: document.getElementById('nama').value,
-                sekolah: document.getElementById('sekolah').value,
-                kepala_sekolah: document.getElementById('kepala_sekolah').value,
+                nama_lengkap: document.getElementById('nama').value.trim(),
+                sekolah: document.getElementById('sekolah').value.trim(),
+                kepala_sekolah: document.getElementById('kepala_sekolah').value.trim(),
                 tanggal_pengesahan: document.getElementById('tanggal_pengesahan').value,
-                mata_pelajaran: document.getElementById('mapel').value,
-                fase_kelas: document.getElementById('kelas').value,
+                mata_pelajaran: document.getElementById('mapel').value.trim(),
+                fase_kelas: document.getElementById('kelas').value.trim(),
                 jenis_kurikulum: document.getElementById('kurikulum').value,
-                tahun_ajaran: document.getElementById('tahun').value,
+                tahun_ajaran: document.getElementById('tahun').value.trim(),
                 jp_per_week: document.getElementById('jpPerWeek').value,
                 updated_at: new Date()
             };

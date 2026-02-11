@@ -64,8 +64,10 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <span id="badgeKurikulum" class="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase tracking-wide">...</span>
-        <button onclick="deleteDraft()" class="bg-red-50 text-red-700 px-3 py-2 rounded-lg font-bold hover:bg-red-100 border border-red-200 text-xs flex items-center gap-1 transition">
+        <span id="badgeKurikulum" class="h-9 px-4 flex items-center justify-center text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 rounded-lg uppercase tracking-wide">
+            ...
+        </span>
+        <button onclick="deleteDraft()" class="h-9 px-4 flex items-center justify-center gap-1.5 bg-red-50 text-red-700 border border-red-200 rounded-lg font-bold hover:bg-red-100 text-xs transition">
           🗑️ Hapus Data
         </button>
       </div>
@@ -75,21 +77,27 @@
       
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <div class="bg-white p-6 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden pl-5 group hover:shadow-md transition">
+        <div class="bg-white p-6 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden pl-5 group hover:shadow-md transition flex flex-col">
             <div class="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
             <div class="flex justify-between items-start mb-4">
                 <h3 class="font-bold text-blue-800 flex items-center gap-2">
                     <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span> 
                     Ambil Prompt AI
                 </h3>
-                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded border">Gemini / ChatGPT</span>
+                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded border">Google Gemini</span>
             </div>
-            <p class="text-xs text-slate-600 mb-6 leading-relaxed">
-                Prompt ini sudah diperbaiki untuk meminta materi <b>SATU TAHUN PENUH (Sem 1 & 2)</b> serta memastikan kolom Kata Kunci & Sumber terisi.
+            <p class="text-xs text-slate-600 mb-6 leading-relaxed flex-1">
+                Silahkan klik tombol <b>"Copy Prompt & Buka Gemini"</b>. Di tab baru, tekan <b>CTRL+V</b> (Paste) di kolom pertanyaan Gemini, <b>Copy</b> jawaban Gemini, <b>Paste</b> di aplikasi <b>(Tempel Hasil)</b>. Anda bisa melampirkan dokumen referensi dari tombol <b>KI-KD / CP</b>.
             </p>
-            <button onclick="openGemini()" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-bold shadow hover:bg-blue-700 transition transform active:scale-95 flex items-center justify-center gap-2 text-sm">
-                📋 Copy Prompt & Buka AI ↗
-            </button>
+            
+            <div class="flex flex-col xl:flex-row gap-3 mt-auto">
+                <a href="https://drive.google.com/drive/folders/11y3RA4CUBc0Fnt4CsRR5IOJ5H8Dws5Ul?usp=sharing" target="_blank" class="flex-1 bg-slate-700 text-white px-4 py-3 rounded-lg font-bold shadow hover:bg-slate-800 transition transform active:scale-95 flex items-center justify-center gap-2 text-sm whitespace-nowrap">
+                    📂 Buka KI-KD / CP
+                </a>
+                <button onclick="openGemini()" class="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg font-bold shadow hover:bg-blue-700 transition transform active:scale-95 flex items-center justify-center gap-2 text-sm whitespace-nowrap">
+                    📋 Prompt & Gemini ↗
+                </button>
+            </div>
         </div>
 
         <div class="bg-white p-6 rounded-xl border border-orange-200 shadow-sm relative overflow-hidden flex flex-col pl-5 group hover:shadow-md transition">
@@ -103,7 +111,7 @@
                     ⬇️ Proses Data
                 </button>
             </div>
-            <textarea id="jsonInput" class="flex-1 w-full border border-slate-300 rounded-lg p-3 text-[10px] font-mono focus:ring-2 focus:ring-orange-500 outline-none transition bg-slate-50 focus:bg-white resize-none h-32" placeholder='[...] Paste Array JSON dari AI di sini...'></textarea>
+            <textarea id="jsonInput" class="flex-1 w-full border border-slate-300 rounded-lg p-3 text-[10px] font-mono focus:ring-2 focus:ring-orange-500 outline-none transition bg-slate-50 focus:bg-white resize-none h-32" placeholder='[...] Paste Array JSON dari Gemini AI di sini...'></textarea>
         </div>
       </div>
 
@@ -124,28 +132,21 @@
               <thead class="text-slate-600 uppercase text-[10px] tracking-wider">
                 <tr>
                   <th class="p-3 w-[120px] text-center font-bold text-blue-900 sticky-col no-border-r" style="left:0; min-width:120px;">SKL</th>
-                  
                   <th class="p-3 w-[200px] text-center font-bold text-blue-900 sticky-col sticky-separator" id="th1" style="left:120px; min-width:200px;">Materi Pokok</th>
-
                   <th class="p-3 w-32 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_ki">KI / Elemen</th>
                   <th class="p-3 w-32 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th2">KD / CP</th>
                   <th class="p-3 w-48 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th3">IPK / TP</th>
-
                   <th class="p-3 w-24 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_kko">KKO</th>
                   <th class="p-3 w-32 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_katakunci">Kata Kunci</th>
-
                   <th class="p-3 w-48 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900">Kegiatan</th>
                   <th class="p-3 w-32 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900">Penilaian</th>
                   <th class="p-3 w-32 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_sumber">Sumber</th>
-
                   <th class="p-3 w-16 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_kompleksitas">Komp</th>
                   <th class="p-3 w-16 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_daya">Daya</th>
                   <th class="p-3 w-16 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_intake">Intake</th>
-
                   <th class="p-3 w-14 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900">KKM</th>
                   <th class="p-3 w-12 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900">Sem</th>
                   <th class="p-3 w-12 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900">JP</th>
-
                   <th class="p-3 w-16 text-center bg-blue-50/50 font-bold text-blue-900">Aksi</th>
                 </tr>
               </thead>
@@ -225,19 +226,18 @@
 
   async function loadData() {
     const {data} = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
-    profile = data || { jenis_kurikulum: 'Merdeka', mata_pelajaran: 'Umum', fase_kelas: 'Umum' };
+    profile = data || { jenis_kurikulum: 'KM', mata_pelajaran: 'Umum', fase_kelas: 'Umum' };
     setupUI();
 
     const { data: d } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle();
     
     if(d && d.content_data){
-      // MAP DATA KE KOLOM - UPDATE AGAR LEBIH FLEKSIBEL
+      // MAP DATA KE KOLOM
       dataList = d.content_data.map(x=>({
         col_skl: x.skl || x.col_skl || '',
         col7: x.kegiatan || x.kegiatan_pembelajaran || x.col7 || '',
         col8: x.penilaian || x.rencana_penilaian || x.col8 || '',
         
-        // Perbaikan Mapping Sumber & Kata Kunci
         col_sumber: x.sumber || x.sumber_belajar || x.col_sumber || '',
         col_katakunci: x.kata_kunci || x.col_katakunci || '',
         col_kko: x.kko || x.col_kko || '',
@@ -279,19 +279,23 @@
   }
   function enableSaveBtn() { document.getElementById('btnSave').disabled = false; }
 
-  // --- PROMPT DIPERTAJAM UNTUK SEMESTER & KELENGKAPAN ---
+  // --- PROMPT DIPERTAJAM UNTUK MENGATASI BUG KURIKULUM ---
   function openGemini() {
-    const isMerdeka = (profile.jenis_kurikulum || '').toLowerCase().includes('merdeka');
-    const prompt = `PERAN: Ahli Kurikulum (K13/Kurmer). 
-KONTEKS: ${profile.mata_pelajaran}, ${profile.fase_kelas}, ${profile.jenis_kurikulum}.
+    const kurRaw = (profile.jenis_kurikulum || '').toString().toUpperCase();
+    const isMerdeka = (kurRaw === 'KM' || kurRaw.includes('MERDEKA'));
+    const namaKurikulum = isMerdeka ? "Kurikulum Merdeka" : "Kurikulum 2013";
+    const k13Fields = isMerdeka ? `"-",\n    "kompleksitas": "-",\n    "daya_dukung": "-",\n    "intake": "-"` : `"75",\n    "kompleksitas": "75",\n    "daya_dukung": "75",\n    "intake": "75"`;
+
+    const prompt = `PERAN: Ahli Kurikulum Pendidikan. 
+KONTEKS: Mengajar Mata Pelajaran ${profile.mata_pelajaran}, Fase/Kelas ${profile.fase_kelas}, dan WAJIB menggunakan format penyusunan **${namaKurikulum}**.
 
 TUGAS:
-1) Analisis dokumen input.
-2) Turunkan menjadi Tujuan Pembelajaran (IPK).
+1) Analisis dokumen input yang diberikan.
+2) Turunkan menjadi Tujuan Pembelajaran (IPK / TP).
 3) Isi lengkap Materi, Kegiatan, Penilaian, Sumber Belajar, dan Kata Kunci.
 4) Tentukan Semester (1 atau 2). **WAJIB distribusikan materi untuk SATU TAHUN AJARAN PENUH (Ada Semester 1 dan Semester 2)** secara proporsional.
 
-FORMAT OUTPUT WAJIB (JSON ARRAY MURNI):
+FORMAT OUTPUT WAJIB (JSON ARRAY MURNI TANPA MARKDOWN):
 [
   {
     "skl": "...",
@@ -304,10 +308,7 @@ FORMAT OUTPUT WAJIB (JSON ARRAY MURNI):
     "kegiatan": "...",
     "penilaian": "...",
     "sumber": "...",
-    "kkm": "75",
-    "kompleksitas": "75",
-    "daya_dukung": "75",
-    "intake": "75",
+    "kkm": ${k13Fields},
     "semester": "1",
     "alokasi_jp": "2"
   }
@@ -315,12 +316,13 @@ FORMAT OUTPUT WAJIB (JSON ARRAY MURNI):
 
     navigator.clipboard.writeText(prompt).then(() => {
         Swal.fire({
-            icon: 'success', title: 'Prompt Tersalin!',
-            html: 'Paste di Gemini.<br><br><b>Perlu materi dari Drive?</b>',
-            showCancelButton: true, confirmButtonText: '📂 Buka Drive', cancelButtonText: 'Tutup', reverseButtons: true
+            icon: 'success', 
+            title: 'Prompt Tersalin!',
+            html: `Format telah disesuaikan untuk <b>${namaKurikulum}</b>.<br><br>Silakan Paste (CTRL+V) di Google Gemini.`,
+            confirmButtonText: 'Buka Gemini ↗', 
+            confirmButtonColor: '#2563eb'
         }).then((result) => {
-            if (result.isConfirmed) window.open('https://drive.google.com/drive/folders/11y3RA4CUBc0Fnt4CsRR5IOJ5H8Dws5Ul?usp=sharing', '_blank');
-            else window.open('https://gemini.google.com/app', '_blank');
+            if (result.isConfirmed) window.open('https://gemini.google.com/app', '_blank');
         });
     });
   }
@@ -331,8 +333,9 @@ FORMAT OUTPUT WAJIB (JSON ARRAY MURNI):
   }
   
   function processJSON(raw){
-    const kur = (profile?.jenis_kurikulum || '').toString().toLowerCase();
-    const isMerdeka = (kur === 'km') || kur.includes('merdeka');
+    const kurRaw = (profile.jenis_kurikulum || '').toString().toUpperCase();
+    const isMerdeka = (kurRaw === 'KM' || kurRaw.includes('MERDEKA'));
+    
     try{
       let raw = document.getElementById('jsonInput').value || '';
       raw = _stripCodeFences(raw).trim();
@@ -342,7 +345,6 @@ FORMAT OUTPUT WAJIB (JSON ARRAY MURNI):
       if(!raw.trim().startsWith('[')) throw new Error('Bukan JSON Array');
 
       dataList = JSON.parse(raw);
-      // MAPPING BARU
       dataList = (dataList || []).map((d)=> {
         d = d || {};
         const get = (keys, fb="") => { for (const k of keys){ if(d[k] !== undefined && d[k] !== null && String(d[k]).trim() !== "") return d[k]; } return fb; };
@@ -383,7 +385,7 @@ FORMAT OUTPUT WAJIB (JSON ARRAY MURNI):
       });
       render(); enableSaveBtn();
     }catch(e){
-      Swal.fire({icon:'error', title:'Format Salah', html:'Pastikan JSON valid dari Gemini.'});
+      Swal.fire({icon:'error', title:'Format Salah', html:'Pastikan hasil Copy dari Gemini adalah format JSON Array yang valid.'});
     }
   }
 

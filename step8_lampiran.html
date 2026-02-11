@@ -60,7 +60,7 @@
     <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-20 flex justify-between items-center shrink-0">
       <div>
         <h1 class="text-xl font-bold text-slate-900">8. Lampiran Administrasi</h1>
-        <p class="text-xs text-slate-500">Lengkapi dokumen pendukung: Kode Etik, Jadwal, hingga Jurnal.</p>
+        <p class="text-xs text-slate-500">Lengkapi dokumen pendukung: Kode Etik, Ikrar, Tata Tertib, dan Jadwal Mengajar.</p>
       </div>
     </header>
 
@@ -143,33 +143,7 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative pl-1">
-        <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div> <div class="px-6 py-4 bg-white border-b border-slate-100 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="p-2 bg-indigo-50 rounded text-indigo-600">📝</div>
-                <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wide">F. Sampel Jurnal Mengajar</h3>
-            </div>
-            <button onclick="addJurnalRow({})" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-sm transition flex items-center gap-2">
-                <span>➕</span> Tambah Baris
-            </button>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
-                <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                    <tr>
-                        <th class="p-4 text-center w-12">No</th>
-                        <th class="p-4 w-48">Tanggal</th>
-                        <th class="p-4 w-32">Kelas</th>
-                        <th class="p-4">Materi / Catatan</th>
-                        <th class="p-4 w-16 text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="jurnalBody" class="bg-white divide-y divide-slate-50"></tbody>
-            </table>
-        </div>
-      </div>
-
-    </main>
+      </main>
 
     <footer class="h-20 bg-white border-t border-slate-200 px-6 absolute bottom-0 w-full flex justify-between items-center z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
       <a href="step7_rpp.html" class="px-4 py-2 text-slate-500 font-bold hover:text-slate-800 text-sm transition flex items-center gap-1">
@@ -214,13 +188,11 @@
       document.getElementById('ikrar').value = data.content_data.ikrar || defaultIkrar;
       document.getElementById('tata_tertib').value = data.content_data.tata_tertib || defaultTata;
       
-      hydrateJurnal(data.content_data.jurnal_rows || []);
       hydrateJadwal(data.content_data.jadwal_rows || []); 
     } else {
       document.getElementById('kode_etik').value = defaultKode;
       document.getElementById('ikrar').value = defaultIkrar;
       document.getElementById('tata_tertib').value = defaultTata;
-      hydrateJurnal([]); 
       hydrateJadwal([]); 
       await syncSKLFromStep2(false);
     }
@@ -238,30 +210,6 @@
       document.getElementById('skl_text').value = out;
       if(showToast) Swal.fire({icon:'success', title:'SKL tersinkron', text:'Ringkasan SKL diambil dari Step 2.', timer: 1500, showConfirmButton:false});
     }catch(e){ if(showToast) Swal.fire('Gagal', 'Pastikan Step 2 sudah tersimpan.', 'warning'); }
-  }
-
-  // --- JURNAL HELPER ---
-  function addJurnalRow(row={}){
-    const tbody = document.getElementById('jurnalBody');
-    const idx = tbody.children.length + 1;
-    const tr = document.createElement('tr');
-    tr.className = "hover:bg-slate-50 transition group";
-    tr.innerHTML = `
-      <td class="p-2 text-center text-slate-400 text-xs font-mono">${idx}</td>
-      <td class="p-2"><input class="table-input" type="date" value="${row.tanggal||''}"></td>
-      <td class="p-2"><input class="table-input" type="text" placeholder="Contoh: X-A" value="${row.kelas||''}"></td>
-      <td class="p-2"><input class="table-input" type="text" placeholder="Materi / Catatan kejadian..." value="${row.materi||''}"></td>
-      <td class="p-2 text-center">
-        <button class="text-slate-300 hover:text-rose-500 transition p-1 rounded hover:bg-rose-50" onclick="this.closest('tr').remove()">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-      </td>`;
-    tbody.appendChild(tr);
-  }
-  function hydrateJurnal(rows){
-    const tbody = document.getElementById('jurnalBody'); tbody.innerHTML = '';
-    if(rows.length === 0) for(let i=0;i<3;i++) addJurnalRow({});
-    else rows.forEach(r=>addJurnalRow(r));
   }
 
   // --- JADWAL HELPER ---
@@ -293,13 +241,6 @@
   async function saveAndGo(){
     const btn = document.getElementById('btnSave'); btn.innerHTML = '⏳ Menyimpan...'; btn.disabled = true;
 
-    // Save Jurnal
-    const jurnalRows = [];
-    document.querySelectorAll('#jurnalBody tr').forEach(tr=>{
-      const inps = tr.querySelectorAll('input');
-      if(inps.length>0) jurnalRows.push({tanggal:inps[0].value, kelas:inps[1].value, materi:inps[2].value});
-    });
-
     // Save Jadwal
     const jadwalRows = [];
     document.querySelectorAll('#jadwalBody tr').forEach(tr=>{
@@ -316,7 +257,7 @@
             kode_etik: document.getElementById('kode_etik').value,
             ikrar: document.getElementById('ikrar').value,
             tata_tertib: document.getElementById('tata_tertib').value,
-            jurnal_rows: jurnalRows,
+            jurnal_rows: [], // Kosongkan jurnal agar di Step 9 ter-generate 20 baris kosong otomatis
             jadwal_rows: jadwalRows 
         },
         status: 'confirmed'

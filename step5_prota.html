@@ -30,17 +30,9 @@
             </div>
 
             <div class="flex items-center gap-4">
-                <div id="p5Container" class="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full shadow-sm">
-                    <span class="text-[10px] font-bold text-amber-700 uppercase">Mode P5:</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="toggleP5" class="sr-only peer" onchange="updateP5Calc()">
-                        <div class="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500"></div>
-                    </label>
-                    <select id="p5Percent" onchange="updateP5Calc()" disabled class="text-xs font-bold border-none bg-transparent text-slate-600 disabled:opacity-30 focus:ring-0 cursor-pointer p-0 outline-none w-14">
-                        <option value="0.2">20%</option>
-                        <option value="0.25" selected>25%</option>
-                        <option value="0.3">30%</option>
-                    </select>
+                <div id="p5Badge" class="hidden items-center gap-2 bg-amber-50 border border-amber-200 px-4 py-1.5 rounded-full shadow-sm">
+                    <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Alokasi P5:</span>
+                    <span id="p5BadgeText" class="text-xs font-black text-amber-800">0%</span>
                 </div>
             </div>
         </header>
@@ -161,6 +153,8 @@
 <script>
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
     let user, profile = {}, allMaterials = [], allocation = {};
+    let p5Config = { active: false, percentage: 0 };
+    
     let rawJP_S1 = 0, rawJP_S2 = 0; 
     let p5_S1 = 0, p5_S2 = 0;
     let intra_S1 = 0, intra_S2 = 0;
@@ -173,60 +167,58 @@
     init();
 
     async function loadData() {
-        const [prof, cp, alloc, protaExist] = await Promise.all([
+        const [prof, cp, alloc] = await Promise.all([
             db.from('profiles').select('*').eq('id', user.id).maybeSingle(),
             db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle(),
-            db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'allocation_data').maybeSingle(),
-            db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'prota_data').maybeSingle()
+            db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'allocation_data').maybeSingle()
         ]);
 
-        if(prof.data) {
-            profile = prof.data;
-            const kur = (profile.jenis_kurikulum || '').toUpperCase();
-            if (kur.includes('13') || kur.includes('K13') || kur.includes('2013')) {
-                const p5Container = document.getElementById('p5Container');
-                if(p5Container) p5Container.style.display = 'none'; 
-                const toggle = document.getElementById('toggleP5');
-                if(toggle) toggle.checked = false;
-                const cardP5 = document.getElementById('card_p5');
-                if(cardP5) cardP5.style.display = 'none';
-                const grid = document.getElementById('kpi_grid');
-                if(grid) {
-                    grid.classList.remove('md:grid-cols-4');
-                    grid.classList.add('md:grid-cols-3');
-                }
-            }
-        }
-
+        if(prof.data) profile = prof.data;
         if(cp.data && cp.data.content_data) allMaterials = cp.data.content_data; 
+        
+        // Mengambil sumber kebenaran (Source of Truth) P5 dari Step 4
         if(alloc.data && alloc.data.content_data) {
             allocation = alloc.data.content_data;
             rawJP_S1 = (allocation.s1?.jp || 0);
             rawJP_S2 = (allocation.s2?.jp || 0);
-        }
-
-        if(protaExist.data && protaExist.data.content_data && protaExist.data.content_data.p5_settings) {
-            const p5 = protaExist.data.content_data.p5_settings;
-            const kur = (profile.jenis_kurikulum || '').toUpperCase();
-            if (!(kur.includes('13') || kur.includes('K13'))) {
-                document.getElementById('toggleP5').checked = p5.active || false;
-                if(p5.percentage) document.getElementById('p5Percent').value = p5.percentage;
+            if(allocation.p5_settings) {
+                p5Config = allocation.p5_settings;
             }
         }
 
-        updateP5Calc(); 
+        const kur = (profile.jenis_kurikulum || '').toUpperCase();
+        const isMerdeka = !(kur.includes('13') || kur.includes('K13') || kur.includes('2013'));
+        
+        if (!isMerdeka) {
+            // Jika K13: Matikan P5 (Force 0 & Hide)
+            p5Config = { active: false, percentage: 0 };
+            const cardP5 = document.getElementById('card_p5');
+            if(cardP5) cardP5.style.display = 'none';
+            const grid = document.getElementById('kpi_grid');
+            if(grid) {
+                grid.classList.remove('md:grid-cols-4');
+                grid.classList.add('md:grid-cols-3');
+            }
+        } else {
+            // Tampilkan Badge Read-Only P5 jika Aktif
+            if (p5Config.active && parseFloat(p5Config.percentage) > 0) {
+                const badge = document.getElementById('p5Badge');
+                if (badge) {
+                    badge.classList.remove('hidden');
+                    badge.classList.add('flex');
+                    document.getElementById('p5BadgeText').innerText = (parseFloat(p5Config.percentage) * 100) + '%';
+                }
+            }
+        }
+
+        calculateProta(); 
     }
 
-    function updateP5Calc() {
-        const isP5 = document.getElementById('toggleP5').checked;
-        const percentInput = document.getElementById('p5Percent');
-        
-        percentInput.disabled = !isP5;
-        percentInput.classList.toggle('text-slate-400', !isP5);
-        percentInput.classList.toggle('text-amber-700', isP5);
+    function calculateProta() {
+        const pct = parseFloat(p5Config.percentage) || 0;
+        const isP5 = p5Config.active && pct > 0;
 
         if (isP5) {
-            const pct = parseFloat(percentInput.value);
             let tempP5_S1 = Math.round(rawJP_S1 * pct);
             let tempP5_S2 = Math.round(rawJP_S2 * pct);
             let tempIntra_S1 = rawJP_S1 - tempP5_S1;
@@ -383,16 +375,13 @@
     async function saveAndNext() {
         const btn = document.getElementById('btnSave'); btn.innerHTML = '⏳ Menyimpan...'; btn.disabled = true;
 
-        const isP5 = document.getElementById('toggleP5').checked;
-        const p5Pct = isP5 ? document.getElementById('p5Percent').value : 0;
-
         const payloadProta = {
             user_id: user.id, doc_type: 'prota_data',
             subject_name: profile.mata_pelajaran || 'Umum', grade_level: profile.fase_kelas || 'Umum', curriculum_type: profile.jenis_kurikulum || 'Merdeka',
             content_data: { 
                 semester_1: allMaterials.filter(m => m.semester == 1), 
                 semester_2: allMaterials.filter(m => m.semester == 2),
-                p5_settings: { active: isP5, percentage: p5Pct }
+                p5_settings: p5Config // Menggunakan data P5 dari Step 4 yang utuh
             },
             status: 'draft'
         };

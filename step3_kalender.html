@@ -30,12 +30,15 @@
                 <h1 class="text-xl font-bold text-slate-900">3. Kalender Akademik</h1>
                 <p class="text-xs text-slate-500">Klik tanggal untuk menandai Libur, Ujian, atau Kegiatan Sekolah.</p>
             </div>
-            <div class="flex items-center gap-3">
-                <div class="text-right hidden md:block mr-4 border-r pr-4 border-slate-200">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tahun Ajaran</div>
-                    <div class="text-lg font-black text-indigo-600 leading-none" id="displayTahun">...</div>
+            
+            <div class="flex items-center gap-4">
+                <div class="hidden md:flex items-center pr-4 border-r border-slate-200 h-10">
+                    <div class="text-right">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Tahun Ajaran</div>
+                        <div class="text-lg font-black text-indigo-600 leading-none" id="displayTahun">...</div>
+                    </div>
                 </div>
-                <button onclick="resetCalendar()" class="bg-red-50 text-red-700 px-3 py-2 rounded-lg font-bold hover:bg-red-100 border border-red-200 text-xs flex items-center gap-1 transition">
+                <button onclick="resetCalendar()" class="h-9 px-4 flex items-center justify-center gap-1.5 bg-red-50 text-red-700 border border-red-200 rounded-lg font-bold hover:bg-red-100 text-xs transition">
                     🔄 Reset Semua
                 </button>
             </div>
@@ -59,7 +62,7 @@
                     </span>
                     </div>
                 <div>
-                    Total Non-Efektif: <span id="totalLibur" class="font-bold text-rose-600 text-base bg-rose-50 px-2 py-0.5 rounded ml-1">0</span> hari
+                    Total Hari Tidak Efektif: <span id="totalLibur" class="font-bold text-rose-600 text-base bg-rose-50 px-2 py-0.5 rounded ml-1">0</span> hari
                 </div>
             </div>
 
@@ -118,7 +121,7 @@
         if (data && data.content_data) holidays = data.content_data.holidays || {};
         
         renderCalendar();
-        updateStats(); // Ini akan otomatis memfilter tanggal yang salah tahun
+        updateStats(); // Memfilter tanggal yang salah tahun
     }
 
     function generateMonths() {
@@ -257,7 +260,6 @@
         }
     }
 
-    // --- REVISI: FILTER TAHUN AJARAN ---
     function updateStats() {
         const validKeys = Object.keys(holidays).filter(k => {
             const [y, m, d] = k.split('-').map(Number);
