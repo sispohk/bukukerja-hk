@@ -13,18 +13,49 @@
   <script src="layout.js"></script>
   
   <style>
-      textarea { resize: vertical; min-height: 180px; line-height: 1.6; font-size: 0.875rem; }
-      .section-label { font-size: 0.875rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; display: block; text-transform: uppercase; letter-spacing: 0.05em; }
-      .card-box { background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 1.5rem; height: 100%; display: flex; flex-direction: column; }
-      .card-header { margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; items-center; }
+      /* Textarea Style */
+      textarea { 
+          resize: vertical; 
+          min-height: 200px; 
+          line-height: 1.6; 
+          font-size: 0.85rem; 
+          transition: all 0.2s;
+      }
+      textarea:focus { background-color: #fff; border-color: #6366f1; }
+
+      /* Table Input Style */
+      .table-input {
+          width: 100%;
+          background: transparent;
+          border: 1px solid transparent;
+          border-radius: 6px;
+          padding: 6px 10px;
+          font-size: 0.85rem;
+          transition: 0.2s;
+      }
+      .table-input:focus {
+          background: white;
+          border-color: #cbd5e1;
+          box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+          outline: none;
+      }
+      .table-select {
+          background-color: transparent;
+          border: 1px solid transparent;
+          border-radius: 6px;
+          padding: 6px;
+          font-size: 0.85rem;
+          cursor: pointer;
+      }
+      .table-select:focus { background: white; border-color: #cbd5e1; outline: none; }
   </style>
 </head>
 
-<body class="bg-slate-100 text-slate-800 h-screen flex font-sans overflow-hidden">
+<body class="bg-slate-50 text-slate-800 h-screen flex font-sans overflow-hidden">
   
-  <div id="sidebar-container" class="flex-none z-50"></div>
+  <div id="sidebar-container"></div>
 
-  <div class="flex-1 flex flex-col relative min-w-0 bg-slate-100">
+  <div class="flex-1 flex flex-col relative min-w-0">
     
     <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-20 flex justify-between items-center shrink-0">
       <div>
@@ -33,92 +64,107 @@
       </div>
     </header>
 
-    <main class="flex-1 overflow-y-auto p-8 pb-32 space-y-6 bg-slate-50/50">
+    <main class="flex-1 overflow-y-auto p-6 pb-32 space-y-8 bg-slate-50">
       
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          <div class="card-box shadow-sm hover:shadow-md transition relative overflow-hidden group border-indigo-200">
-            <div class="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
-            <div class="card-header">
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden group hover:shadow-md transition relative pl-1">
+            <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div> <div class="px-5 py-4 border-b border-slate-100 bg-white flex justify-between items-center">
                 <div>
-                    <h3 class="font-bold text-indigo-900 text-base">A. Ringkasan SKL</h3>
-                    <p class="text-[10px] text-slate-500">Otomatis dari Step 2.</p>
+                    <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wide">A. Ringkasan SKL</h3>
+                    <p class="text-[10px] text-slate-500">Otomatis diambil dari Step 2.</p>
                 </div>
-                <button onclick="syncSKLFromStep2()" class="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-indigo-600 hover:text-white transition flex items-center gap-1">
-                    🔄 Sync
+                <button onclick="syncSKLFromStep2()" class="bg-indigo-50 border border-indigo-200 text-indigo-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-indigo-600 hover:text-white transition flex items-center gap-1 shadow-sm">
+                    <span>🔄</span> Sinkron
                 </button>
             </div>
-            <textarea id="skl_text" readonly class="w-full flex-1 border border-slate-200 rounded-lg p-3 text-sm bg-slate-50 text-slate-600 focus:outline-none" placeholder="Data diambil dari Step 2..."></textarea>
+            <div class="p-4 flex-1">
+                <textarea id="skl_text" readonly class="w-full h-full border border-slate-200 rounded-lg p-4 bg-slate-50 text-slate-600 focus:outline-none" placeholder="Data belum ada. Klik Sinkron."></textarea>
+            </div>
           </div>
 
-          <div class="card-box shadow-sm hover:shadow-md transition">
-            <div class="card-header">
-                <h3 class="section-label text-slate-700">B. Kode Etik Guru</h3>
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden group hover:shadow-md transition relative pl-1">
+            <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div> <div class="px-5 py-4 border-b border-slate-100 bg-white">
+                <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wide">B. Kode Etik Guru</h3>
             </div>
-            <textarea id="kode_etik" class="w-full flex-1 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+            <div class="p-4 flex-1">
+                <textarea id="kode_etik" class="w-full h-full border border-slate-200 rounded-lg p-4 bg-slate-50 text-slate-700 placeholder-slate-300 focus:bg-white"></textarea>
+            </div>
           </div>
 
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          <div class="card-box shadow-sm hover:shadow-md transition">
-            <div class="card-header">
-                <h3 class="section-label text-slate-700">C. Ikrar Guru Indonesia</h3>
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden group hover:shadow-md transition relative pl-1">
+            <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div> <div class="px-5 py-4 border-b border-slate-100 bg-white">
+                <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wide">C. Ikrar Guru Indonesia</h3>
             </div>
-            <textarea id="ikrar" class="w-full flex-1 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+            <div class="p-4 flex-1">
+                <textarea id="ikrar" class="w-full h-full border border-slate-200 rounded-lg p-4 bg-slate-50 text-slate-700 placeholder-slate-300 focus:bg-white"></textarea>
+            </div>
           </div>
 
-          <div class="card-box shadow-sm hover:shadow-md transition">
-            <div class="card-header">
-                <h3 class="section-label text-slate-700">D. Tata Tertib Guru</h3>
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden group hover:shadow-md transition relative pl-1">
+            <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div> <div class="px-5 py-4 border-b border-slate-100 bg-white">
+                <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wide">D. Tata Tertib Guru</h3>
             </div>
-            <textarea id="tata_tertib" class="w-full flex-1 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+            <div class="p-4 flex-1">
+                <textarea id="tata_tertib" class="w-full h-full border border-slate-200 rounded-lg p-4 bg-slate-50 text-slate-700 placeholder-slate-300 focus:bg-white"></textarea>
+            </div>
           </div>
 
       </div>
 
-      <div class="card-box border-blue-200 shadow-sm relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-1 bg-blue-500 h-full"></div>
-        <div class="flex items-center justify-between mb-4 pl-2">
-            <h3 class="font-bold text-blue-900 text-lg">E. Jadwal Mengajar</h3>
-            <button onclick="addJadwalRow({})" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition">+ Tambah Baris</button>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative pl-1">
+        <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div> <div class="px-6 py-4 bg-white border-b border-slate-100 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-50 rounded text-indigo-600">📅</div>
+                <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wide">E. Jadwal Mengajar</h3>
+            </div>
+            <button onclick="addJadwalRow({})" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-sm transition flex items-center gap-2">
+                <span>➕</span> Tambah Baris
+            </button>
         </div>
-        <div class="overflow-hidden border border-slate-200 rounded-xl">
+        <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">
-                <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider">
+                <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                     <tr>
-                        <th class="p-3 border-b text-center w-12">No</th>
-                        <th class="p-3 border-b w-32">Hari</th>
-                        <th class="p-3 border-b w-32">Jam Ke-</th>
-                        <th class="p-3 border-b w-32">Kelas</th>
-                        <th class="p-3 border-b">Mata Pelajaran / Ket.</th>
-                        <th class="p-3 border-b w-12 text-center">Hapus</th>
+                        <th class="p-4 text-center w-12">No</th>
+                        <th class="p-4 w-40">Hari</th>
+                        <th class="p-4 w-32">Jam Ke-</th>
+                        <th class="p-4 w-32">Kelas</th>
+                        <th class="p-4">Mata Pelajaran</th>
+                        <th class="p-4 w-16 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="jadwalBody" class="bg-white divide-y divide-slate-100"></tbody>
+                <tbody id="jadwalBody" class="bg-white divide-y divide-slate-50"></tbody>
             </table>
         </div>
       </div>
 
-      <div class="card-box border-emerald-200 shadow-sm relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-1 bg-emerald-500 h-full"></div>
-        <div class="flex items-center justify-between mb-4 pl-2">
-            <h3 class="font-bold text-emerald-900 text-lg">F. Sampel Jurnal Mengajar</h3>
-            <button onclick="addJurnalRow({})" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 shadow-sm transition">+ Tambah Baris</button>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative pl-1">
+        <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div> <div class="px-6 py-4 bg-white border-b border-slate-100 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-50 rounded text-indigo-600">📝</div>
+                <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wide">F. Sampel Jurnal Mengajar</h3>
+            </div>
+            <button onclick="addJurnalRow({})" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-sm transition flex items-center gap-2">
+                <span>➕</span> Tambah Baris
+            </button>
         </div>
-        <div class="overflow-hidden border border-slate-200 rounded-xl">
+        <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">
-                <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider">
+                <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                     <tr>
-                        <th class="p-3 border-b text-center w-12">No</th>
-                        <th class="p-3 border-b w-40">Tanggal</th>
-                        <th class="p-3 border-b w-24">Kelas</th>
-                        <th class="p-3 border-b">Materi / Catatan</th>
-                        <th class="p-3 border-b w-12 text-center">Hapus</th>
+                        <th class="p-4 text-center w-12">No</th>
+                        <th class="p-4 w-48">Tanggal</th>
+                        <th class="p-4 w-32">Kelas</th>
+                        <th class="p-4">Materi / Catatan</th>
+                        <th class="p-4 w-16 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="jurnalBody" class="bg-white divide-y divide-slate-100"></tbody>
+                <tbody id="jurnalBody" class="bg-white divide-y divide-slate-50"></tbody>
             </table>
         </div>
       </div>
@@ -199,13 +245,17 @@
     const tbody = document.getElementById('jurnalBody');
     const idx = tbody.children.length + 1;
     const tr = document.createElement('tr');
-    tr.className = "hover:bg-slate-50 transition";
+    tr.className = "hover:bg-slate-50 transition group";
     tr.innerHTML = `
-      <td class="p-2 text-center text-slate-400 text-xs align-middle">${idx}</td>
-      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-emerald-500 outline-none transition" type="date" value="${row.tanggal||''}"></td>
-      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-emerald-500 outline-none transition" type="text" placeholder="Kls..." value="${row.kelas||''}"></td>
-      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-emerald-500 outline-none transition" type="text" placeholder="Catatan kegiatan..." value="${row.materi||''}"></td>
-      <td class="p-2 text-center align-middle"><button class="text-slate-300 hover:text-rose-500 transition font-bold px-2" onclick="this.closest('tr').remove()">✕</button></td>`;
+      <td class="p-2 text-center text-slate-400 text-xs font-mono">${idx}</td>
+      <td class="p-2"><input class="table-input" type="date" value="${row.tanggal||''}"></td>
+      <td class="p-2"><input class="table-input" type="text" placeholder="Contoh: X-A" value="${row.kelas||''}"></td>
+      <td class="p-2"><input class="table-input" type="text" placeholder="Materi / Catatan kejadian..." value="${row.materi||''}"></td>
+      <td class="p-2 text-center">
+        <button class="text-slate-300 hover:text-rose-500 transition p-1 rounded hover:bg-rose-50" onclick="this.closest('tr').remove()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </td>`;
     tbody.appendChild(tr);
   }
   function hydrateJurnal(rows){
@@ -219,20 +269,24 @@
     const tbody = document.getElementById('jadwalBody');
     const idx = tbody.children.length + 1;
     const tr = document.createElement('tr');
-    tr.className = "hover:bg-slate-50 transition";
+    tr.className = "hover:bg-slate-50 transition group";
     const hariOpts = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"].map(h => `<option value="${h}" ${row.hari===h?'selected':''}>${h}</option>`).join('');
     tr.innerHTML = `
-      <td class="p-2 text-center text-slate-400 text-xs align-middle">${idx}</td>
-      <td class="p-2 align-top"><select class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs outline-none focus:ring-2 ring-blue-500 transition cursor-pointer">${hariOpts}</select></td>
-      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" type="text" placeholder="1 - 2" value="${row.jam||''}"></td>
-      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" type="text" placeholder="X-1" value="${row.kelas||''}"></td>
-      <td class="p-2 align-top"><input class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" type="text" placeholder="Matematika" value="${row.mapel||''}"></td>
-      <td class="p-2 text-center align-middle"><button class="text-slate-300 hover:text-rose-500 transition font-bold px-2" onclick="this.closest('tr').remove()">✕</button></td>`;
+      <td class="p-2 text-center text-slate-400 text-xs font-mono">${idx}</td>
+      <td class="p-2"><select class="table-select w-full text-slate-700 font-medium">${hariOpts}</select></td>
+      <td class="p-2"><input class="table-input" type="text" placeholder="1 - 2" value="${row.jam||''}"></td>
+      <td class="p-2"><input class="table-input" type="text" placeholder="X-1" value="${row.kelas||''}"></td>
+      <td class="p-2"><input class="table-input" type="text" placeholder="Matematika" value="${row.mapel||''}"></td>
+      <td class="p-2 text-center">
+        <button class="text-slate-300 hover:text-rose-500 transition p-1 rounded hover:bg-rose-50" onclick="this.closest('tr').remove()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </td>`;
     tbody.appendChild(tr);
   }
   function hydrateJadwal(rows){
     const tbody = document.getElementById('jadwalBody'); tbody.innerHTML = '';
-    if(rows.length === 0) for(let i=0;i<3;i++) addJadwalRow({});
+    if(rows.length === 0) for(let i=0;i<5;i++) addJadwalRow({});
     else rows.forEach(r=>addJadwalRow(r));
   }
 
@@ -269,8 +323,14 @@
     };
 
     const { error } = await db.from('work_drafts').upsert(payload, { onConflict: 'user_id,doc_type' });
-    if(error) { Swal.fire('Gagal', error.message, 'error'); btn.innerHTML = '<span>💾</span> Simpan & Finalisasi (Cetak) →'; btn.disabled = false; }
-    else { window.location.href = 'step9_cetak.html'; }
+    if(error) { 
+        Swal.fire('Gagal', error.message, 'error'); 
+        btn.innerHTML = '<span>💾</span> Simpan & Finalisasi (Cetak) →'; btn.disabled = false; 
+    } else { 
+        const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 1500});
+        Toast.fire({icon: 'success', title: 'Lampiran Tersimpan!'});
+        setTimeout(() => window.location.href = 'step9_cetak.html', 1500);
+    }
   }
 </script>
 </body>

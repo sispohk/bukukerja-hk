@@ -11,6 +11,44 @@
   <link rel="stylesheet" href="style.css">
   <script src="config.js"></script>
   <script src="layout.js"></script>
+  <style>
+      /* --- TABLE MAGIC: STICKY HEADER & COLUMNS --- */
+      .table-container { 
+          overflow-x: auto; 
+          position: relative; 
+          padding-bottom: 20px;
+          border-radius: 0 0 0.75rem 0.75rem;
+      }
+      table { border-collapse: separate; border-spacing: 0; }
+
+      /* Sticky Header */
+      thead th { 
+          position: sticky; top: 0; z-index: 20; 
+          background-color: #f8fafc; 
+          border-bottom: 2px solid #e2e8f0;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+          height: 50px;
+          vertical-align: middle;
+      }
+
+      /* Sticky Columns */
+      .sticky-col { 
+          position: sticky; 
+          z-index: 15; 
+          background-color: #fff; 
+      }
+      
+      thead th.sticky-col { z-index: 30; background-color: #eff6ff; }
+
+      /* Separator Line */
+      .sticky-separator {
+          border-right: 2px solid #cbd5e1 !important; 
+          box-shadow: 4px 0 6px -2px rgba(0,0,0,0.05);
+      }
+
+      .no-border-r { border-right: none !important; }
+      td { vertical-align: top; }
+  </style>
 </head>
 
 <body class="bg-slate-100 text-slate-800 h-screen flex font-sans overflow-hidden">
@@ -19,7 +57,7 @@
 
   <div class="flex-1 flex flex-col relative min-w-0">
     
-    <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-10 flex justify-between items-center shrink-0">
+    <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-20 flex justify-between items-center shrink-0">
       <div>
         <h1 class="text-xl font-bold text-slate-900">2. Analisis & Alokasi Waktu</h1>
         <p class="text-xs text-slate-500">Pecah KI/KD atau CP menjadi Tujuan Pembelajaran Rinci.</p>
@@ -33,11 +71,12 @@
       </div>
     </header>
 
-    <main class="flex-1 overflow-y-auto p-8 bg-slate-100 pb-32 flex flex-col gap-6 relative">
+    <main class="flex-1 overflow-y-auto p-8 bg-slate-100 pb-32 flex flex-col gap-8 relative">
       
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden h-full">
-            <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+        
+        <div class="bg-white p-6 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden pl-5 group hover:shadow-md transition">
+            <div class="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
             <div class="flex justify-between items-start mb-4">
                 <h3 class="font-bold text-blue-800 flex items-center gap-2">
                     <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span> 
@@ -46,15 +85,15 @@
                 <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded border">Gemini / ChatGPT</span>
             </div>
             <p class="text-xs text-slate-600 mb-6 leading-relaxed">
-                Prompt ini sudah dimodifikasi agar AI menyertakan <b>KI (Kompetensi Inti)</b> untuk K13 atau Elemen CP untuk Kurmer.
+                Prompt ini sudah diperbaiki untuk meminta materi <b>SATU TAHUN PENUH (Sem 1 & 2)</b> serta memastikan kolom Kata Kunci & Sumber terisi.
             </p>
             <button onclick="openGemini()" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-bold shadow hover:bg-blue-700 transition transform active:scale-95 flex items-center justify-center gap-2 text-sm">
                 📋 Copy Prompt & Buka AI ↗
             </button>
         </div>
 
-        <div class="bg-white p-6 rounded-xl border border-orange-200 shadow-sm relative overflow-hidden h-full flex flex-col">
-            <div class="absolute top-0 left-0 w-full h-1 bg-orange-500"></div>
+        <div class="bg-white p-6 rounded-xl border border-orange-200 shadow-sm relative overflow-hidden flex flex-col pl-5 group hover:shadow-md transition">
+            <div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
             <div class="flex justify-between items-start mb-2">
                 <h3 class="font-bold text-orange-800 flex items-center gap-2">
                     <span class="bg-orange-100 text-orange-600 w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span>
@@ -64,13 +103,15 @@
                     ⬇️ Proses Data
                 </button>
             </div>
-            <textarea id="jsonInput" class="flex-1 w-full border border-slate-300 rounded-lg p-3 text-[10px] font-mono focus:ring-2 focus:ring-orange-500 outline-none transition bg-slate-50 focus:bg-white resize-none" placeholder='[...] Paste Array JSON dari AI di sini...'></textarea>
+            <textarea id="jsonInput" class="flex-1 w-full border border-slate-300 rounded-lg p-3 text-[10px] font-mono focus:ring-2 focus:ring-orange-500 outline-none transition bg-slate-50 focus:bg-white resize-none h-32" placeholder='[...] Paste Array JSON dari AI di sini...'></textarea>
         </div>
       </div>
 
-      <div id="resultArea" class="bg-white rounded-xl border border-slate-200 shadow-sm hidden overflow-hidden flex-1 flex flex-col min-h-[400px]">
-        <div class="bg-slate-50 px-6 py-4 border-b flex justify-between items-center">
-          <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2">
+      <div id="resultArea" class="bg-white rounded-xl border border-slate-200 shadow-sm hidden relative pl-1">
+        <div class="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
+        
+        <div class="bg-white px-6 py-4 border-b border-slate-100 flex justify-between items-center rounded-t-xl sticky top-0 z-10">
+          <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2 pl-2">
             <span>📊</span> Tabel Hasil Analisis
           </h3>
           <button onclick="addRow()" class="text-xs bg-white border border-slate-300 px-3 py-1.5 rounded hover:bg-blue-50 hover:text-blue-600 font-bold transition shadow-sm">
@@ -78,39 +119,37 @@
           </button>
         </div>
 
-        <div class="overflow-auto flex-1 relative">
-            <table class="w-full text-sm text-left border-collapse">
-              <thead class="bg-slate-100 text-slate-600 border-b uppercase text-[10px] tracking-wider sticky top-0 z-10 shadow-sm">
+        <div class="table-container">
+            <table class="w-full text-sm text-left border-collapse min-w-[1600px]">
+              <thead class="text-slate-600 uppercase text-[10px] tracking-wider">
                 <tr>
-                  <th class="p-3 w-24 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800">SKL</th>
+                  <th class="p-3 w-[120px] text-center font-bold text-blue-900 sticky-col no-border-r" style="left:0; min-width:120px;">SKL</th>
+                  
+                  <th class="p-3 w-[200px] text-center font-bold text-blue-900 sticky-col sticky-separator" id="th1" style="left:120px; min-width:200px;">Materi Pokok</th>
 
-                  <th class="p-3 w-20 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800" id="th_ki">KI / Elemen</th>
-                  <th class="p-3 w-28 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800" id="th1">Materi</th>
-                  <th class="p-3 w-24 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800" id="th2">KD / CP</th>
-                  <th class="p-3 w-24 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800" id="th3">IPK / TP</th>
+                  <th class="p-3 w-32 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_ki">KI / Elemen</th>
+                  <th class="p-3 w-32 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th2">KD / CP</th>
+                  <th class="p-3 w-48 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th3">IPK / TP</th>
 
-                  <!-- KM-only -->
-                  <th class="p-3 w-24 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800" id="th_kko">KKO</th>
-                  <th class="p-3 w-28 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800" id="th_katakunci">Kata Kunci/Glosarium</th>
+                  <th class="p-3 w-24 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_kko">KKO</th>
+                  <th class="p-3 w-32 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_katakunci">Kata Kunci</th>
 
-                  <th class="p-3 w-40 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800">Kegiatan Pembelajaran</th>
-                  <th class="p-3 w-32 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800">Rencana Penilaian</th>
+                  <th class="p-3 w-48 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900">Kegiatan</th>
+                  <th class="p-3 w-32 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900">Penilaian</th>
+                  <th class="p-3 w-32 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_sumber">Sumber</th>
 
-                  <th class="p-3 w-32 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800" id="th_sumber">Sumber Belajar</th>
+                  <th class="p-3 w-16 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_kompleksitas">Komp</th>
+                  <th class="p-3 w-16 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_daya">Daya</th>
+                  <th class="p-3 w-16 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900" id="th_intake">Intake</th>
 
-                  <!-- K13-only -->
-                  <th class="p-3 w-20 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800" id="th_kompleksitas">Kompleksitas</th>
-                  <th class="p-3 w-24 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800" id="th_daya">Daya Dukung</th>
-                  <th class="p-3 w-20 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800" id="th_intake">Intake</th>
+                  <th class="p-3 w-14 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900">KKM</th>
+                  <th class="p-3 w-12 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900">Sem</th>
+                  <th class="p-3 w-12 text-center bg-blue-50/50 font-bold border-r border-slate-100 text-blue-900">JP</th>
 
-                  <th class="p-3 w-14 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800">KKM/KKTP</th>
-                  <th class="p-3 w-12 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800">Sem</th>
-                  <th class="p-3 w-12 text-center bg-blue-50 font-bold border-r border-blue-100 text-blue-800">JP</th>
-
-                  <th class="p-3 w-16 text-center bg-blue-50 font-bold text-blue-800">Aksi</th>
+                  <th class="p-3 w-16 text-center bg-blue-50/50 font-bold text-blue-900">Aksi</th>
                 </tr>
               </thead>
-              <tbody id="tableBody" class="divide-y divide-gray-100 bg-white"></tbody>
+              <tbody id="tableBody" class="divide-y divide-slate-100 bg-white"></tbody>
             </table>
         </div>
       </div>
@@ -129,64 +168,35 @@
   const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
   let user, dataList=[], profile={};
 
-    // --- Helpers: Opsi B (0-100) untuk KKM (K13) ---
   function _clamp0100(n){
     n = Number(n);
     if (Number.isNaN(n)) return '';
-    if (n < 0) n = 0;
-    if (n > 100) n = 100;
+    if (n < 0) n = 0; if (n > 100) n = 100;
     return Math.round(n);
   }
 
-  // kind: 'kompleksitas' | 'daya_dukung' | 'intake' | 'kkm'
-  // - Menerima angka langsung (0-100)
-  // - Menerima teks Tinggi/Sedang/Rendah dan mengubah ke angka titik tengah rentang umum:
-  //   Kompleksitas: tinggi 50-64, sedang 65-80, rendah 81-100
-  //   Daya Dukung/Intake: rendah 50-64, sedang 65-80, tinggi 81-100
   function toNum0100(v, kind){
     if (v === null || v === undefined) return '';
     let s = String(v).trim();
     if (!s) return '';
-
-    // angka murni
-    if (/^-?\d+(?:[\.,]\d+)?$/.test(s)) {
-      return _clamp0100(parseFloat(s.replace(',', '.')));
-    }
-
-    // ambil angka pertama jika ada
+    if (/^-?\d+(?:[\.,]\d+)?$/.test(s)) return _clamp0100(parseFloat(s.replace(',', '.')));
     const m = s.match(/-?\d+(?:[\.,]\d+)?/);
     if (m) return _clamp0100(parseFloat(m[0].replace(',', '.')));
 
     const t = s.toLowerCase();
-    const isTinggi = t.includes('tinggi');
-    const isSedang = t.includes('sedang');
-    const isRendah = t.includes('rendah');
-
-    if (kind === 'kompleksitas') {
-      if (isTinggi) return 57;   // tengah 50-64
-      if (isSedang) return 72;   // tengah 65-80
-      if (isRendah) return 90;   // tengah 81-100
-    } else if (kind === 'daya_dukung' || kind === 'intake') {
-      if (isRendah) return 57;
-      if (isSedang) return 72;
-      if (isTinggi) return 90;
-    } else { // kkm: tidak perlu mapping tinggi/sedang/rendah
-      // biarkan kosong jika bukan angka
-    }
+    const isTinggi = t.includes('tinggi'); const isSedang = t.includes('sedang'); const isRendah = t.includes('rendah');
+    if (kind === 'kompleksitas') { if (isTinggi) return 57; if (isSedang) return 72; if (isRendah) return 90; } 
+    else if (kind === 'daya_dukung' || kind === 'intake') { if (isRendah) return 57; if (isSedang) return 72; if (isTinggi) return 90; } 
     return '';
   }
 
-  // Sinkronisasi KKM (K13) dengan rata-rata 3 aspek (Opsi B)
   function syncKKMRow(i, mode){
-    // mode: 'from_aspek' | 'from_kkm'
     const d = dataList[i];
     if (!d) return;
-
     const k  = toNum0100(d.col_kompleksitas, 'kompleksitas');
     const dd = toNum0100(d.col_daya_dukung,  'daya_dukung');
     const it = toNum0100(d.col_intake,       'intake');
     const kkm = toNum0100(d.col4, 'kkm');
-
     const hasAspek = (k !== '' && dd !== '' && it !== '');
     const hasKKM   = (kkm !== '');
 
@@ -195,31 +205,19 @@
       d.col4 = String(_clamp0100(avg));
       return;
     }
-
     if (mode === 'from_kkm' && hasKKM){
-      if (!hasAspek){
-        // default aman: set semua aspek = KKM
-        d.col_kompleksitas = String(kkm);
-        d.col_daya_dukung  = String(kkm);
-        d.col_intake       = String(kkm);
-        return;
-      }
-
-      // jika aspek sudah ada: geser semuanya dengan delta agar avg tepat = KKM
+      if (!hasAspek){ d.col_kompleksitas=String(kkm); d.col_daya_dukung=String(kkm); d.col_intake=String(kkm); return; }
       const avg0 = (Number(k)+Number(dd)+Number(it))/3;
       const delta = Number(kkm) - avg0;
-
-      d.col_kompleksitas = String(_clamp0100(Number(k)  + delta));
+      d.col_kompleksitas = String(_clamp0100(Number(k) + delta));
       d.col_daya_dukung  = String(_clamp0100(Number(dd) + delta));
       d.col_intake       = String(_clamp0100(Number(it) + delta));
-
-      // pastikan benar-benar pas (pembulatan)
       const avg1 = Math.round((Number(d.col_kompleksitas)+Number(d.col_daya_dukung)+Number(d.col_intake))/3);
       d.col4 = String(_clamp0100(avg1));
     }
   }
 
-async function init(){
+  async function init(){
     const {data:{session}} = await db.auth.getSession();
     if(session) { user = session.user; loadData(); }
   }
@@ -230,29 +228,28 @@ async function init(){
     profile = data || { jenis_kurikulum: 'Merdeka', mata_pelajaran: 'Umum', fase_kelas: 'Umum' };
     setupUI();
 
-    const { data: d } = await db.from('work_drafts').select('*')
-      .eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle();
+    const { data: d } = await db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle();
     
     if(d && d.content_data){
-      // Mapping Data Baru (Support KI)
+      // MAP DATA KE KOLOM - UPDATE AGAR LEBIH FLEKSIBEL
       dataList = d.content_data.map(x=>({
-        // kolom baru (standar buku kerja)
         col_skl: x.skl || x.col_skl || '',
-        col7: x.kegiatan_pembelajaran || x.col7 || '',
-        col8: x.rencana_penilaian || x.col8 || '',
-        col_sumber: x.sumber_belajar || x.col_sumber || '',
-        col_kko: x.kko || x.col_kko || '',
+        col7: x.kegiatan || x.kegiatan_pembelajaran || x.col7 || '',
+        col8: x.penilaian || x.rencana_penilaian || x.col8 || '',
+        
+        // Perbaikan Mapping Sumber & Kata Kunci
+        col_sumber: x.sumber || x.sumber_belajar || x.col_sumber || '',
         col_katakunci: x.kata_kunci || x.col_katakunci || '',
+        col_kko: x.kko || x.col_kko || '',
+        
         col_kompleksitas: (toNum0100(x.kompleksitas || x.col_kompleksitas || '', 'kompleksitas') || ''),
         col_daya_dukung: (toNum0100(x.daya_dukung || x.col_daya_dukung || '', 'daya_dukung') || ''),
         col_intake: (toNum0100(x.intake || x.col_intake || '', 'intake') || ''),
-
-        // kolom inti (kompatibilitas lama)
         col_ki: x.ki_text || x.ki || x.col_ki || '', 
-        col1: x.materi_pembelajaran || x.elemen || x.col1 || '', 
+        col1: x.materi || x.materi_pembelajaran || x.elemen || x.col1 || '', 
         col2: x.kd || x.deskripsi || x.col2 || '', 
         col3: x.ipk || x.detail_tp || x.col3 || '', 
-        col4: x.detail_kktp || x.col4 || '',
+        col4: x.kkm || x.detail_kktp || x.col4 || '',
         col5: String(x.semester || x.col5 || '1'), 
         col6: String(x.alokasi_jp || x.col6 || '2')
       }));
@@ -265,20 +262,16 @@ async function init(){
     const isMerdeka = (kur === 'km') || kur.includes('merdeka');
 
     document.getElementById('badgeKurikulum').innerText = isMerdeka ? "Kurikulum Merdeka" : "Kurikulum 2013";
-
-    // Label Dinamis
     document.getElementById('th_ki').innerText = isMerdeka ? "Elemen CP" : "Kompetensi Inti (KI)";
     document.getElementById('th1').innerText = "Materi Pokok";
     document.getElementById('th2').innerText = isMerdeka ? "CP Asli" : "Kompetensi Dasar (KD)";
     document.getElementById('th3').innerText = isMerdeka ? "Tujuan Pembelajaran (TP)" : "Indikator (IPK)";
 
-    // Toggle header KM-only
     ['th_kko','th_katakunci'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = isMerdeka ? '' : 'none';
     });
 
-    // Toggle header K13-only
     ['th_kompleksitas','th_daya','th_intake'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = !isMerdeka ? '' : 'none';
@@ -286,96 +279,51 @@ async function init(){
   }
   function enableSaveBtn() { document.getElementById('btnSave').disabled = false; }
 
-  // --- PROMPT BARU (VERSI LENGKAP + TAMBAHAN KKO & KATA KUNCI) ---
+  // --- PROMPT DIPERTAJAM UNTUK SEMESTER & KELENGKAPAN ---
   function openGemini() {
     const isMerdeka = (profile.jenis_kurikulum || '').toLowerCase().includes('merdeka');
-    const labelKI = isMerdeka ? "Elemen CP" : "Kompetensi Inti (KI)";
-
-    // --- 1. KONSTRUKSI PROMPT (Tetap Lengkap) ---
     const prompt = `PERAN: Ahli Kurikulum (K13/Kurmer). 
 KONTEKS: ${profile.mata_pelajaran}, ${profile.fase_kelas}, ${profile.jenis_kurikulum}.
 
 TUGAS:
-1) Ambil/rujuk SKL yang relevan (salin dari Permendikbud/aturan resmi yang berlaku untuk jenjangnya, jika tersedia dari dokumen input; jika tidak ada, tulis ringkasan SKL yang paling umum untuk mapel/jenjang).
-2) Analisis dokumen input (KI/KD atau CP) lalu turunkan menjadi IPK yang terukur.
-3) Identifikasi KATA KERJA OPERASIONAL (KKO) dari TP tersebut (misal: Menganalisis, Menyajikan).
-4) Identifikasi KATA KUNCI (Glosarium) atau istilah-istilah penting dari materi tersebut.
-5) Lengkapi: Materi Pembelajaran, Kegiatan Pembelajaran (contoh aktivitas siswa: Mengamati, Menanya, Mencoba, Menalar, Menyaji, Mencipta), Rencana Penilaian (Tes Tulis/Unjuk Kerja/Proyek), dan Sumber Belajar.
-6) KHUSUS K13: isi Kompleksitas, Daya Dukung, Intake dalam bentuk angka 0-100, serta pastikan KKM = rata-rata (Kompleksitas + Daya Dukung + Intake) / 3 (bulatkan ke integer).
+1) Analisis dokumen input.
+2) Turunkan menjadi Tujuan Pembelajaran (IPK).
+3) Isi lengkap Materi, Kegiatan, Penilaian, Sumber Belajar, dan Kata Kunci.
+4) Tentukan Semester (1 atau 2). **WAJIB distribusikan materi untuk SATU TAHUN AJARAN PENUH (Ada Semester 1 dan Semester 2)** secara proporsional.
 
-ATURAN PENTING:
-- Output HARUS JSON ARRAY murni (tanpa markdown, tanpa penjelasan).
-- IPK harus spesifik & bisa diukur.
-- "KKO" diisi hanya kata kerjanya saja.
-- "Kata Kunci" diisi daftar istilah penting dipisahkan koma.
-- Output untuk 1 TAHUN (Semester 1 dan Semester 2) sesuai dokumen.
-- Setiap baris WAJIB punya semester: "col5" = "1" atau "2" (jangan selain itu).
-- Untuk Kurikulum Merdeka: 
-  - Isi "KI" dengan Elemen CP (atau Profil/Elemen yang paling relevan),
-  - Isi "KD" dengan kutipan CP yang relevan,
-  - Isi "IPK" dengan TP yang operasional.
-- Untuk Kurikulum 2013:
-  - Isi "KI" dengan KI-3 (Pengetahuan) atau KI-4 (Keterampilan) yang sesuai,
-  - Isi "KD" dengan KD 3.x atau 4.x,
-  - Isi "IPK" diturunkan dari KD sesuai KKO.
-
-FORMAT OUTPUT (WAJIB):
+FORMAT OUTPUT WAJIB (JSON ARRAY MURNI):
 [
   {
-    "SKL": "Salin/rujuk SKL (Permendikbud) atau ringkasan SKL yang relevan",
-    "KI": "KI-3 / KI-4 atau Elemen CP",
-    "KD": "KD 3.x/4.x atau kutipan CP",
-    "IPK": "Target spesifik terukur",
-    "KKO": "Kata Kerja Operasional (mis: Menganalisis)",
-    "Kata Kunci": "Istilah penting / Glosarium",
-    "Materi Pembelajaran": "Topik/Sub-topik",
-    "Kegiatan Pembelajaran": "Aktivitas siswa (Mengamati, Menanya, Mencoba, dst.)",
-    "Rencana Penilaian": "Tes Tulis / Unjuk Kerja / Proyek",
-    "Sumber Belajar": "Buku paket/modul/LKPD/video/situs resmi/lingkungan sekitar (tulis ringkas)",
-    "KKM/KKTP": "ANGKA 0-100 (contoh: 75). Untuk Kurikulum Merdeka, boleh pakai angka target (mis. 75) atau interval (mis. 70-100), tapi tetap NUMERIK.",
-    "Kompleksitas": "KHUSUS K13: angka 0-100",
-    "Daya Dukung": "KHUSUS K13: angka 0-100",
-    "Intake": "KHUSUS K13: angka 0-100",
-
-    "col_ki": "SAMA dengan KI",
-    "col1": "SAMA dengan Materi Pembelajaran",
-    "col2": "SAMA dengan KD",
-    "col3": "SAMA dengan IPK",
-    "col_kko": "SAMA dengan KKO",
-    "col_katakunci": "SAMA dengan Kata Kunci",
-    "col7": "SAMA dengan Kegiatan Pembelajaran",
-    "col8": "SAMA dengan Rencana Penilaian",
-    "col4": "SAMA dengan KKM/KKTP (angka)",
-    "col5": "1 atau 2 (WAJIB string)",
-    "col6": "2"
+    "skl": "...",
+    "ki": "...",
+    "kd": "...",
+    "ipk": "...",
+    "kko": "...",
+    "kata_kunci": "...",
+    "materi": "...",
+    "kegiatan": "...",
+    "penilaian": "...",
+    "sumber": "...",
+    "kkm": "75",
+    "kompleksitas": "75",
+    "daya_dukung": "75",
+    "intake": "75",
+    "semester": "1",
+    "alokasi_jp": "2"
   }
 ]`;
 
-    // --- 2. EKSEKUSI (ANTI-BLOCKER) ---
-    // Strategi: Buka Gemini dulu, lalu minta user klik OK untuk buka Drive.
-    // Ini satu-satunya cara agar browser tidak memblokir tab kedua.
-    
     navigator.clipboard.writeText(prompt).then(() => {
-        // A. Buka Gemini (Langsung)
-        window.open('https://gemini.google.com/app', '_blank');
-
-        // B. Tawarkan Buka Drive (Lewat Interaksi User)
         Swal.fire({
-            icon: 'success',
-            title: 'Prompt Tersalin & Gemini Terbuka!',
-            html: 'Silakan paste prompt di Gemini.<br><br><b>Perlu materi dari Google Drive?</b>',
-            showCancelButton: true,
-            confirmButtonText: '📂 Ya, Buka Folder Materi',
-            cancelButtonText: 'Tutup',
-            confirmButtonColor: '#2563eb',
-            reverseButtons: true
+            icon: 'success', title: 'Prompt Tersalin!',
+            html: 'Paste di Gemini.<br><br><b>Perlu materi dari Drive?</b>',
+            showCancelButton: true, confirmButtonText: '📂 Buka Drive', cancelButtonText: 'Tutup', reverseButtons: true
         }).then((result) => {
-            if (result.isConfirmed) {
-                window.open('https://drive.google.com/drive/folders/11y3RA4CUBc0Fnt4CsRR5IOJ5H8Dws5Ul?usp=sharing', '_blank');
-            }
+            if (result.isConfirmed) window.open('https://drive.google.com/drive/folders/11y3RA4CUBc0Fnt4CsRR5IOJ5H8Dws5Ul?usp=sharing', '_blank');
+            else window.open('https://gemini.google.com/app', '_blank');
         });
     });
-}
+  }
 
   function _stripCodeFences(s){
     const m = (s||"").match(/```(?:json|JSON)?\s*([\s\S]*?)```/);
@@ -388,298 +336,127 @@ FORMAT OUTPUT (WAJIB):
     try{
       let raw = document.getElementById('jsonInput').value || '';
       raw = _stripCodeFences(raw).trim();
-
-      // 1) Jika ada teks sebelum/after JSON, ambil kandidat JSON Array pertama
-      //    ambil dari '[' pertama sampai ']' terakhir
-      const firstBracket = raw.indexOf('[');
-      const lastBracket  = raw.lastIndexOf(']');
-      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-        raw = raw.slice(firstBracket, lastBracket + 1);
-      }
-
-      // 2) Normalisasi karakter kutip (smart quotes) dan whitespace
-      raw = raw
-        .replace(/[\u201C\u201D]/g, '"')
-        .replace(/[\u2018\u2019]/g, "'")
-        .replace(/\r\n/g, '\n');
-
-      // 3) Repair ringan: hapus trailing comma sebelum ']' atau '}'
-      //    (LLM sering nambah koma terakhir)
-      raw = raw.replace(/,\s*([\]}])/g, '$1');
-
-      // 4) Validasi awal
+      const firstBracket = raw.indexOf('['); const lastBracket  = raw.lastIndexOf(']');
+      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) raw = raw.slice(firstBracket, lastBracket + 1);
+      raw = raw.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'").replace(/\r\n/g, '\n').replace(/,\s*([\]}])/g, '$1');
       if(!raw.trim().startsWith('[')) throw new Error('Bukan JSON Array');
 
       dataList = JSON.parse(raw);
-
-      // Normalisasi agar tabel selalu terisi meski Gemini hanya mengisi kolom standar
+      // MAPPING BARU
       dataList = (dataList || []).map((d)=> {
         d = d || {};
-        const get = (keys, fb="") => {
-          for (const k of keys){
-            if(d[k] !== undefined && d[k] !== null && String(d[k]).trim() !== "") return d[k];
-          }
-          return fb;
-        };
-        d.col_skl = get(['col_skl','SKL','skl'], d.col_skl || '');
-        d.col_ki  = get(['col_ki','KI','ki'], d.col_ki || '');
-        d.col1    = get(['col1','Materi Pembelajaran','materi_pembelajaran','materi'], d.col1 || '');
-        d.col2    = get(['col2','KD','kd','deskripsi'], d.col2 || '');
-        d.col3    = get(['col3','IPK','ipk','detail_tp'], d.col3 || '');
-        d.col7    = get(['col7','Kegiatan Pembelajaran','kegiatan_pembelajaran'], d.col7 || '');
-        d.col8    = get(['col8','Rencana Penilaian','rencana_penilaian'], d.col8 || '');
-        d.col_sumber = get(['col_sumber','sumber_belajar','Sumber Belajar','sumber'], d.col_sumber || '');
-
-        // KM-only fields
-        d.col_kko = get(['col_kko','kko','KKO','kata_kerja_operasional'], d.col_kko || '');
-        d.col_katakunci = get(['col_katakunci','kata_kunci','katakunci','glosarium','Glosarium'], d.col_katakunci || '');
-
-        // K13-only fields
-        d.col_kompleksitas = get(['col_kompleksitas','kompleksitas'], d.col_kompleksitas || '');
-        d.col_daya_dukung  = get(['col_daya_dukung','daya_dukung','dayadukung'], d.col_daya_dukung || '');
-        d.col_intake       = get(['col_intake','intake'], d.col_intake || '');
-
+        const get = (keys, fb="") => { for (const k of keys){ if(d[k] !== undefined && d[k] !== null && String(d[k]).trim() !== "") return d[k]; } return fb; };
         
-        d.col_kompleksitas = toNum0100(d.col_kompleksitas, 'kompleksitas');
-        d.col_daya_dukung  = toNum0100(d.col_daya_dukung, 'daya_dukung');
-        d.col_intake       = toNum0100(d.col_intake, 'intake');
-        // K13: sinkron otomatis KKM <-> 3 aspek (opsi B)
-        // - Jika 3 aspek terisi: KKM dipaksa = rata-rata
-        // - Jika KKM terisi tapi aspek kosong: aspek diisi = KKM
-        // Catatan: sinkronisasi final dilakukan setelah d.col4 dinormalisasi numerik di bawah.
-        // KKM/KKTP wajib numerik: ambil angka pertama jika ada teks tambahan
-        let kkm = get(['col4','KKM/KKTP','kkm','kktp','detail_kktp'], d.col4 || '');
+        d.col_skl = get(['skl', 'SKL', 'col_skl'], '');
+        d.col_ki = get(['ki', 'KI', 'col_ki'], '');
+        d.col1 = get(['materi', 'materi_pembelajaran', 'Materi', 'col1'], '');
+        d.col2 = get(['kd', 'cp', 'KD', 'col2'], '');
+        d.col3 = get(['ipk', 'tp', 'IPK', 'col3'], '');
+        
+        d.col7 = get(['kegiatan', 'kegiatan_pembelajaran', 'col7'], '');
+        d.col8 = get(['penilaian', 'rencana_penilaian', 'col8'], '');
+        
+        d.col_sumber = get(['sumber', 'sumber_belajar', 'Sumber', 'col_sumber'], '');
+        d.col_katakunci = get(['kata_kunci', 'katakunci', 'Kata Kunci', 'col_katakunci'], '');
+        d.col_kko = get(['kko', 'KKO', 'col_kko'], '');
+        
+        d.col_kompleksitas = toNum0100(get(['kompleksitas', 'Kompleksitas'], ''), 'kompleksitas');
+        d.col_daya_dukung = toNum0100(get(['daya_dukung', 'Daya Dukung'], ''), 'daya_dukung');
+        d.col_intake = toNum0100(get(['intake', 'Intake'], ''), 'intake');
+        
+        let kkm = get(['kkm', 'kktp', 'KKM', 'col4'], '');
         const num = String(kkm).match(/(\d+(\.\d+)?)/);
         d.col4 = num ? num[1] : String(kkm).trim();
 
-        // Sinkronisasi (K13) — pastikan rata-rata 3 aspek = KKM (opsi B)
         if (!isMerdeka){
-          const k = toNum0100(d.col_kompleksitas, 'kompleksitas');
-          const dd = toNum0100(d.col_daya_dukung, 'daya_dukung');
-          const it = toNum0100(d.col_intake, 'intake');
-          const kkmN = toNum0100(d.col4, 'kkm');
-
-          const hasAspek = (k !== '' && dd !== '' && it !== '');
-          const hasKKM = (kkmN !== '');
-
-          if (hasAspek){
-            // Paksa KKM dari rata-rata aspek
-            const avg = Math.round((Number(k)+Number(dd)+Number(it))/3);
-            d.col_kompleksitas = String(k);
-            d.col_daya_dukung  = String(dd);
-            d.col_intake       = String(it);
-            d.col4 = String(_clamp0100(avg));
-          } else if (hasKKM){
-            // Jika aspek kosong, isi semua = KKM
-            d.col_kompleksitas = String(kkmN);
-            d.col_daya_dukung  = String(kkmN);
-            d.col_intake       = String(kkmN);
-            d.col4 = String(kkmN);
+          const k = d.col_kompleksitas, dd = d.col_daya_dukung, it = d.col_intake, kkmN = d.col4;
+          if (k !== '' && dd !== '' && it !== ''){
+            d.col4 = String(_clamp0100(Math.round((Number(k)+Number(dd)+Number(it))/3)));
+          } else if (kkmN !== ''){
+            d.col_kompleksitas = String(kkmN); d.col_daya_dukung = String(kkmN); d.col_intake = String(kkmN);
           }
         }
-
-        // Semester wajib 1 atau 2
-        let sem = get(['col5','semester'], d.col5 || '1');
-        sem = String(sem).trim();
-        if (sem !== '1' && sem !== '2') sem = '1';
-        d.col5 = sem;
-
-        // JP
-        d.col6 = String(get(['col6','alokasi_jp'], d.col6 || '2')).trim() || '2';
-
+        let sem = get(['semester', 'col5'], '1'); sem = String(sem).trim(); if (sem !== '1' && sem !== '2') sem = '1';
+        d.col5 = sem; 
+        d.col6 = String(get(['alokasi_jp', 'col6'], '2')).trim() || '2';
         return d;
       });
-
-      render();
-      enableSaveBtn();
-
+      render(); enableSaveBtn();
     }catch(e){
-      Swal.fire({
-        icon:'error',
-        title:'Format Salah',
-        html:'Pastikan yang ditempel adalah <b>JSON Array</b> valid dari Gemini.<br><br>'
-          + '<b>Tips:</b> minta Gemini output <b>JSON murni</b> (tanpa teks tambahan & tanpa markdown).<br>'
-          + 'Jika Gemini menambahkan penjelasan, pastikan kamu hanya menempel bagian yang dimulai dengan <code>[</code> dan diakhiri <code>]</code>.'
-      });
-      console.error(e);
+      Swal.fire({icon:'error', title:'Format Salah', html:'Pastikan JSON valid dari Gemini.'});
     }
-  }
-
-
-  function _getField(d, keys, fallback="") {
-    for (const k of keys) {
-      if (d && d[k] !== undefined && d[k] !== null && String(d[k]).trim() !== "") return d[k];
-    }
-    return fallback;
   }
 
   function render(){
     document.getElementById('resultArea').classList.remove('hidden');
     const kur = (profile.jenis_kurikulum || '').toString().toLowerCase();
     const isMerdeka = (kur === 'km') || kur.includes('merdeka');
-    const b = document.getElementById('tableBody');
-    b.innerHTML = '';
+    const b = document.getElementById('tableBody'); b.innerHTML = '';
 
     dataList.forEach((d,i)=>{
-      const tr = document.createElement('tr');
-      tr.className = 'hover:bg-slate-50 group transition align-top';
-
-      const createCell = (text, key, cls='') => {
+      const tr = document.createElement('tr'); tr.className = 'hover:bg-slate-50 group transition align-top';
+      
+      const createCell = (text, key, cls='', sticky=false, leftOffset=0) => {
         const td = document.createElement('td');
-        td.className = `p-3 border-b border-slate-100 outline-none focus:bg-blue-50 focus:ring-1 focus:ring-blue-300 ${cls}`;
-        td.contentEditable = 'true';
-        td.textContent = text ?? '';
+        if(sticky) {
+            td.style.position = 'sticky'; td.style.left = leftOffset + 'px'; td.style.zIndex = '10';
+            td.style.backgroundColor = '#fff';
+            if(key === 'col1') td.style.borderRight = '2px solid #cbd5e1'; 
+        }
+        td.className = `p-3 border-b border-slate-100 outline-none focus:bg-blue-50 focus:ring-1 focus:ring-blue-300 whitespace-pre-wrap ${cls}`;
+        td.contentEditable = 'true'; td.textContent = text ?? '';
         td.addEventListener('blur', () => {
-            if (key === 'col_kompleksitas') {
-              const v = toNum0100(td.innerText, 'kompleksitas');
-              td.innerText = (v === '' ? '' : String(v));
-              dataList[i][key] = td.innerText;
-              syncKKMRow(i, 'from_aspek');
-              render();
-              return;
+            if (['col_kompleksitas','col_daya_dukung','col_intake'].includes(key)) {
+                dataList[i][key] = toNum0100(td.innerText, key.replace('col_','')); syncKKMRow(i, 'from_aspek'); render(); return;
             }
-            if (key === 'col_daya_dukung') {
-              const v = toNum0100(td.innerText, 'daya_dukung');
-              td.innerText = (v === '' ? '' : String(v));
-              dataList[i][key] = td.innerText;
-              syncKKMRow(i, 'from_aspek');
-              render();
-              return;
-            }
-            if (key === 'col_intake') {
-              const v = toNum0100(td.innerText, 'intake');
-              td.innerText = (v === '' ? '' : String(v));
-              dataList[i][key] = td.innerText;
-              // update KKM agar = rata-rata 3 aspek
-              syncKKMRow(i, 'from_aspek');
-              render();
-              return;
-            }
-            // K13: bila KKM diedit, sesuaikan 3 aspek agar rata-rata = KKM
             if (key === 'col4' && !isMerdeka) {
-              const v = toNum0100(td.innerText, 'kkm');
-              td.innerText = (v === '' ? '' : String(v));
-              dataList[i][key] = td.innerText;
-              syncKKMRow(i, 'from_kkm');
-              render();
-              return;
+              dataList[i][key] = toNum0100(td.innerText, 'kkm'); syncKKMRow(i, 'from_kkm'); render(); return;
             }
             dataList[i][key] = td.innerText;
-          });
+        });
         return td;
       }
 
       tr.append(
-          createCell(d.col_skl || '', 'col_skl', 'text-[10px] text-slate-500 leading-tight border-r border-slate-100'),
-          createCell(d.col_ki || '', 'col_ki', 'text-[10px] text-slate-500 leading-tight border-r border-slate-100'),
-          createCell(d.col1 || '', 'col1', 'text-xs font-medium border-r border-slate-100'),
-          createCell(d.col2 || '', 'col2', 'text-[10px] text-slate-500 leading-tight border-r border-slate-100'),
-          createCell(d.col3 || '', 'col3', 'text-xs font-medium border-r border-slate-100'),
-
-          // KM-only
-          ...(isMerdeka ? [
-            createCell(d.col_kko || '', 'col_kko', 'text-xs font-medium border-r border-slate-100'),
-            createCell(d.col_katakunci || '', 'col_katakunci', 'text-xs font-medium border-r border-slate-100 whitespace-pre-wrap')
-          ] : []),
-
-          createCell(d.col7 || '', 'col7', 'text-xs font-medium border-r border-slate-100 whitespace-pre-wrap'),
-          createCell(d.col8 || '', 'col8', 'text-xs font-medium border-r border-slate-100 whitespace-pre-wrap'),
-          createCell(d.col_sumber || '', 'col_sumber', 'text-xs font-medium border-r border-slate-100 whitespace-pre-wrap'),
-
-          // K13-only
-          ...(!isMerdeka ? [
-            createCell(d.col_kompleksitas || '', 'col_kompleksitas', 'text-xs text-center font-medium border-r border-slate-100'),
-            createCell(d.col_daya_dukung || '', 'col_daya_dukung', 'text-xs text-center font-medium border-r border-slate-100'),
-            createCell(d.col_intake || '', 'col_intake', 'text-xs text-center font-medium border-r border-slate-100')
-          ] : []),
-
-          createCell(d.col4 || '', 'col4', 'text-xs text-center font-medium border-r border-slate-100'),
-          createCell(d.col5 || '1', 'col5', 'text-xs text-center font-medium border-r border-slate-100'),
-          createCell(d.col6 || '2', 'col6', 'text-xs text-center font-medium border-r border-slate-100')
+          createCell(d.col_skl, 'col_skl', 'text-[10px] text-slate-500 leading-tight no-border-r', true, 0),
+          createCell(d.col1, 'col1', 'text-xs font-medium', true, 120),
+          createCell(d.col_ki, 'col_ki', 'text-[10px] text-slate-500 leading-tight border-r border-slate-100'),
+          createCell(d.col2, 'col2', 'text-[10px] text-slate-500 leading-tight border-r border-slate-100'),
+          createCell(d.col3, 'col3', 'text-xs font-medium border-r border-slate-100'),
+          ...(isMerdeka ? [createCell(d.col_kko, 'col_kko', 'text-xs border-r border-slate-100'), createCell(d.col_katakunci, 'col_katakunci', 'text-xs border-r border-slate-100')] : []),
+          createCell(d.col7, 'col7', 'text-xs border-r border-slate-100'), createCell(d.col8, 'col8', 'text-xs border-r border-slate-100'), createCell(d.col_sumber, 'col_sumber', 'text-xs border-r border-slate-100'),
+          ...(!isMerdeka ? [createCell(d.col_kompleksitas, 'col_kompleksitas', 'text-xs text-center border-r'), createCell(d.col_daya_dukung, 'col_daya_dukung', 'text-xs text-center border-r'), createCell(d.col_intake, 'col_intake', 'text-xs text-center border-r')] : []),
+          createCell(d.col4, 'col4', 'text-xs text-center border-r font-bold text-blue-700'), createCell(d.col5, 'col5', 'text-xs text-center border-r font-bold'), createCell(d.col6, 'col6', 'text-xs text-center border-r font-bold')
       );
 
-      const tdDel = document.createElement('td');
-      tdDel.className = 'p-2 text-xs text-center font-medium border-r border-slate-100';
-
-      const btnWrap = document.createElement('div');
-      btnWrap.className = 'flex items-center justify-center gap-2';
-      const del = document.createElement('button');
-      del.className = 'text-slate-300 hover:text-red-500 font-bold transition px-2 py-1 hover:bg-red-50 rounded';
-      del.innerHTML = 'Hapus';
+      const tdDel = document.createElement('td'); tdDel.className = 'p-2 text-xs text-center border-r border-slate-100';
+      const del = document.createElement('button'); del.className = 'text-slate-300 hover:text-red-500 font-bold px-2 py-1'; del.innerHTML = '✕';
       del.addEventListener('click', () => { dataList.splice(i,1); render(); });
-
-      btnWrap.appendChild(del);
-      tdDel.appendChild(btnWrap);
-
-      tr.appendChild(tdDel);
-      b.appendChild(tr);
+      tdDel.appendChild(del); tr.appendChild(tdDel); b.appendChild(tr);
     });
   }
 
-  function addRow(){ 
-    dataList.push({col_skl:"SKL", col_ki:"KI-3", col1:"Materi", col2:"KD 3.1", col3:"IPK (KKO)", col7:"Kegiatan", col8:"Penilaian", col4:"75", col5:"1", col6:"2"}); 
-    render(); enableSaveBtn(); 
-  }
+  function addRow(){ dataList.push({col_skl:"-", col_ki:"-", col1:"Materi", col2:"KD/CP", col3:"IPK/TP", col7:"-", col8:"-", col4:"75", col5:"1", col6:"2"}); render(); enableSaveBtn(); }
 
   async function save(){
     const btn=document.getElementById('btnSave'); btn.innerHTML="⏳ Menyimpan..."; btn.disabled=true;
-    
-    // Mapping ke DB (Tambahkan field 'ki')
     const content = dataList.map(d => ({
-        // Versi standar (untuk Buku Kerja)
-        skl: d.SKL ?? d.skl ?? d.col_skl ?? '',
-        ki_text: d.KI ?? d.col_ki ?? d.ki ?? '',
-        kd: d.KD ?? d.col2 ?? d.deskripsi ?? '',
-        ipk: d.IPK ?? d.col3 ?? d.detail_tp ?? '',
-        materi_pembelajaran: d["Materi Pembelajaran"] ?? d.col1 ?? d.elemen ?? '',
-        kegiatan_pembelajaran: d["Kegiatan Pembelajaran"] ?? d.kegiatan_pembelajaran ?? d.col7 ?? '',
-        rencana_penilaian: d["Rencana Penilaian"] ?? d.rencana_penilaian ?? d.col8 ?? '',
-        sumber_belajar: d.col_sumber ?? d.sumber_belajar ?? '',
-        kko: d.col_kko ?? d.kko ?? '',
-        kata_kunci: d.col_katakunci ?? d.kata_kunci ?? d.col_katakunci ?? '',
-        kompleksitas: (toNum0100(d.col_kompleksitas ?? d.kompleksitas ?? '', 'kompleksitas') || ''),
-        daya_dukung: (toNum0100(d.col_daya_dukung ?? d.daya_dukung ?? '', 'daya_dukung') || ''),
-        intake: (toNum0100(d.col_intake ?? d.intake ?? '', 'intake') || ''),
-
-        // Versi lama (agar kompatibel dengan step lain yang sudah ada)
-        ki: d.col_ki ?? d.KI ?? '',
-        elemen: d.col1 ?? d["Materi Pembelajaran"] ?? '',
-        deskripsi: d.col2 ?? d.KD ?? '',
-        detail_tp: d.col3 ?? d.IPK ?? '',
-        detail_kktp: d.col4 ?? '',
-        sumber_belajar: d.col_sumber ?? '',
-        kko: d.col_kko ?? '',
-        kata_kunci: d.col_katakunci ?? '',
-        kompleksitas: (toNum0100(d.col_kompleksitas ?? '', 'kompleksitas') || ''),
-        daya_dukung: (toNum0100(d.col_daya_dukung ?? '', 'daya_dukung') || ''),
-        intake: (toNum0100(d.col_intake ?? '', 'intake') || ''),
-        semester: d.col5 ?? '1',
-        alokasi_jp: d.col6 ?? '2'
+        skl: d.col_skl, ki_text: d.col_ki, kd: d.col2, ipk: d.col3, materi_pembelajaran: d.col1,
+        kegiatan_pembelajaran: d.col7, rencana_penilaian: d.col8, sumber_belajar: d.col_sumber,
+        kko: d.col_kko, kata_kunci: d.col_katakunci, kompleksitas: d.col_kompleksitas, daya_dukung: d.col_daya_dukung, intake: d.col_intake,
+        semester: d.col5, alokasi_jp: d.col6,
+        ki: d.col_ki, elemen: d.col1, deskripsi: d.col2, detail_tp: d.col3, detail_kktp: d.col4
     }));
     
-    const payload = {
-      user_id: user.id, doc_type: 'master_cp_atp',
-      subject_name: profile.mata_pelajaran, grade_level: profile.fase_kelas, curriculum_type: profile.jenis_kurikulum,
-      content_data: content, status: 'confirmed'
-    };
-    
+    const payload = { user_id: user.id, doc_type: 'master_cp_atp', subject_name: profile.mata_pelajaran, grade_level: profile.fase_kelas, curriculum_type: profile.jenis_kurikulum, content_data: content, status: 'confirmed' };
     const {error} = await db.from('work_drafts').upsert(payload, {onConflict:'user_id,doc_type'});
-    if(error){ 
-        Swal.fire('Gagal', error.message, 'error');
-        btn.innerHTML = '<span>💾</span> Simpan & Lanjut (Kalender) →'; btn.disabled = false;
-    } else {
-        const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 1500});
-        Toast.fire({icon: 'success', title: 'Data Tersimpan!'});
-        setTimeout(()=> window.location.href='step3_kalender.html', 1500);
-    }
+    if(error){ Swal.fire('Gagal', error.message, 'error'); btn.innerHTML = '<span>💾</span> Simpan & Lanjut (Kalender) →'; btn.disabled = false; } 
+    else { const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 1500}); Toast.fire({icon: 'success', title: 'Data Tersimpan!'}); setTimeout(()=> window.location.href='step3_kalender.html', 1500); }
   }
 
   async function deleteDraft(){
     const res = await Swal.fire({title: 'Hapus Data?', text:'Tabel analisis akan dikosongkan.', icon: 'warning', showCancelButton: true});
-    if(res.isConfirmed){
-        await db.from('work_drafts').delete().eq('user_id', user.id).eq('doc_type', 'master_cp_atp');
-        location.reload();
-    }
+    if(res.isConfirmed){ await db.from('work_drafts').delete().eq('user_id', user.id).eq('doc_type', 'master_cp_atp'); location.reload(); }
   }
 </script>
 </body>

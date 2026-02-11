@@ -10,105 +10,108 @@
     
     <script src="config.js"></script>
     <script src="layout.js"></script>
+    <style>
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); }
+    </style>
 </head>
-<body class="bg-slate-100 text-slate-800 h-screen flex font-sans overflow-hidden">
+<body class="bg-slate-50 text-slate-800 h-screen flex font-sans overflow-hidden">
 
     <div id="sidebar-container"></div>
 
     <div class="flex-1 flex flex-col relative min-w-0">
-        <header class="bg-white border-b px-6 py-4 shadow-sm z-10 flex justify-between items-center shrink-0">
+        <header class="h-20 bg-white border-b border-slate-200 px-8 py-4 shadow-sm z-10 flex justify-between items-center shrink-0">
             <div>
-                <h1 class="text-xl font-bold text-slate-900">1. Profil & Pengaturan Umum</h1>
-                <p class="text-xs text-slate-500">Data ini akan menjadi KOP (Header) dan acuan penghitungan JP.</p>
+                <h1 class="text-xl font-bold text-slate-900 tracking-tight">1. Identitas & Profil</h1>
+                <p class="text-xs text-slate-500 font-medium">Pengaturan dasar untuk KOP Dokumen & Rumus JP.</p>
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-8 pb-32 bg-slate-100">
-            <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-xl border border-slate-300 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+        <main class="flex-1 overflow-y-auto p-8 bg-slate-50 flex justify-center">
+            
+            <div class="w-full max-w-5xl space-y-6">
+                
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
+                    <div class="absolute top-0 left-0 w-2 h-full bg-indigo-600"></div> <div class="p-8">
+                        <div class="flex flex-col md:flex-row gap-8 items-start">
+                            <div class="hidden md:flex flex-col items-center gap-3 shrink-0">
+                                <div class="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-4xl shadow-inner text-indigo-500 border border-indigo-100">
+                                    👨‍🏫
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Guru Mapel</span>
+                            </div>
 
-                <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                                <div class="col-span-1 md:col-span-2">
+                                    <label class="block text-xs font-extrabold text-slate-500 uppercase mb-1 ml-1">Nama Lengkap & Gelar</label>
+                                    <input type="text" id="nama" class="w-full text-lg font-bold border-b-2 border-slate-200 bg-transparent px-2 py-1 focus:border-indigo-600 focus:outline-none transition placeholder-slate-300 text-slate-800" placeholder="Contoh: Budi Santoso, S.Pd.">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Instansi / Sekolah</label>
+                                    <input type="text" id="sekolah" class="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Nama Sekolah">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Kepala Sekolah</label>
+                                    <input type="text" id="kepala_sekolah" class="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Nama Kepala Sekolah">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     
-                    <div class="col-span-1 md:col-span-2">
-                        <h3 class="flex items-center gap-2 font-bold text-blue-800 text-sm uppercase tracking-wider mb-4 border-b pb-2">
-                            <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded flex items-center justify-center text-xs">A</span> 
-                            Identitas Guru
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+                        <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                            <span>📚</span> Kurikulum
                         </h3>
-                        <div>
-                            <label class="block text-xs font-bold mb-1 text-slate-600 uppercase">Nama Guru Mata Pelajaran</label>
-                            <input type="text" id="nama" class="w-full border border-slate-300 bg-slate-50 p-3 rounded-lg focus:bg-white focus:ring-2 ring-blue-500 outline-none transition font-medium text-slate-800" placeholder="Nama Lengkap & Gelar">
+                        <select id="kurikulum" class="w-full bg-amber-50 border border-amber-200 text-amber-900 text-sm font-bold rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer appearance-none">
+                            <option value="KM">Kurikulum Merdeka</option>
+                            <option value="K13">Kurikulum 2013</option>
+                        </select>
+                        <p class="text-[10px] text-slate-400 mt-2">Menentukan format RPP/Modul Ajar.</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                        <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                            <span>🏷️</span> Mapel & Kelas
+                        </h3>
+                        <div class="space-y-3">
+                            <input type="text" id="mapel" class="w-full border-b border-slate-200 py-1 text-sm font-medium focus:border-blue-500 outline-none bg-transparent" placeholder="Mata Pelajaran">
+                            <input type="text" id="kelas" class="w-full border-b border-slate-200 py-1 text-sm font-medium focus:border-blue-500 outline-none bg-transparent" placeholder="Fase / Kelas (mis: X)">
                         </div>
                     </div>
 
-                    <div class="col-span-1 md:col-span-2">
-                        <h3 class="flex items-center gap-2 font-bold text-blue-800 text-sm uppercase tracking-wider mb-4 border-b pb-2">
-                            <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded flex items-center justify-center text-xs">B</span> 
-                            Data Sekolah & Pengesahan
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                        <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                            <span>⏱️</span> Alokasi Waktu
                         </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-xs font-bold mb-1 text-slate-600 uppercase">Nama Sekolah</label>
-                                <input type="text" id="sekolah" class="w-full border border-slate-300 bg-slate-50 p-3 rounded-lg focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" placeholder="Contoh: MAS Husnul Khotimah Kuningan">
+                        <div class="flex gap-4">
+                            <div class="flex-1">
+                                <label class="text-[10px] uppercase font-bold text-slate-400">Thn Ajar</label>
+                                <input type="text" id="tahun" class="w-full font-bold text-sm text-slate-700 border-b border-slate-200 py-1 outline-none focus:border-emerald-500" placeholder="2025/2026">
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold mb-1 text-slate-600 uppercase">Kepala Sekolah</label>
-                                <input type="text" id="kepala_sekolah" class="w-full border border-slate-300 bg-slate-50 p-3 rounded-lg focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" placeholder="Nama Lengkap & Gelar">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold mb-1 text-slate-600 uppercase">Tahun Ajaran</label>
-                                <input type="text" id="tahun" class="w-full border border-slate-300 bg-slate-50 p-3 rounded-lg focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" placeholder="Contoh: 2025/2026">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold mb-1 text-slate-600 uppercase">Tanggal Pengesahan</label>
-                                <input type="date" id="tanggal_pengesahan" class="w-full border border-slate-300 bg-slate-50 p-3 rounded-lg focus:bg-white focus:ring-2 ring-blue-500 outline-none transition">
+                            <div class="w-20">
+                                <label class="text-[10px] uppercase font-bold text-emerald-600">JP/Minggu</label>
+                                <input type="number" id="jpPerWeek" class="w-full font-black text-xl text-emerald-700 border-b-2 border-emerald-200 py-0 outline-none focus:border-emerald-500 text-center" value="4">
                             </div>
                         </div>
-                    </div>
-
-                    <div class="col-span-1 md:col-span-2">
-                        <h3 class="flex items-center gap-2 font-bold text-blue-800 text-sm uppercase tracking-wider mb-4 border-b pb-2">
-                            <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded flex items-center justify-center text-xs">C</span> 
-                            Detail Pembelajaran
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold mb-1 text-slate-600 uppercase">Mata Pelajaran</label>
-                                <input type="text" id="mapel" class="w-full border border-slate-300 bg-slate-50 p-3 rounded-lg focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" placeholder="Contoh: Matematika">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold mb-1 text-slate-600 uppercase">Fase / Kelas</label>
-                                <input type="text" id="kelas" class="w-full border border-slate-300 bg-slate-50 p-3 rounded-lg focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" placeholder="Contoh: Fase E, XII">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-xs font-bold mb-1 text-slate-600 uppercase text-indigo-700">JP Per Pekan</label>
-                                <div class="relative">
-                                    <input type="number" id="jpPerWeek" class="w-full border border-slate-300 bg-slate-50 p-3 rounded-lg focus:bg-white focus:ring-2 ring-blue-500 outline-none transition" placeholder="4">
-                                    <span class="absolute right-3 top-3 text-slate-300 font-bold text text-center">Jam Pelajaran</span>
-                                </div>
-                            </div>
-
-                            <div class="md:col-span-4">
-                                <label class="block text-xs font-bold mb-1 text-slate-600 uppercase">Kurikulum</label>
-                                <div class="relative">
-                                    <select id="kurikulum" class="w-full border border-slate-300 bg-slate-50 p-3 rounded-lg focus:bg-white focus:ring-2 ring-blue-500 outline-none transition appearance-none cursor-pointer">
-                                        <option value="KM">Kurikulum Merdeka (KM)</option>
-                                        <option value="K13">Kurikulum 2013 (K13)</option>
-                                    </select>
-
-                                    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-500">▼</div>
-                                </div>
-                            </div>
+                        <div class="mt-3">
+                            <label class="text-[10px] uppercase font-bold text-slate-400">Tgl Sah</label>
+                            <input type="date" id="tanggal_pengesahan" class="w-full text-xs font-medium text-slate-600 border-none p-0 outline-none bg-transparent">
                         </div>
                     </div>
 
                 </div>
+
             </div>
         </main>
 
-        <footer class="bg-white border-t p-4 absolute bottom-0 w-full flex justify-between items-center z-20 shadow-lg">
-            <div class="flex-1 text-xs text-slate-400">Pastikan JP Per Pekan diisi dengan benar.</div>
-            <button onclick="save()" id="btnSave" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition transform active:scale-95 flex items-center gap-2">
+        <footer class="bg-white border-t border-slate-200 p-4 absolute bottom-0 w-full flex justify-end items-center z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+            <button onclick="save()" id="btnSave" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black shadow-lg transition transform active:scale-95 flex items-center gap-2 text-sm">
                 <span>💾</span> Simpan & Lanjut (Analisis) →
             </button>
         </footer>
@@ -120,10 +123,7 @@
 
         async function init() {
             const { data: { session } } = await db.auth.getSession();
-            if (session) {
-                user = session.user;
-                loadProfile();
-            }
+            if (session) { user = session.user; loadProfile(); }
         }
         init();
 
@@ -136,10 +136,12 @@
                 document.getElementById('tanggal_pengesahan').value = data.tanggal_pengesahan || '';
                 document.getElementById('mapel').value = data.mata_pelajaran || '';
                 document.getElementById('kelas').value = data.fase_kelas || '';
+                
                 const v = (data.jenis_kurikulum || 'KM');
-                document.getElementById('kurikulum').value = (String(v).toLowerCase().includes('merdeka')) ? 'KM' : v;
+                const kurVal = (String(v).toLowerCase().includes('merdeka')) ? 'KM' : 'K13';
+                document.getElementById('kurikulum').value = kurVal;
+                
                 document.getElementById('tahun').value = data.tahun_ajaran || '';
-                // Load JP
                 document.getElementById('jpPerWeek').value = data.jp_per_week || '4';
             }
         }
@@ -147,9 +149,6 @@
         async function save() {
             const btn = document.getElementById('btnSave'); 
             btn.innerHTML = '⏳ Menyimpan...'; btn.disabled = true;
-
-            let kur = document.getElementById('kurikulum').value;
-            if ((kur || '').toLowerCase().includes('merdeka')) kur = 'KM';
 
             const payload = {
                 id: user.id,
@@ -159,9 +158,8 @@
                 tanggal_pengesahan: document.getElementById('tanggal_pengesahan').value,
                 mata_pelajaran: document.getElementById('mapel').value,
                 fase_kelas: document.getElementById('kelas').value,
-                jenis_kurikulum: kur,
+                jenis_kurikulum: document.getElementById('kurikulum').value,
                 tahun_ajaran: document.getElementById('tahun').value,
-                // Simpan JP
                 jp_per_week: document.getElementById('jpPerWeek').value,
                 updated_at: new Date()
             };
@@ -169,18 +167,12 @@
             const { error } = await db.from('profiles').upsert(payload);
             
             if(error) {
-                Swal.fire('Gagal Menyimpan', error.message, 'error');
+                Swal.fire('Gagal', error.message, 'error');
                 btn.innerHTML = '<span>💾</span> Simpan & Lanjut (Analisis) →'; btn.disabled = false;
             } else {
-                const Toast = Swal.mixin({
-                    toast: true, position: 'top-end', showConfirmButton: false, timer: 1500,
-                    didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
-                });
-                Toast.fire({ icon: 'success', title: 'Profil & JP tersimpan!' });
-                
-                setTimeout(() => {
-                    window.location.href = 'step2_analisis.html';
-                }, 1000);
+                const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 1000});
+                Toast.fire({ icon: 'success', title: 'Profil Tersimpan' });
+                setTimeout(() => window.location.href = 'step2_analisis.html', 1000);
             }
         }
     </script>

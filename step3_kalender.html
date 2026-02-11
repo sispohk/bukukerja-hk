@@ -25,12 +25,16 @@
 
     <div class="flex-1 flex flex-col relative min-w-0">
         
-        <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-10 flex justify-between items-center shrink-0">
+        <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-20 flex justify-between items-center shrink-0">
             <div>
                 <h1 class="text-xl font-bold text-slate-900">3. Kalender Akademik</h1>
                 <p class="text-xs text-slate-500">Klik tanggal untuk menandai Libur, Ujian, atau Kegiatan Sekolah.</p>
             </div>
             <div class="flex items-center gap-3">
+                <div class="text-right hidden md:block mr-4 border-r pr-4 border-slate-200">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tahun Ajaran</div>
+                    <div class="text-lg font-black text-indigo-600 leading-none" id="displayTahun">...</div>
+                </div>
                 <button onclick="resetCalendar()" class="bg-red-50 text-red-700 px-3 py-2 rounded-lg font-bold hover:bg-red-100 border border-red-200 text-xs flex items-center gap-1 transition">
                     🔄 Reset Semua
                 </button>
@@ -80,24 +84,9 @@
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
     let user;
     let holidays = {}; 
-    let profile = {}; // Simpan data profil global
-    
-    // Config Tahun & Bulan
-    const START_YEAR = 2025; 
-    const MONTHS = [
-        {m: 6, y: START_YEAR, name: "Juli 2025"},
-        {m: 7, y: START_YEAR, name: "Agustus 2025"},
-        {m: 8, y: START_YEAR, name: "September 2025"},
-        {m: 9, y: START_YEAR, name: "Oktober 2025"},
-        {m: 10, y: START_YEAR, name: "November 2025"},
-        {m: 11, y: START_YEAR, name: "Desember 2025"},
-        {m: 0, y: START_YEAR + 1, name: "Januari 2026"},
-        {m: 1, y: START_YEAR + 1, name: "Februari 2026"},
-        {m: 2, y: START_YEAR + 1, name: "Maret 2026"},
-        {m: 3, y: START_YEAR + 1, name: "April 2026"},
-        {m: 4, y: START_YEAR + 1, name: "Mei 2026"},
-        {m: 5, y: START_YEAR + 1, name: "Juni 2026"}
-    ];
+    let profile = {}; 
+    let startYear = 2025; // Default fallback
+    let MONTHS = []; // Akan diisi dinamis
 
     const DAY_NAMES = ["A", "S", "S", "R", "K", "J", "S"]; 
 
@@ -108,23 +97,50 @@
     init();
 
     async function loadData() {
-        // 1. AMBIL PROFIL GURU (PENTING untuk Subject Name)
+        // 1. AMBIL PROFIL GURU & TAHUN AJARAN
         const { data: profileData } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
-        if(profileData) profile = profileData;
+        if(profileData) {
+            profile = profileData;
+            // Parse tahun ajaran dari string "2026/2027" -> 2026
+            if (profile.tahun_ajaran) {
+                const match = profile.tahun_ajaran.match(/^(\d{4})/);
+                if (match) startYear = parseInt(match[1]);
+            }
+        }
+        document.getElementById('displayTahun').innerText = `${startYear}/${startYear+1}`;
 
-        // 2. AMBIL DRAFT KALENDER
+        // 2. GENERATE BULAN BERDASARKAN TAHUN
+        generateMonths();
+
+        // 3. AMBIL DRAFT KALENDER
         const { data } = await db.from('work_drafts').select('*')
             .eq('user_id', user.id).eq('doc_type', 'calendar_data').maybeSingle();
         if (data && data.content_data) holidays = data.content_data.holidays || {};
         
         renderCalendar();
-        updateStats();
+        updateStats(); // Ini akan otomatis memfilter tanggal yang salah tahun
+    }
+
+    function generateMonths() {
+        MONTHS = [
+            {m: 6, y: startYear, name: "Juli " + startYear},
+            {m: 7, y: startYear, name: "Agustus " + startYear},
+            {m: 8, y: startYear, name: "September " + startYear},
+            {m: 9, y: startYear, name: "Oktober " + startYear},
+            {m: 10, y: startYear, name: "November " + startYear},
+            {m: 11, y: startYear, name: "Desember " + startYear},
+            {m: 0, y: startYear + 1, name: "Januari " + (startYear + 1)},
+            {m: 1, y: startYear + 1, name: "Februari " + (startYear + 1)},
+            {m: 2, y: startYear + 1, name: "Maret " + (startYear + 1)},
+            {m: 3, y: startYear + 1, name: "April " + (startYear + 1)},
+            {m: 4, y: startYear + 1, name: "Mei " + (startYear + 1)},
+            {m: 5, y: startYear + 1, name: "Juni " + (startYear + 1)}
+        ];
     }
 
     function renderCalendar() {
         const container = document.getElementById('calendarGrid');
         container.innerHTML = '';
-        // "Hari Ini" logic dihapus agar kalender bersih
 
         MONTHS.forEach((cfg) => {
             const daysInMonth = new Date(cfg.y, cfg.m + 1, 0).getDate();
@@ -148,7 +164,6 @@
                 const status = holidays[dateKey] || "";
                 const dayOfWeek = new Date(cfg.y, cfg.m, d).getDay();
 
-                // --- LOGIKA WARNA ---
                 let bgClass = "bg-white hover:bg-slate-50 text-slate-700 rounded-lg";
                 let borderClass = "border border-slate-100";
                 
@@ -242,8 +257,17 @@
         }
     }
 
+    // --- REVISI: FILTER TAHUN AJARAN ---
     function updateStats() {
-        document.getElementById('totalLibur').innerText = Object.keys(holidays).length;
+        const validKeys = Object.keys(holidays).filter(k => {
+            const [y, m, d] = k.split('-').map(Number);
+            // S1: Juli (7) - Des (12) di tahun startYear
+            // S2: Jan (1) - Juni (6) di tahun startYear + 1
+            if (y === startYear && m >= 7) return true;
+            if (y === startYear + 1 && m <= 6) return true;
+            return false;
+        });
+        document.getElementById('totalLibur').innerText = validKeys.length;
     }
 
     async function resetCalendar() {
@@ -255,7 +279,16 @@
         const btn = document.getElementById('btnSave'); 
         btn.innerHTML = '⏳ Menyimpan...'; btn.disabled = true;
 
-        // FIX DATABASE ERROR: Kirim data profil (subject_name, grade, dll)
+        // BERSIHKAN DATA SAMPAH (Tahun lama dihapus)
+        const cleanHolidays = {};
+        Object.keys(holidays).forEach(k => {
+            const [y, m, d] = k.split('-').map(Number);
+            // Simpan hanya jika masuk range tahun ajaran aktif
+            if ((y === startYear && m >= 7) || (y === startYear + 1 && m <= 6)) {
+                cleanHolidays[k] = holidays[k];
+            }
+        });
+
         const payload = {
             user_id: user.id,
             doc_type: 'calendar_data',
@@ -265,12 +298,12 @@
             grade_level: profile.fase_kelas || 'Umum',
             curriculum_type: profile.jenis_kurikulum || 'Merdeka',
 
-            content_data: { holidays: holidays },
+            content_data: { holidays: cleanHolidays }, // Simpan yang bersih saja
             status: 'draft'
         };
 
         const { error } = await db.from('work_drafts').upsert(payload, { 
-            onConflict: 'user_id,doc_type' // Spasi sudah dihapus
+            onConflict: 'user_id,doc_type' 
         });
 
         if (error) {

@@ -11,99 +11,140 @@
     <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
     <script src="layout.js"></script>
+    <style>
+        .input-jp::-webkit-inner-spin-button, 
+        .input-jp::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
 </head>
 
-<body class="bg-slate-100 text-slate-800 h-screen flex font-sans overflow-hidden">
+<body class="bg-slate-50 text-slate-800 h-screen flex font-sans overflow-hidden">
 
     <div id="sidebar-container"></div>
 
     <div class="flex-1 flex flex-col relative min-w-0">
         
-        <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-10 flex justify-between items-center shrink-0">
+        <header class="h-20 bg-white border-b border-slate-200 px-6 py-3 shadow-sm z-10 flex justify-between items-center shrink-0">
             <div>
-                <h1 class="text-xl font-bold text-slate-900">5. Program Tahunan (Prota)</h1>
-                <p class="text-xs text-slate-500">Distribusikan JP Materi agar sesuai dengan ketersediaan waktu.</p>
+                <h1 class="text-lg font-bold text-slate-900">5. Program Tahunan (Prota)</h1>
+                <p class="text-xs text-slate-500">Distribusikan JP Materi ke dalam Semester.</p>
             </div>
-            <a href="step2_analisis.html" class="bg-white border border-slate-300 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 hover:text-blue-600 transition flex items-center gap-2 shadow-sm">
-                <span>✏️</span> Edit Data Materi (Step 2)
-            </a>
+
+            <div class="flex items-center gap-4">
+                <div id="p5Container" class="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full shadow-sm">
+                    <span class="text-[10px] font-bold text-amber-700 uppercase">Mode P5:</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleP5" class="sr-only peer" onchange="updateP5Calc()">
+                        <div class="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                    <select id="p5Percent" onchange="updateP5Calc()" disabled class="text-xs font-bold border-none bg-transparent text-slate-600 disabled:opacity-30 focus:ring-0 cursor-pointer p-0 outline-none w-14">
+                        <option value="0.2">20%</option>
+                        <option value="0.25" selected>25%</option>
+                        <option value="0.3">30%</option>
+                    </select>
+                </div>
+            </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-8 pb-32 bg-slate-100">
+        <main class="flex-1 overflow-y-auto p-6 bg-slate-100 pb-32">
             
-            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex flex-col md:flex-row justify-between items-center shadow-sm gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">ℹ️</div>
-                    <div>
-                        <h3 class="text-sm font-bold text-blue-800">Ketersediaan Waktu</h3>
-                        <p class="text-xs text-blue-600">Total JP Efektif dari Kalender.</p>
+            <div id="kpi_grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 transition-all duration-300">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden pl-4">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-slate-600"></div>
+                    <div class="text-[10px] uppercase font-bold text-slate-400 mb-1">Total Tersedia (RPE)</div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-2xl font-black text-slate-800" id="disp_total_raw">0</span>
+                        <span class="text-xs font-bold text-slate-500">JP</span>
                     </div>
                 </div>
-                <div class="flex gap-8 text-right">
-                    <div>
-                        <span class="text-[10px] text-slate-500 block uppercase font-bold">Target Smt 1</span>
-                        <span class="text-xl font-extrabold text-slate-800" id="supply_s1">0 JP</span>
+                <div id="card_p5" class="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm relative overflow-hidden pl-4">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+                    <div class="text-[10px] uppercase font-bold text-amber-600 mb-1">Potongan P5 (Projek)</div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-2xl font-black text-amber-700" id="disp_total_p5">0</span>
+                        <span class="text-xs font-bold text-amber-600">JP</span>
                     </div>
-                    <div>
-                        <span class="text-[10px] text-slate-500 block uppercase font-bold">Target Smt 2</span>
-                        <span class="text-xl font-extrabold text-slate-800" id="supply_s2">0 JP</span>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden pl-4">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
+                    <div class="absolute right-0 top-0 p-3 opacity-10 text-blue-600 text-4xl font-black">Target</div>
+                    <div class="text-[10px] uppercase font-bold text-blue-600 mb-1">Jatah Materi (Intra)</div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-2xl font-black text-blue-700" id="disp_total_intra">0</span>
+                        <span class="text-xs font-bold text-blue-600">JP</span>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden pl-4">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                    <div class="text-[10px] uppercase font-bold text-slate-400 mb-1">Status Distribusi</div>
+                    <div id="status_badge" class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-500 mt-1">
+                        Menghitung...
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-4 justify-between items-center">
-                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
-                        <span class="w-2 h-6 bg-blue-500 rounded-full"></span> Semester 1 (Ganjil)
-                    </h3>
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6 relative pl-1">
+                <div class="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
+                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full"></span> Semester 1 (Ganjil)
+                        </h3>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Target: <b id="target_s1" class="text-slate-700">0</b> JP Intra</p>
+                    </div>
                     
-                    <div class="flex items-center gap-3">
-                        <button onclick="autoFitJP(1)" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow flex items-center gap-1 transition transform active:scale-95" title="Sesuaikan JP materi dengan total tersedia">
-                            <span>⚡</span> Auto Fit JP
-                        </button>
-                        <div class="text-xs font-bold bg-white border px-3 py-1.5 rounded-lg shadow-sm">
-                            Terpakai: <span id="used_s1" class="text-blue-600 text-sm">0</span> JP
+                    <div class="flex items-center gap-2">
+                        <div class="h-9 bg-white border border-slate-200 px-3 rounded-lg shadow-sm flex items-center gap-2 min-w-[110px]">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Terpakai</span>
+                            <span id="used_s1" class="text-lg font-black text-slate-300 ml-auto mr-1">0</span>
                         </div>
+                        <button onclick="autoFitJP(1)" class="h-9 bg-indigo-600 text-white px-4 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-md transition flex items-center gap-2 transform active:scale-95 border border-indigo-600">
+                            <span>⚡</span> Auto Fit
+                        </button>
                     </div>
                 </div>
                 <table class="w-full text-sm text-left">
-                    <thead class="bg-white text-slate-500 font-bold uppercase text-[10px] border-b">
+                    <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] border-b">
                         <tr>
-                            <th class="p-4 w-12 text-center">No</th>
-                            <th class="p-4">Materi Pokok (Elemen)</th>
-                            <th class="p-4 w-1/3">Tujuan Pembelajaran (TP)</th>
-                            <th class="p-4 w-24 text-center">JP</th>
+                            <th class="p-4 w-10 text-center">No</th>
+                            <th class="p-4 w-1/4">Materi Pokok</th>
+                            <th class="p-4">Tujuan Pembelajaran (TP)</th>
+                            <th class="p-4 w-24 text-center">Alokasi JP</th>
                         </tr>
                     </thead>
-                    <tbody id="tbody_s1" class="divide-y divide-slate-100"></tbody>
+                    <tbody id="tbody_s1" class="divide-y divide-slate-100 text-xs"></tbody>
                 </table>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-4 justify-between items-center">
-                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
-                        <span class="w-2 h-6 bg-purple-500 rounded-full"></span> Semester 2 (Genap)
-                    </h3>
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6 relative pl-1">
+                <div class="absolute top-0 left-0 w-1 h-full bg-purple-600"></div>
+                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <span class="w-2 h-2 bg-purple-500 rounded-full"></span> Semester 2 (Genap)
+                        </h3>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Target: <b id="target_s2" class="text-slate-700">0</b> JP Intra</p>
+                    </div>
                     
-                    <div class="flex items-center gap-3">
-                        <button onclick="autoFitJP(2)" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow flex items-center gap-1 transition transform active:scale-95" title="Sesuaikan JP materi dengan total tersedia">
-                            <span>⚡</span> Auto Fit JP
-                        </button>
-                        <div class="text-xs font-bold bg-white border px-3 py-1.5 rounded-lg shadow-sm">
-                            Terpakai: <span id="used_s2" class="text-purple-600 text-sm">0</span> JP
+                    <div class="flex items-center gap-2">
+                        <div class="h-9 bg-white border border-slate-200 px-3 rounded-lg shadow-sm flex items-center gap-2 min-w-[110px]">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Terpakai</span>
+                            <span id="used_s2" class="text-lg font-black text-slate-300 ml-auto mr-1">0</span>
                         </div>
+                        <button onclick="autoFitJP(2)" class="h-9 bg-indigo-600 text-white px-4 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-md transition flex items-center gap-2 transform active:scale-95 border border-indigo-600">
+                            <span>⚡</span> Auto Fit
+                        </button>
                     </div>
                 </div>
                 <table class="w-full text-sm text-left">
                     <thead class="bg-white text-slate-500 font-bold uppercase text-[10px] border-b">
                         <tr>
-                            <th class="p-4 w-12 text-center">No</th>
-                            <th class="p-4">Materi Pokok (Elemen)</th>
-                            <th class="p-4 w-1/3">Tujuan Pembelajaran (TP)</th>
-                            <th class="p-4 w-24 text-center">JP</th>
+                            <th class="p-4 w-10 text-center">No</th>
+                            <th class="p-4 w-1/4">Materi Pokok</th>
+                            <th class="p-4">Tujuan Pembelajaran (TP)</th>
+                            <th class="p-4 w-24 text-center">Alokasi JP</th>
                         </tr>
                     </thead>
-                    <tbody id="tbody_s2" class="divide-y divide-slate-100"></tbody>
+                    <tbody id="tbody_s2" class="divide-y divide-slate-100 text-xs"></tbody>
                 </table>
             </div>
 
@@ -120,38 +161,97 @@
 <script>
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
     let user, profile = {}, allMaterials = [], allocation = {};
+    let rawJP_S1 = 0, rawJP_S2 = 0; 
+    let p5_S1 = 0, p5_S2 = 0;
+    let intra_S1 = 0, intra_S2 = 0;
 
     async function init() {
         const { data: { session } } = await db.auth.getSession();
         if (session) { user = session.user; loadData(); }
+        else { window.location.href = 'index.html'; }
     }
     init();
 
     async function loadData() {
-        // Load data penting
-        const [prof, cp, alloc] = await Promise.all([
+        const [prof, cp, alloc, protaExist] = await Promise.all([
             db.from('profiles').select('*').eq('id', user.id).maybeSingle(),
             db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'master_cp_atp').maybeSingle(),
-            db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'allocation_data').maybeSingle()
+            db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'allocation_data').maybeSingle(),
+            db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'prota_data').maybeSingle()
         ]);
 
-        if(prof.data) profile = prof.data;
-        
-        // 1. Load Materials (Sumber Kebenaran: Step 2)
-        if(cp.data && cp.data.content_data) {
-            allMaterials = cp.data.content_data; 
+        if(prof.data) {
+            profile = prof.data;
+            const kur = (profile.jenis_kurikulum || '').toUpperCase();
+            if (kur.includes('13') || kur.includes('K13') || kur.includes('2013')) {
+                const p5Container = document.getElementById('p5Container');
+                if(p5Container) p5Container.style.display = 'none'; 
+                const toggle = document.getElementById('toggleP5');
+                if(toggle) toggle.checked = false;
+                const cardP5 = document.getElementById('card_p5');
+                if(cardP5) cardP5.style.display = 'none';
+                const grid = document.getElementById('kpi_grid');
+                if(grid) {
+                    grid.classList.remove('md:grid-cols-4');
+                    grid.classList.add('md:grid-cols-3');
+                }
+            }
         }
 
-        // 2. Load Allocation Supply (Referensi dari Step 4)
+        if(cp.data && cp.data.content_data) allMaterials = cp.data.content_data; 
         if(alloc.data && alloc.data.content_data) {
             allocation = alloc.data.content_data;
-            document.getElementById('supply_s1').innerText = (allocation.s1?.jp || 0) + " JP";
-            document.getElementById('supply_s2').innerText = (allocation.s2?.jp || 0) + " JP";
+            rawJP_S1 = (allocation.s1?.jp || 0);
+            rawJP_S2 = (allocation.s2?.jp || 0);
         }
+
+        if(protaExist.data && protaExist.data.content_data && protaExist.data.content_data.p5_settings) {
+            const p5 = protaExist.data.content_data.p5_settings;
+            const kur = (profile.jenis_kurikulum || '').toUpperCase();
+            if (!(kur.includes('13') || kur.includes('K13'))) {
+                document.getElementById('toggleP5').checked = p5.active || false;
+                if(p5.percentage) document.getElementById('p5Percent').value = p5.percentage;
+            }
+        }
+
+        updateP5Calc(); 
+    }
+
+    function updateP5Calc() {
+        const isP5 = document.getElementById('toggleP5').checked;
+        const percentInput = document.getElementById('p5Percent');
+        
+        percentInput.disabled = !isP5;
+        percentInput.classList.toggle('text-slate-400', !isP5);
+        percentInput.classList.toggle('text-amber-700', isP5);
+
+        if (isP5) {
+            const pct = parseFloat(percentInput.value);
+            let tempP5_S1 = Math.round(rawJP_S1 * pct);
+            let tempP5_S2 = Math.round(rawJP_S2 * pct);
+            let tempIntra_S1 = rawJP_S1 - tempP5_S1;
+            let tempIntra_S2 = rawJP_S2 - tempP5_S2;
+
+            if (tempIntra_S1 % 2 !== 0) { tempP5_S1 += 1; tempIntra_S1 -= 1; }
+            if (tempIntra_S2 % 2 !== 0) { tempP5_S2 += 1; tempIntra_S2 -= 1; }
+
+            p5_S1 = tempP5_S1; intra_S1 = tempIntra_S1;
+            p5_S2 = tempP5_S2; intra_S2 = tempIntra_S2;
+        } else {
+            p5_S1 = 0; p5_S2 = 0;
+            intra_S1 = rawJP_S1; intra_S2 = rawJP_S2;
+        }
+
+        document.getElementById('disp_total_raw').innerText = (rawJP_S1 + rawJP_S2);
+        document.getElementById('disp_total_p5').innerText = (p5_S1 + p5_S2);
+        document.getElementById('disp_total_intra').innerText = (intra_S1 + intra_S2);
+        
+        document.getElementById('target_s1').innerText = intra_S1;
+        document.getElementById('target_s2').innerText = intra_S2;
 
         renderTable(1);
         renderTable(2);
-        calculateUsage();
+        calculateUsage(); 
     }
 
     function renderTable(sem) {
@@ -160,7 +260,7 @@
         const items = allMaterials.filter(m => m.semester == sem);
 
         if(items.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic text-xs">Tidak ada materi untuk Semester ${sem}. Cek Step 2.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Materi Semester ${sem} kosong. Cek Step 2.</td></tr>`;
             return;
         }
 
@@ -168,18 +268,33 @@
             const jp = item.alokasi_jp || 0;
             tbody.innerHTML += `
                 <tr class="hover:bg-slate-50 transition border-b group">
-                    <td class="p-4 text-center text-slate-400 text-xs">${idx + 1}</td>
-                    <td class="p-4">
-                        <div class="font-bold text-slate-700 text-xs">${item.elemen || 'Tanpa Judul'}</div>
-                    </td>
-                    <td class="p-4 text-xs text-slate-600 leading-relaxed">${item.detail_tp || item.deskripsi}</td>
+                    <td class="p-4 text-center text-slate-400">${idx + 1}</td>
+                    <td class="p-4 font-bold text-slate-700">${item.elemen || 'Tanpa Judul'}</td>
+                    <td class="p-4 text-slate-600 leading-relaxed line-clamp-2">${item.detail_tp || item.deskripsi}</td>
                     <td class="p-4 text-center">
-                        <input type="number" value="${jp}" 
+                        <input type="number" value="${jp}" min="0"
                             onchange="updateJP('${item.elemen}', this.value, ${sem})"
-                            class="w-16 text-center border border-slate-200 bg-slate-50 rounded p-1 text-xs font-bold focus:ring-2 ring-blue-500 outline-none transition">
+                            class="input-jp w-16 text-center border-2 border-slate-200 bg-white rounded-lg py-1.5 text-sm font-bold focus:ring-2 ring-indigo-500 focus:border-indigo-500 outline-none transition text-slate-700"
+                            data-sem="${sem}">
                     </td>
                 </tr>`;
         });
+
+        const p5Val = (sem === 1) ? p5_S1 : p5_S2;
+        if (p5Val > 0) {
+            tbody.innerHTML += `
+                <tr class="bg-amber-50/50 border-t border-amber-100">
+                    <td class="p-4 text-center text-amber-500 font-bold">P5</td>
+                    <td class="p-4 font-bold text-amber-700">Projek Penguatan Profil Pelajar Pancasila</td>
+                    <td class="p-4 text-amber-600 italic">Alokasi Kokurikuler</td>
+                    <td class="p-4 text-center">
+                        <div class="w-16 mx-auto py-1.5 bg-amber-100 text-amber-700 rounded-lg font-bold text-sm border border-amber-200 cursor-not-allowed opacity-80">
+                            ${p5Val}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
     }
 
     function updateJP(elemenName, newVal, sem) {
@@ -191,110 +306,118 @@
     }
 
     function calculateUsage() {
-        const s1 = allMaterials.filter(m => m.semester == 1).reduce((sum, m) => sum + (parseInt(m.alokasi_jp)||0), 0);
-        const s2 = allMaterials.filter(m => m.semester == 2).reduce((sum, m) => sum + (parseInt(m.alokasi_jp)||0), 0);
+        const s1_mat = allMaterials.filter(m => m.semester == 1).reduce((sum, m) => sum + (parseInt(m.alokasi_jp)||0), 0);
+        const s2_mat = allMaterials.filter(m => m.semester == 2).reduce((sum, m) => sum + (parseInt(m.alokasi_jp)||0), 0);
 
         const el1 = document.getElementById('used_s1');
         const el2 = document.getElementById('used_s2');
         
-        el1.innerText = s1; el2.innerText = s2;
+        el1.innerText = s1_mat;
+        el2.innerText = s2_mat;
         
-        const supply1 = allocation.s1?.jp || 0;
-        const supply2 = allocation.s2?.jp || 0;
-        
-        el1.className = s1 > supply1 ? "text-rose-600 font-bold animate-pulse" : (s1 === supply1 ? "text-emerald-600 font-bold" : "text-blue-600");
-        el2.className = s2 > supply2 ? "text-rose-600 font-bold animate-pulse" : (s2 === supply2 ? "text-emerald-600 font-bold" : "text-purple-600");
+        const checkStatus = (el, current, target) => {
+            if (current === target) {
+                el.className = "text-lg font-black text-emerald-500"; 
+                return true;
+            } else if (current > target) {
+                el.className = "text-lg font-black text-rose-500"; 
+                return false;
+            } else {
+                el.className = "text-lg font-black text-amber-500"; 
+                return false;
+            }
+        };
+
+        const ok1 = checkStatus(el1, s1_mat, intra_S1);
+        const ok2 = checkStatus(el2, s2_mat, intra_S2);
+
+        const badge = document.getElementById('status_badge');
+        if (ok1 && ok2) {
+            badge.className = "inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-100 text-emerald-700";
+            badge.innerText = "✅ SEIMBANG";
+        } else {
+            const diff = (intra_S1 + intra_S2) - (s1_mat + s2_mat);
+            badge.className = "inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-700";
+            badge.innerText = `⚠️ Selisih ${Math.abs(diff)} JP`;
+        }
     }
 
-    // --- FITUR AUTO FIT JP ---
     function autoFitJP(sem) {
-        const supply = (sem === 1) ? (allocation.s1?.jp || 0) : (allocation.s2?.jp || 0);
-        if (supply <= 0) return Swal.fire('Error', 'Data Alokasi Waktu (Step 4) belum ada atau 0 JP.', 'error');
-
+        const targetIntra = (sem === 1) ? intra_S1 : intra_S2;
         const items = allMaterials.filter(m => m.semester == sem);
-        const itemCount = items.length;
-        if (itemCount === 0) return Swal.fire('Kosong', 'Tidak ada materi di semester ini.', 'warning');
-
-        const currentUsed = items.reduce((sum, m) => sum + (parseInt(m.alokasi_jp) || 0), 0);
-        const diff = supply - currentUsed;
-
-        if (diff === 0) return Swal.fire('Sudah Pas', 'Total JP materi sudah sesuai dengan ketersediaan.', 'info');
+        
+        if (targetIntra <= 0 || items.length === 0) return;
 
         Swal.fire({
-            title: 'Sesuaikan Otomatis?',
-            html: `Target: <b>${supply} JP</b><br>Terpakai: <b>${currentUsed} JP</b><br>Selisih: <b class="${diff>0?'text-green-600':'text-red-600'}">${diff>0?'+':''}${diff} JP</b><br>Akan dibagikan ke ${itemCount} materi.`,
+            title: 'Ratakan JP?',
+            text: `Bagikan ${targetIntra} JP ke ${items.length} materi secara merata (genap).`,
             icon: 'question',
             showCancelButton: true,
-            confirmButtonText: 'Ya, Ratakan'
+            confirmButtonText: 'Ya, Ratakan',
+            confirmButtonColor: '#4f46e5'
         }).then((result) => {
             if (result.isConfirmed) {
-                distributeDiff(items, diff);
+                items.forEach(i => i.alokasi_jp = 0);
+                let remaining = targetIntra;
+                const count = items.length;
+                let base = Math.floor(remaining / count);
+                if (base % 2 !== 0) base -= 1;
+                
+                items.forEach(i => { i.alokasi_jp = base; remaining -= base; });
+                
+                let i = 0;
+                while (remaining >= 2) {
+                    items[i].alokasi_jp += 2;
+                    remaining -= 2;
+                    i = (i + 1) % count;
+                }
+                if (remaining > 0) items[0].alokasi_jp += remaining;
+
                 renderTable(sem);
                 calculateUsage();
-                Swal.fire('Berhasil', 'JP telah disesuaikan.', 'success');
+                Swal.fire('Selesai', '', 'success');
             }
         });
-    }
-
-    function distributeDiff(items, totalDiff) {
-        const count = items.length;
-        let remain = totalDiff;
-        let i = 0;
-        
-        const quickBase = Math.floor(remain / count);
-        if (quickBase !== 0) {
-            items.forEach(m => { m.alokasi_jp = (parseInt(m.alokasi_jp)||0) + quickBase; });
-            remain -= (quickBase * count);
-        }
-
-        while (remain !== 0) {
-            if (remain > 0) {
-                items[i].alokasi_jp += 1;
-                remain--;
-            } else {
-                if (items[i].alokasi_jp > 0) { 
-                    items[i].alokasi_jp -= 1;
-                    remain++;
-                }
-            }
-            i = (i + 1) % count; 
-        }
     }
 
     async function saveAndNext() {
         const btn = document.getElementById('btnSave'); btn.innerHTML = '⏳ Menyimpan...'; btn.disabled = true;
 
-        const semester_1 = allMaterials.filter(m => m.semester == 1);
-        const semester_2 = allMaterials.filter(m => m.semester == 2);
+        const isP5 = document.getElementById('toggleP5').checked;
+        const p5Pct = isP5 ? document.getElementById('p5Percent').value : 0;
 
-        // --- 1. SIMPAN KE PROTA DATA (Format Struktur Semester) ---
         const payloadProta = {
             user_id: user.id, doc_type: 'prota_data',
             subject_name: profile.mata_pelajaran || 'Umum', grade_level: profile.fase_kelas || 'Umum', curriculum_type: profile.jenis_kurikulum || 'Merdeka',
-            content_data: { semester_1, semester_2 },
+            content_data: { 
+                semester_1: allMaterials.filter(m => m.semester == 1), 
+                semester_2: allMaterials.filter(m => m.semester == 2),
+                p5_settings: { active: isP5, percentage: p5Pct }
+            },
             status: 'draft'
         };
-        const saveProta = db.from('work_drafts').upsert(payloadProta, { onConflict: 'user_id,doc_type' });
 
-        // --- 2. SYNC BACK KE MASTER DATA STEP 2 (Agar JP tersimpan permanen di source) ---
         const payloadMaster = {
-            user_id: user.id, doc_type: 'master_cp_atp', // ID Step 2
-            subject_name: profile.mata_pelajaran || 'Umum', grade_level: profile.fase_kelas || 'Umum', curriculum_type: profile.jenis_kurikulum || 'Merdeka',
-            content_data: allMaterials, // Array flat yang sudah di-update JP-nya
+            user_id: user.id, doc_type: 'master_cp_atp', 
+            subject_name: profile.mata_pelajaran || 'Umum', 
+            grade_level: profile.fase_kelas || 'Umum', 
+            curriculum_type: profile.jenis_kurikulum || 'Merdeka',
+            content_data: allMaterials, 
             status: 'confirmed'
         };
-        const saveMaster = db.from('work_drafts').upsert(payloadMaster, { onConflict: 'user_id,doc_type' });
 
-        // Eksekusi Simpan Paralel
-        const [resProta, resMaster] = await Promise.all([saveProta, saveMaster]);
+        const [resProta, resMaster] = await Promise.all([
+            db.from('work_drafts').upsert(payloadProta, { onConflict: 'user_id,doc_type' }),
+            db.from('work_drafts').upsert(payloadMaster, { onConflict: 'user_id,doc_type' })
+        ]);
 
         if (resProta.error || resMaster.error) { 
-            Swal.fire('Gagal', (resProta.error?.message || '') + ' ' + (resMaster.error?.message || ''), 'error'); 
+            console.error(resProta.error, resMaster.error);
+            Swal.fire('Gagal', 'Terjadi kesalahan saat menyimpan.', 'error'); 
             btn.innerHTML = '<span>💾</span> Simpan & Lanjut (Promes) →'; btn.disabled = false; 
-        }
-        else { 
+        } else { 
             const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 1000});
-            Toast.fire({icon: 'success', title: 'Tersimpan & Sinkron ke Step 2'});
+            Toast.fire({icon: 'success', title: 'Prota Tersimpan'});
             setTimeout(() => window.location.href = 'step6_promes.html', 1000);
         }
     }

@@ -13,32 +13,47 @@
     <script src="layout.js"></script>
 
     <style>
-        /* Container agar scrollable & memenuhi ruang */
-        .table-wrapper { position: relative; width: 100%; height: 100%; overflow: auto; }
-        
-        /* Table Layout Fixed agar Sticky Col presisi */
-        table { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: max-content; }
-        
-        /* Sticky Header (Z-Index Level 3) */
-        thead th { position: sticky; top: 0; z-index: 30; background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; }
-        
-        /* Sticky Columns (Z-Index Level 2) */
-        .sticky-col { position: sticky; z-index: 20; background-color: white; border-right: 1px solid #e2e8f0; }
-        
-        /* Perpotongan Header & Column (Z-Index Level 4 - Paling Atas) */
-        thead th.sticky-col { z-index: 40; }
+        /* Hilangkan Spinner Input */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* Konfigurasi Lebar & Posisi Kolom Kiri */
-        .col-no     { left: 0; width: 50px; text-align: center; }
-        .col-materi { left: 50px; width: 350px; } /* Lebar diperbesar dikit agar muat teks panjang */
-        .col-target { left: 400px; width: 60px; text-align: center; background-color: #eff6ff !important; color: #1e40af; border-right: 2px solid #cbd5e1; } /* 50 + 350 = 400px */
+        /* Container Table */
+        .table-container { 
+            overflow-x: auto; 
+            padding-bottom: 20px; 
+            background: white;
+        }
+        
+        table { border-collapse: separate; border-spacing: 0; min-width: max-content; }
+        
+        /* Sticky Header (Hanya Judul Kolom Tabel yang Sticky) */
+        thead th { 
+            position: sticky; top: 0; z-index: 40; 
+            background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; 
+            height: 40px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        /* Konfigurasi Lebar Kolom (Tanpa Sticky Left) */
+        .col-no { width: 50px; text-align: center; }
+        .col-materi { width: 320px; min-width: 320px; max-width: 400px; }
+        .col-target { width: 70px; text-align: center; background-color: #eff6ff !important; color: #1d4ed8; border-right: 2px solid #cbd5e1; }
 
-        /* Interactive Header Colors */
+        /* Text Wrap Logic */
+        .wrap-text { 
+            white-space: normal !important; 
+            word-wrap: break-word; 
+            line-height: 1.4;
+        }
+
+        /* Warna Header Minggu */
         .week-header { cursor: pointer; user-select: none; transition: 0.2s; }
         .week-header:hover { filter: brightness(0.95); }
         .week-full { background-color: #ffffff; color: #64748b; }
         .week-partial { background-color: #fef3c7; color: #d97706; }
         .week-off { background-color: #ffe4e6; color: #e11d48; }
+        
+        .jp-input { font-size: 11px; font-weight: 600; }
     </style>
 </head>
 
@@ -47,73 +62,114 @@
     <div id="sidebar-container"></div>
 
     <div class="flex-1 flex flex-col relative min-w-0">
-        <header class="h-20 bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-10 flex justify-between items-center shrink-0">
+        
+        <header class="h-20 bg-white border-b border-slate-200 px-6 py-3 shadow-sm z-10 flex justify-between items-center shrink-0">
             <div>
-                <h1 class="text-xl font-bold text-slate-900">6. Program Semester (Promes)</h1>
-                <p class="text-xs text-slate-500">Klik angka minggu (1-5) untuk mengurangi kapasitas JP jika kena libur.</p>
+                <h1 class="text-lg font-bold text-slate-900">6. Program Semester (Promes)</h1>
+                <p class="text-xs text-slate-500">Distribusikan JP ke dalam matriks minggu efektif.</p>
             </div>
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-xs font-bold border border-blue-200">
-                    <span id="semesterLabel">Semester Ganjil</span>
-                </div>
+            
+            <div class="hidden md:flex gap-3 text-[10px] items-center font-medium text-slate-500 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
+                <span class="text-xs font-bold text-slate-700 mr-1">Legenda:</span>
+                <div class="flex items-center gap-1"><div class="w-3 h-3 bg-white border border-slate-300 rounded"></div> Efektif</div>
+                <div class="flex items-center gap-1"><div class="w-3 h-3 bg-amber-100 border border-amber-300 rounded"></div> Sebagian</div>
+                <div class="flex items-center gap-1"><div class="w-3 h-3 bg-rose-100 border border-rose-300 rounded"></div> Libur</div>
             </div>
         </header>
 
-        <main class="flex-1 overflow-hidden p-4 bg-slate-100 flex flex-col gap-4">
+        <main class="flex-1 overflow-y-auto p-6 bg-slate-100 pb-32 flex flex-col gap-10">
             
-            <div class="flex flex-wrap gap-4 items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm shrink-0">
-                <div class="flex bg-slate-100 p-1 rounded-lg">
-                    <button onclick="switchSemester(1)" id="btnSem1" class="px-4 py-2 text-xs font-bold rounded shadow-sm bg-white text-blue-700 transition">Smt 1 (Ganjil)</button>
-                    <button onclick="switchSemester(2)" id="btnSem2" class="px-4 py-2 text-xs font-bold rounded text-slate-500 hover:text-slate-700 transition">Smt 2 (Genap)</button>
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col relative pl-1">
+                <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                
+                <div class="px-5 py-4 bg-white border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center shrink-0">
+                    <h3 class="font-bold text-blue-800 text-sm flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-600 rounded-full"></span> Semester 1 (Ganjil)
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="resetMatrix(1)" class="text-[10px] text-rose-600 font-bold px-3 py-1.5 border border-rose-200 rounded hover:bg-rose-50 transition">
+                            Reset Smt 1
+                        </button>
+                        <button onclick="autoDistribute(1)" class="flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded text-[10px] font-bold hover:bg-blue-700 shadow-sm transition">
+                            <span>⚡</span> Isi Otomatis
+                        </button>
+                    </div>
                 </div>
-
-                <div class="flex gap-4 text-[10px] items-center font-medium">
-                    <div class="flex items-center gap-1"><div class="w-3 h-3 bg-white border border-slate-300 rounded"></div> Full</div>
-                    <div class="flex items-center gap-1"><div class="w-3 h-3 bg-amber-100 border border-amber-300 rounded"></div> Sebagian</div>
-                    <div class="flex items-center gap-1"><div class="w-3 h-3 bg-rose-200 border border-rose-300 rounded"></div> Libur (0)</div>
-                    <div class="flex items-center gap-1"><div class="w-3 h-3 bg-emerald-100 border border-emerald-300 rounded"></div> Terisi</div>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <button onclick="autoDistribute()" class="flex items-center gap-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-xs font-bold shadow-md shadow-indigo-200 active:scale-95">
-                        <span>⚡</span> Isi Otomatis
-                    </button>
-                    <button onclick="resetMatrix()" class="text-xs text-rose-500 hover:text-rose-700 font-bold px-3 py-2 border border-rose-200 rounded-lg hover:bg-rose-50 transition">
-                        Reset Total
-                    </button>
+                
+                <div class="table-container">
+                    <table class="text-xs text-left w-full">
+                        <thead>
+                            <tr id="thead_m_1"></tr>
+                            <tr id="thead_w_1"></tr>
+                        </thead>
+                        <tbody id="tbody_1" class="divide-y divide-gray-100 bg-white text-slate-600"></tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex-1 overflow-hidden relative flex flex-col">
-                <div class="table-wrapper custom-scrollbar">
-                    <table class="text-xs text-left">
-                        <thead>
-                            <tr id="headerRowMonths"></tr>
-                            <tr id="headerRowWeeks"></tr>
-                        </thead>
-                        <tbody id="matrixBody" class="divide-y divide-gray-100 bg-white"></tbody>
-                    </table>
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col relative pl-1">
+                <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                
+                <div class="px-5 py-4 bg-white border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center shrink-0">
+                    <h3 class="font-bold text-indigo-800 text-sm flex items-center gap-2">
+                        <span class="w-2 h-2 bg-indigo-600 rounded-full"></span> Semester 2 (Genap)
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="resetMatrix(2)" class="text-[10px] text-rose-600 font-bold px-3 py-1.5 border border-rose-200 rounded hover:bg-rose-50 transition">
+                            Reset Smt 2
+                        </button>
+                        <button onclick="autoDistribute(2)" class="flex items-center gap-1 bg-indigo-600 text-white px-3 py-1.5 rounded text-[10px] font-bold hover:bg-indigo-700 shadow-sm transition">
+                            <span>⚡</span> Isi Otomatis
+                        </button>
+                    </div>
                 </div>
                 
-                <div id="loadingOverlay" class="absolute inset-0 bg-white/90 flex items-center justify-center z-50">
-                    <div class="flex flex-col items-center">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-                        <span class="text-xs font-bold text-slate-500">Memuat Data...</span>
+                <div class="table-container">
+                    <table class="text-xs text-left w-full">
+                        <thead>
+                            <tr id="thead_m_2"></tr>
+                            <tr id="thead_w_2"></tr>
+                        </thead>
+                        <tbody id="tbody_2" class="divide-y divide-gray-100 bg-white text-slate-600"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="p5Banner" class="hidden mt-4 bg-amber-50 border border-amber-200 rounded-xl relative pl-1 overflow-visible shadow-sm">
+                <div class="absolute top-0 left-0 w-1 h-full bg-amber-500 rounded-l-xl"></div>
+                <div class="p-4 flex items-start gap-4">
+                    <span class="text-2xl pt-1">💡</span>
+                    <div>
+                        <h4 class="font-bold text-amber-800 text-sm uppercase tracking-wide mb-1">Mode P5 Aktif</h4>
+                        <p class="text-xs text-amber-700 leading-relaxed">
+                            Baris <b>Projek Penguatan Profil Pelajar Pancasila (P5)</b> telah ditambahkan otomatis di bagian bawah setiap tabel semester.<br>
+                            Isi alokasi P5 secara manual sesuai sistem blok atau reguler di sekolah Anda.
+                        </p>
                     </div>
                 </div>
             </div>
+
         </main>
 
-        <footer class="h-20 bg-white border-t border-slate-200 px-6 absolute bottom-0 w-full flex justify-between items-center z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <footer class="h-20 bg-white border-t border-slate-200 px-6 absolute bottom-0 w-full flex justify-between items-center z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             <a href="step5_prota.html" class="px-4 py-2 text-slate-500 font-bold hover:text-slate-800 text-sm transition flex items-center gap-1"><span>←</span> Kembali</a>
-            <button onclick="save()" id="btnSave" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition transform active:scale-95 flex items-center gap-2 text-sm"><span>💾</span> Simpan & Lanjut (Modul Ajar) →</button>
+            <button onclick="save()" id="btnSave" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition transform active:scale-95 flex items-center gap-2 text-sm">
+                <span>💾</span> Simpan & Lanjut (Modul Ajar) →
+            </button>
         </footer>
+    </div>
+
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/90 flex items-center justify-center z-50">
+        <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-4 border-slate-200 border-t-blue-600 mb-4"></div>
+            <span class="text-sm font-bold text-slate-500">Memuat Data Promes...</span>
+        </div>
     </div>
 
 <script>
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
-    let user, profile = {}, protaData = {}, promesData = {}, currentSemester = 1;
-    let jpPerWeekGlobal = 4; // Default
+    let user, profile = {}, protaData = {}, localPromes = {};
+    let jpPerWeekGlobal = 4;
     let calendarHolidays = {}; 
 
     const MONTH_CONFIG = {
@@ -121,18 +177,19 @@
         2: ["Januari", "Februari", "Maret", "April", "Mei", "Juni"]
     };
 
-    // State Lokal
-    let matrixValues = {}; 
-    let weekCapacities = {}; 
+    let appState = {
+        1: { values: {}, capacities: {}, materi: [] },
+        2: { values: {}, capacities: {}, materi: [] }
+    };
 
     async function init() {
         const { data: { session } } = await db.auth.getSession();
         if (session) { user = session.user; loadData(); }
+        else { window.location.href = 'index.html'; }
     }
     init();
 
     async function loadData() {
-        // Load Data Paralel
         const [prof, d5, d3, d6] = await Promise.all([
             db.from('profiles').select('*').eq('id', user.id).maybeSingle(),
             db.from('work_drafts').select('*').eq('user_id', user.id).eq('doc_type', 'prota_data').maybeSingle(),
@@ -142,59 +199,63 @@
 
         if(prof.data) { 
             profile = prof.data; 
-            // Ambil JP Per Pekan dari profil
             jpPerWeekGlobal = parseInt(profile.jp_per_week) || parseInt(profile.jumlah_jp) || 4; 
         }
         if(d5.data && d5.data.content_data) protaData = d5.data.content_data;
         if(d3.data && d3.data.content_data && d3.data.content_data.holidays) calendarHolidays = d3.data.content_data.holidays;
-        if(d6.data && d6.data.content_data) promesData = d6.data.content_data;
+        if(d6.data && d6.data.content_data) localPromes = d6.data.content_data;
+
+        initSemesterState(1);
+        initSemesterState(2);
+
+        renderTable(1);
+        renderTable(2);
+
+        if(protaData.p5_settings && protaData.p5_settings.active) {
+            document.getElementById('p5Banner').classList.remove('hidden');
+        }
 
         document.getElementById('loadingOverlay').classList.add('hidden');
-        
-        currentSemester = 1;
-        loadFromMemory(1);
-        updateUIButtons(1);
-        renderTable();
     }
 
-    function switchSemester(sem) {
-        saveToMemory();
-        currentSemester = sem;
-        loadFromMemory(sem);
-        updateUIButtons(sem);
-        renderTable();
-    }
-
-    function updateUIButtons(sem) {
-        const btn1 = document.getElementById('btnSem1'), btn2 = document.getElementById('btnSem2'), label = document.getElementById('semesterLabel');
-        if(sem === 1) {
-            btn1.className = "px-4 py-2 text-xs font-bold rounded shadow-sm bg-white text-blue-700 transition";
-            btn2.className = "px-4 py-2 text-xs font-bold rounded text-slate-500 hover:text-slate-700 transition";
-            label.innerText = "Semester Ganjil";
-        } else {
-            btn1.className = "px-4 py-2 text-xs font-bold rounded text-slate-500 hover:text-slate-700 transition";
-            btn2.className = "px-4 py-2 text-xs font-bold rounded shadow-sm bg-white text-blue-700 transition";
-            label.innerText = "Semester Genap";
-        }
-    }
-
-    // --- LOGIC DATA HANDLING ---
-    function loadFromMemory(sem) {
+    function initSemesterState(sem) {
         const semKey = 'semester_' + sem;
-        if(!promesData[semKey]) {
-            matrixValues = {};
-            weekCapacities = detectCalendarConflicts(sem); 
+        let materiList = [];
+        if (protaData[semKey] && Array.isArray(protaData[semKey])) {
+            materiList = JSON.parse(JSON.stringify(protaData[semKey]));
+        }
+
+        const p5Settings = protaData.p5_settings || { active: false, percentage: 0 };
+        if (p5Settings.active) {
+            const totalIntra = materiList.reduce((acc, item) => acc + (parseInt(item.alokasi_jp)||0), 0);
+            const pct = parseFloat(p5Settings.percentage);
+            const totalGlobal = Math.round(totalIntra / (1 - pct));
+            let jpP5 = totalGlobal - totalIntra;
+            if (jpPerWeekGlobal % 2 === 0 && jpP5 % 2 !== 0) jpP5 += 1; 
+
+            if (jpP5 > 0) {
+                materiList.push({
+                    elemen: "PROJEK P5",
+                    detail_tp: "Tema: Kearifan Lokal / Gaya Hidup Berkelanjutan",
+                    alokasi_jp: jpP5,
+                    is_p5: true
+                });
+            }
+        }
+        appState[sem].materi = materiList;
+
+        if(localPromes[semKey]) {
+            appState[sem].values = localPromes[semKey].values || {};
+            appState[sem].capacities = localPromes[semKey].capacities || detectCalendarConflicts(sem);
         } else {
-            matrixValues = promesData[semKey].values || {};
-            weekCapacities = promesData[semKey].capacities || detectCalendarConflicts(sem);
+            appState[sem].values = {};
+            appState[sem].capacities = detectCalendarConflicts(sem);
         }
     }
 
-    function saveToMemory() {
-        const semKey = 'semester_' + currentSemester;
-        if(!promesData[semKey]) promesData[semKey] = {};
-        promesData[semKey].values = matrixValues;
-        promesData[semKey].capacities = weekCapacities;
+    function getWeeksInMonth(year, monthIdx) {
+        const days = new Date(year, monthIdx + 1, 0).getDate();
+        return days > 28 ? 5 : 4;
     }
 
     function detectCalendarConflicts(sem) {
@@ -206,8 +267,9 @@
             const realMonthIdx = startMonthIdx + mOffset;
             const currentYear = (realMonthIdx > 11) ? yearBase + 1 : yearBase;
             const daysInMonth = new Date(currentYear, realMonthIdx + 1, 0).getDate();
+            const totalWeeks = getWeeksInMonth(currentYear, realMonthIdx);
 
-            for (let w = 1; w <= 5; w++) {
+            for (let w = 1; w <= totalWeeks; w++) {
                 let startDate = (w - 1) * 7 + 1;
                 let endDate = Math.min(w * 7, daysInMonth);
                 const weekKey = `${mOffset}_${w}`;
@@ -218,7 +280,6 @@
                 for (let d = startDate; d <= endDate; d++) {
                     const dateObj = new Date(currentYear, realMonthIdx, d);
                     if (dateObj.getDay() === 0) continue; 
-                    
                     const dateKey = `${currentYear}-${String(realMonthIdx+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                     if (calendarHolidays[dateKey]) { hasHoliday = true; break; }
                 }
@@ -230,204 +291,180 @@
         return caps;
     }
 
-    function toggleCapacity(weekKey) {
-        const current = weekCapacities[weekKey] || 0;
-        // Logic toggle: Full -> Parsial (Setengah) -> Libur -> Full
-        if (current === jpPerWeekGlobal) weekCapacities[weekKey] = Math.floor(jpPerWeekGlobal / 2);
-        else if (current > 0) weekCapacities[weekKey] = 0;
-        else weekCapacities[weekKey] = jpPerWeekGlobal;
+    function toggleCapacity(sem, weekKey) {
+        const current = appState[sem].capacities[weekKey] || 0;
+        let nextVal = 0;
+        if (current === jpPerWeekGlobal) nextVal = Math.floor(jpPerWeekGlobal / 2); 
+        else if (current > 0) nextVal = 0; 
+        else nextVal = jpPerWeekGlobal; 
         
-        if (weekCapacities[weekKey] === 0) {
-            for (const k in matrixValues) if (k.includes(`_${weekKey}`)) delete matrixValues[k];
+        appState[sem].capacities[weekKey] = nextVal;
+        if (nextVal === 0) {
+            for (const k in appState[sem].values) if (k.includes(`_${weekKey}`)) delete appState[sem].values[k];
         }
-        renderTable();
+        renderTable(sem);
     }
 
-    // --- RENDER TABLE ---
-    function renderTable() {
-        const months = MONTH_CONFIG[currentSemester];
-        const hRow1 = document.getElementById('headerRowMonths');
-        const hRow2 = document.getElementById('headerRowWeeks');
+    function renderTable(sem) {
+        const months = MONTH_CONFIG[sem];
+        const hRowM = document.getElementById(`thead_m_${sem}`);
+        const hRowW = document.getElementById(`thead_w_${sem}`);
+        const tbody = document.getElementById(`tbody_${sem}`);
         
-        let htmlM = `<th rowspan="2" class="p-3 sticky-col col-no">No</th>
-                     <th rowspan="2" class="p-3 sticky-col col-materi">Sub-Materi (Tujuan Pembelajaran)</th>
-                     <th rowspan="2" class="p-3 sticky-col col-target">Target</th>`;
+        let htmlM = `<th rowspan="2" class="p-3 col-no bg-slate-50 border-b font-medium">No</th>
+                     <th rowspan="2" class="p-3 col-materi bg-slate-50 border-b font-medium">Materi Pokok / TP</th>
+                     <th rowspan="2" class="p-3 col-target bg-slate-50 border-b border-r font-medium">Target</th>`;
         let htmlW = ``;
 
+        const startMonthIdx = sem === 1 ? 6 : 0;
+        const yearBase = sem === 1 ? 2025 : 2026;
+
         months.forEach((mName, mIdx) => {
-            htmlM += `<th colspan="5" class="p-2 text-center border-r border-slate-200 bg-slate-50 font-bold text-slate-600 w-[160px]">${mName}</th>`;
-            for(let w=1; w<=5; w++) {
+            const realMonthIdx = startMonthIdx + mIdx;
+            const currentYear = (realMonthIdx > 11) ? yearBase + 1 : yearBase;
+            const totalWeeks = getWeeksInMonth(currentYear, realMonthIdx);
+
+            htmlM += `<th colspan="${totalWeeks}" class="p-2 text-center border-r border-slate-200 bg-slate-50 font-bold text-slate-600 min-w-[120px] uppercase text-[9px] tracking-wider">${mName}</th>`;
+            
+            for(let w=1; w<=totalWeeks; w++) {
                 const weekKey = `${mIdx}_${w}`;
-                const cap = weekCapacities[weekKey];
+                const cap = appState[sem].capacities[weekKey];
                 
                 let cssClass = "", title = "", label = w;
-                if (cap === -1 || cap === undefined) { cssClass = "bg-slate-100 text-slate-300 pointer-events-none"; title=""; }
+                if (cap === undefined) { cssClass = "bg-slate-50 text-slate-300 pointer-events-none"; label=w; }
                 else if (cap === 0) { cssClass = "week-off font-bold"; title=`Libur (0 JP)`; }
-                else if (cap < jpPerWeekGlobal) { cssClass = "week-partial font-bold"; title=`Parsial (${cap} JP) - Ada Libur`; label+=`⚠️`; }
+                else if (cap < jpPerWeekGlobal) { cssClass = "week-partial font-bold"; title=`Parsial (${cap} JP)`; }
                 else { cssClass = "week-full"; title=`Full (${cap} JP)`; }
 
-                htmlW += `<th onclick="toggleCapacity('${weekKey}')" class="p-1 w-8 text-center border-r border-slate-200 week-header ${cssClass} text-[10px]" title="${title} (Klik ubah)">${label}</th>`;
+                htmlW += `<th onclick="toggleCapacity(${sem}, '${weekKey}')" class="p-1 w-8 text-center border-r border-slate-200 week-header ${cssClass} text-[10px]" title="${title}">${label}</th>`;
             }
         });
         
-        htmlM += `<th rowspan="2" class="p-3 w-[100px] text-center border-l bg-slate-50">Status</th>`;
-        hRow1.innerHTML = htmlM;
-        hRow2.innerHTML = htmlW;
+        htmlM += `<th rowspan="2" class="p-3 w-[80px] text-center border-l bg-slate-50 shadow-sm border-b">Status</th>`;
+        hRowM.innerHTML = htmlM;
+        hRowW.innerHTML = htmlW;
 
-        const tbody = document.getElementById('matrixBody');
         tbody.innerHTML = '';
-
-        const semKeyProta = 'semester_' + currentSemester;
-        let materiList = [];
-        if (protaData[semKeyProta] && Array.isArray(protaData[semKeyProta])) materiList = protaData[semKeyProta];
-        else if (protaData.semester == currentSemester && protaData.items) materiList = protaData.items;
+        const materiList = appState[sem].materi;
 
         if(materiList.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="40" class="p-8 text-center text-slate-400">Data Materi (Step 5) kosong.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="40" class="p-8 text-center text-slate-400">Data Materi kosong.</td></tr>`;
             return;
         }
 
         materiList.forEach((item, rIdx) => {
             const target = parseInt(item.alokasi_jp) || 0;
-            const babTitle = item.elemen || "Materi Umum";
-            const subTitle = item.detail_tp || item.deskripsi || "Tanpa Judul"; 
-            
+            const isP5 = item.is_p5 === true;
+            const rowClass = isP5 ? "bg-amber-50 hover:bg-amber-100" : "bg-white hover:bg-slate-50";
+            const cellClass = isP5 ? "bg-amber-50" : "bg-white";
+
             let rowHTML = `
-                <td class="p-2 border-b sticky-col col-no text-center bg-white align-top pt-3">${rIdx + 1}</td>
-                <td class="p-2 border-b sticky-col col-materi align-top bg-white">
-                    <div class="text-[9px] text-slate-400 uppercase tracking-wider font-bold mb-0.5">${babTitle}</div>
-                    <div class="font-medium text-slate-800 text-xs whitespace-normal break-words leading-snug">${subTitle}</div>
+                <td class="p-3 border-b border-slate-100 col-no text-center ${cellClass} font-medium align-top">${isP5 ? '*' : rIdx + 1}</td>
+                <td class="p-3 border-b border-slate-100 col-materi align-top ${cellClass}">
+                    <div class="text-[11px] font-bold ${isP5 ? 'text-amber-800' : 'text-slate-800'} mb-1">${item.elemen || ''}</div>
+                    <div class="text-[10px] text-slate-500 wrap-text leading-snug">${item.detail_tp || ''}</div>
                 </td>
-                <td class="p-2 border-b sticky-col col-target font-bold align-middle" id="target_${rIdx}">${target}</td>
+                <td class="p-3 border-b border-r border-slate-200 col-target font-bold align-top pt-4 text-xs" id="target_${sem}_${rIdx}">${target}</td>
             `;
 
             months.forEach((_, mIdx) => {
-                for(let w=1; w<=5; w++) {
+                const realMonthIdx = startMonthIdx + mIdx;
+                const currentYear = (realMonthIdx > 11) ? yearBase + 1 : yearBase;
+                const totalWeeks = getWeeksInMonth(currentYear, realMonthIdx);
+
+                for(let w=1; w<=totalWeeks; w++) {
                     const weekKey = `${mIdx}_${w}`;
                     const cellKey = `${rIdx}_${mIdx}_${w}`;
-                    const val = matrixValues[cellKey] || '';
-                    const cap = weekCapacities[weekKey];
+                    const val = appState[sem].values[cellKey] || '';
+                    const cap = appState[sem].capacities[weekKey];
 
                     let bgClass = "", disabled = "";
-                    if (cap === 0 || cap === -1) { bgClass = "bg-rose-50"; disabled = "disabled"; }
-                    else if (val) { bgClass = "bg-emerald-50"; }
+                    if (cap === 0) { bgClass = "bg-rose-50"; disabled = "disabled"; }
+                    else if (val) { bgClass = isP5 ? "bg-amber-200" : "bg-emerald-100 font-bold text-emerald-700"; }
 
-                    const ph = (cap > 0) ? cap : ''; 
-
-                    // Step dalam Input number disesuaikan (2 jika genap, 1 jika ganjil)
                     const stepVal = (jpPerWeekGlobal % 2 === 0) ? 2 : 1;
 
-                    rowHTML += `<td class="p-0 border-r border-b text-center ${bgClass} w-8">
-                        <input type="number" value="${val}" ${disabled} placeholder="${ph}" max="${cap}" step="${stepVal}"
-                        onchange="updateMatrix('${cellKey}', this.value, ${rIdx}, ${cap})" 
-                        class="w-full h-full min-h-[40px] text-center text-[10px] outline-none transition bg-transparent font-medium text-slate-700 placeholder-slate-200 focus:bg-blue-100">
+                    rowHTML += `<td class="p-0 border-r border-b border-slate-100 text-center ${bgClass} w-8 align-top">
+                        <input type="number" value="${val}" ${disabled} max="${cap}" step="${stepVal}"
+                        onchange="updateMatrix(${sem}, '${cellKey}', this.value, ${rIdx}, ${cap})" 
+                        class="w-full h-14 text-center jp-input outline-none bg-transparent focus:bg-blue-100 p-0 m-0">
                     </td>`;
                 }
             });
 
-            rowHTML += `<td class="p-2 border-l border-b text-center bg-slate-50 align-middle" id="status_${rIdx}">-</td>`;
+            rowHTML += `<td class="p-2 border-l border-b border-slate-100 text-center ${cellClass} align-top pt-4" id="status_${sem}_${rIdx}">-</td>`;
+            
             const tr = document.createElement('tr');
             tr.innerHTML = rowHTML;
-            tr.className = "hover:bg-slate-50 transition group";
+            tr.className = `${cellClass} ${rowClass} transition group`;
             tbody.appendChild(tr);
-            validateRow(rIdx, target);
+            
+            validateRow(sem, rIdx, target);
         });
     }
 
-    // --- REVISI: UPDATE MATRIX (VALIDASI GENAP/GANJIL) ---
-    function updateMatrix(key, val, rowIdx, maxCap) {
+    function updateMatrix(sem, key, val, rowIdx, maxCap) {
         let numVal = parseInt(val);
-
-        if(val !== '' && isNaN(numVal)) {
-            val = '';
-        } else if (val !== '') {
-            // 1. Cek Kapasitas Maksimum
-            if(numVal > maxCap) {
-                numVal = maxCap;
-                Swal.fire({toast:true, position:'top', icon:'warning', title:`Maksimal ${maxCap} JP`, timer:1000, showConfirmButton:false});
-            }
-
-            // 2. Cek Validasi Genap/Ganjil
-            // Aturan: Jika JP per pekan Genap (misal 4), maka input TIDAK BOLEH Ganjil (1, 3, dst).
+        if(val !== '' && isNaN(numVal)) val = '';
+        else if (val !== '') {
+            if(numVal > maxCap) numVal = maxCap;
             const isWeekEven = (jpPerWeekGlobal % 2 === 0);
-            
-            if (isWeekEven && (numVal % 2 !== 0)) {
-                Swal.fire({
-                    toast:true, position:'top', icon:'error', 
-                    title:`JP Per Pekan (${jpPerWeekGlobal}) adalah GENAP.`, 
-                    text: 'Input harus angka genap (2, 4, dst).',
-                    timer: 2000, showConfirmButton:false
-                });
-                // Reset ke angka genap terdekat (bawah) atau 0
-                numVal = (numVal > 1) ? numVal - 1 : 0;
-            }
-
+            if (isWeekEven && (numVal % 2 !== 0)) numVal = (numVal > 1) ? numVal - 1 : 0;
             val = numVal;
         }
-
-        matrixValues[key] = val;
+        if (val === 0 || val === '0') val = '';
         
-        // Update tampilan input agar user melihat perubahannya (jika di-reset sistem)
-        // Cari element input berdasarkan event tidak bisa langsung di sini, 
-        // tapi karena render ulang mahal, kita biarkan logic di atas, 
-        // saat user pindah fokus (onchange), value di field mungkin perlu direfresh manual jika kita ingin strict visual.
-        // Tapi biasanya matrixValues yang dipakai saat save.
-
-        const target = parseInt(document.getElementById(`target_${rowIdx}`).innerText) || 0;
-        validateRow(rowIdx, target);
+        appState[sem].values[key] = val;
         
-        // Refresh tabel hanya jika terjadi koreksi otomatis, agar input field terupdate
-        if (String(val) !== String(document.querySelector(`input[onchange*="'${key}'"]`).value)) {
-             document.querySelector(`input[onchange*="'${key}'"]`).value = val;
-        }
+        const inputEl = document.querySelector(`input[onchange*="'${key}'"]`);
+        if(inputEl && String(val) !== String(inputEl.value)) inputEl.value = val;
+
+        const target = parseInt(document.getElementById(`target_${sem}_${rowIdx}`).innerText) || 0;
+        validateRow(sem, rowIdx, target);
     }
 
-    function validateRow(rIdx, target) {
+    function validateRow(sem, rIdx, target) {
         let currentSum = 0;
         const prefix = `${rIdx}_`;
-        for (const key in matrixValues) {
-            if (key.startsWith(prefix)) currentSum += (parseInt(matrixValues[key]) || 0);
+        for (const key in appState[sem].values) {
+            if (key.startsWith(prefix)) currentSum += (parseInt(appState[sem].values[key]) || 0);
         }
-        const statEl = document.getElementById(`status_${rIdx}`);
+        const statEl = document.getElementById(`status_${sem}_${rIdx}`);
         if(!statEl) return;
 
         if(currentSum === target) {
-            statEl.innerHTML = `<span class="text-emerald-600 font-bold text-[10px] bg-emerald-100 px-2 py-0.5 rounded-full">✅ Pas</span>`;
+            statEl.innerHTML = `<span class="text-emerald-600 text-[16px]">✅</span>`;
         } else if (currentSum < target) {
-            statEl.innerHTML = `<span class="text-amber-600 font-bold text-[10px]">Kurang ${target - currentSum}</span>`;
+            statEl.innerHTML = `<span class="text-amber-500 font-bold text-[9px] bg-amber-50 px-2 py-1 rounded">-${target - currentSum}</span>`;
         } else {
-            statEl.innerHTML = `<span class="text-rose-600 font-bold text-[10px]">Lebih ${currentSum - target}</span>`;
+            statEl.innerHTML = `<span class="text-rose-500 font-bold text-[9px] bg-rose-50 px-2 py-1 rounded">+${currentSum - target}</span>`;
         }
     }
 
-    // --- REVISI: AUTO DISTRIBUTE (VALIDASI GENAP) ---
-    function autoDistribute() {
-        const semKeyProta = 'semester_' + currentSemester;
-        let materiList = [];
-        if (protaData[semKeyProta]) materiList = protaData[semKeyProta];
+    function autoDistribute(sem) {
+        const materiList = appState[sem].materi;
+        if(materiList.length === 0) return;
 
         let availableSlots = [];
+        const startMonthIdx = sem === 1 ? 6 : 0;
+        const yearBase = sem === 1 ? 2025 : 2026;
+
         for(let m=0; m<6; m++) {
-            for(let w=1; w<=5; w++) {
+            const realMonthIdx = startMonthIdx + m;
+            const currentYear = (realMonthIdx > 11) ? yearBase + 1 : yearBase;
+            const totalWeeks = getWeeksInMonth(currentYear, realMonthIdx);
+
+            for(let w=1; w<=totalWeeks; w++) {
                 const weekKey = `${m}_${w}`;
-                const cap = weekCapacities[weekKey];
+                const cap = appState[sem].capacities[weekKey];
                 if(cap > 0) availableSlots.push({ m, w, cap, used: 0 });
             }
         }
 
         if(availableSlots.length === 0) return Swal.fire('Penuh', 'Tidak ada minggu efektif tersedia.', 'warning');
 
-        // Reset Matrix saat Auto Fill
-        // matrixValues = {}; // Opsional: kalau mau timpa total, uncomment ini. User minta logic isi otomatis, asumsi timpa.
-        // Agar aman, kita bersihkan dulu row yang ada di semester ini
-        // Tapi logic asli kode sebelumnya me-reset matrixValues={} di dalam fungsi reset.
-        // Di sini kita timpa saja logic pengisiannya.
-        
-        // Kita perlu clear value lama agar tidak tumpang tindih
-        matrixValues = {}; 
-
+        appState[sem].values = {}; 
         let slotIdx = 0;
-        let warningOdd = false;
 
         materiList.forEach((item, rIdx) => {
             let demand = parseInt(item.alokasi_jp) || 0;
@@ -439,77 +476,63 @@
                 
                 if (remainingCap > 0) {
                     let fill = Math.min(demand, remainingCap);
-
-                    // LOGIC GENAP: Jika JP Pekan Genap, maka 'fill' harus genap
                     if (isWeekEven && (fill % 2 !== 0)) {
-                        fill = fill - 1; // Kurangi 1 agar jadi genap
-                        if (fill <= 0) {
-                            // Jika setelah dikurangi jadi 0 (misal demand sisa 1), 
-                            // kita tidak bisa masukkan ke minggu ini.
-                            // Kita terpaksa skip slot ini atau biarkan demand menggantung.
-                            // Kasus: Sisa materi 1 JP, tapi slot minimal harus isi 2 JP.
-                            // Maka 1 JP ini akan jadi "Kurang" di status akhir.
-                            warningOdd = true;
-                            break; // Pindah ke materi berikutnya, biarkan sisa demand ini
-                        }
+                        fill = fill - 1; 
+                        if (fill <= 0) { break; } 
                     }
-
+                    
                     const cellKey = `${rIdx}_${slot.m}_${slot.w}`;
-                    matrixValues[cellKey] = (matrixValues[cellKey] || 0) + fill;
+                    appState[sem].values[cellKey] = (appState[sem].values[cellKey] || 0) + fill;
                     
                     demand -= fill;
                     slot.used += fill;
-
-                    // Pindah slot jika penuh
+                    
                     if(slot.used >= slot.cap) slotIdx++;
-
                 } else {
                     slotIdx++;
                 }
             }
         });
 
-        renderTable();
-
-        let msg = 'Distribusi menyesuaikan kapasitas per minggu.';
-        if (warningOdd && (jpPerWeekGlobal % 2 === 0)) {
-            msg += '<br><br><b>Catatan:</b> Ada sisa materi ganjil (1 JP) yang tidak terdistribusi karena aturan JP Genap.';
-        }
-
-        Swal.fire({icon: 'success', title: 'Terisi Otomatis!', html: msg, timer: 2500});
+        renderTable(sem);
+        Swal.fire({icon: 'success', title: `Semester ${sem} Terisi!`, timer: 1500, showConfirmButton:false});
     }
 
-    function resetMatrix() {
+    function resetMatrix(sem) {
         Swal.fire({ 
-            title: 'Reset Total?', 
-            text: "Hapus isian JP DAN kembalikan status minggu (tanda seru/libur) ke kondisi awal kalender?", 
-            icon: 'warning', 
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Ya, Reset Semua'
+            title: `Reset Semester ${sem}?`, 
+            text: "Isian JP akan dihapus. Status minggu dikembalikan ke default Kalender.", 
+            icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Reset'
         }).then((res) => { 
             if(res.isConfirmed) { 
-                matrixValues = {}; 
-                weekCapacities = detectCalendarConflicts(currentSemester);
-                renderTable(); 
-                saveToMemory(); 
-                Swal.fire('Tereset', 'Tabel kembali bersih sesuai kalender.', 'success');
+                appState[sem].values = {}; 
+                appState[sem].capacities = detectCalendarConflicts(sem);
+                renderTable(sem); 
+                Swal.fire('Tereset', '', 'success');
             } 
         });
     }
 
     async function save() {
         const btn = document.getElementById('btnSave'); btn.innerHTML = '⏳ Menyimpan...'; btn.disabled = true;
-        saveToMemory();
         
+        const payloadData = {
+            semester_1: { values: appState[1].values, capacities: appState[1].capacities },
+            semester_2: { values: appState[2].values, capacities: appState[2].capacities }
+        };
+
         const payload = {
             user_id: user.id, doc_type: 'promes_data',
             subject_name: profile.mata_pelajaran || 'Umum', grade_level: profile.fase_kelas || 'Umum', curriculum_type: profile.jenis_kurikulum || 'Merdeka',
-            content_data: promesData, status: 'draft'
+            content_data: payloadData, status: 'draft'
         };
+        
         const { error } = await db.from('work_drafts').upsert(payload, { onConflict: 'user_id,doc_type' });
-        if (error) { Swal.fire('Gagal', error.message, 'error'); btn.innerHTML = '<span>💾</span> Simpan & Lanjut (Modul Ajar) →'; btn.disabled = false; }
-        else { 
+        
+        if (error) { 
+            Swal.fire('Gagal', error.message, 'error'); 
+            btn.innerHTML = '<span>💾</span> Simpan & Lanjut (Modul Ajar) →'; btn.disabled = false; 
+        } else { 
             const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 1500});
             Toast.fire({icon: 'success', title: 'Promes Tersimpan!'});
             setTimeout(() => window.location.href = 'step7_rpp.html', 1500);
